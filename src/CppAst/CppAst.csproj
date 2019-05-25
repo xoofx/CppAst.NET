@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net46;netstandard2.0</TargetFrameworks>
+    <LangVersion>7.3</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RuntimeIdentifiers>win7-x86;win7-x64;osx;linux-x64</RuntimeIdentifiers>
+
+    <Description>CppAst provides a C/C++ parser for header files with access to the full AST, comments and macros for .NET Framework and .NET Core</Description>
+    <Copyright>Alexandre Mutel</Copyright>
+    <Authors>Alexandre Mutel</Authors>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <!--<VersionSuffix>alpha</VersionSuffix>
+    <BuildNumber>001</BuildNumber>-->
+    <VersionSuffix Condition="'$(VersionSuffix)' != '' AND '$(BuildNumber)' != ''">$(VersionSuffix)-$(BuildNumber)</VersionSuffix>
+    <PackageId Condition="'$(SignAssembly)' == 'true'">CppAst.Signed</PackageId>
+    <PackageTags>parser;c++;ast;syntax</PackageTags>
+    <PackageReleaseNotes>https://github.com/xoofx/CppAst/blob/master/changelog.md</PackageReleaseNotes>
+    <PackageIconUrl>https://raw.githubusercontent.com/xoofx/CppAst/master/img/cppast.png</PackageIconUrl>
+    <PackageProjectUrl>https://github.com/xoofx/CppAst</PackageProjectUrl>
+    <PackageLicenseExpression>BSD-2-Clause</PackageLicenseExpression>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!--Add support for sourcelink-->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="libclang.runtime" Version="8.0.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../../ext/ClangSharp/ClangSharp/Generated/**/*.cs">
+      <Link>ClangSharp\Generated\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="../../ext/ClangSharp/ClangSharp/Extensions/**/*.cs">
+      <Link>ClangSharp\Extensions\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="../../ext/ClangSharp/ClangSharp/*.cs">
+      <Link>ClangSharp\%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--Add support for sourcelink-->
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-*" PrivateAssets="All" />
+  </ItemGroup>
+</Project>
