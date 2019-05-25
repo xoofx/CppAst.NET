@@ -5,14 +5,13 @@
     <LangVersion>7.3</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RuntimeIdentifiers>win7-x86;win7-x64;osx;linux-x64</RuntimeIdentifiers>
-
     <Description>CppAst provides a C/C++ parser for header files with access to the full AST, comments and macros for .NET Framework and .NET Core</Description>
     <Copyright>Alexandre Mutel</Copyright>
     <Authors>Alexandre Mutel</Authors>
     <NeutralLanguage>en-US</NeutralLanguage>
     <VersionPrefix>0.1.0</VersionPrefix>
-    <!--<VersionSuffix>alpha</VersionSuffix>
-    <BuildNumber>001</BuildNumber>-->
+    <VersionSuffix>alpha</VersionSuffix>
+    <BuildNumber>001</BuildNumber>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/xoofx/CppAst</RepositoryUrl>
     <VersionSuffix Condition="'$(VersionSuffix)' != '' AND '$(BuildNumber)' != ''">$(VersionSuffix)-$(BuildNumber)</VersionSuffix>
