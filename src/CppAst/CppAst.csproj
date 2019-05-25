@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFrameworks>net46;netstandard2.0</TargetFrameworks>
     <LangVersion>7.3</LangVersion>
@@ -46,7 +45,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!--Add support for sourcelink - TODO Not working yet -->
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19270-01" PrivateAssets="All"/>
   </ItemGroup>
 </Project>

@@ -2,7 +2,6 @@
 
 <img align="right" width="160px" height="160px" src="img/cppast.png">
 
-
 CppAst provides a C/C++ parser for header files with access to the full AST, comments and macros for .NET Framework and .NET Core
 
 > NOTE: This repository is still under development and is not usable for public consumption
