@@ -1,0 +1,37 @@
+version: 1.0.{build}
+image: Visual Studio 2017
+configuration: Release
+install:
+- ps: >-
+    cd src
+
+    nuget restore CppAst.sln
+
+    $env:appveyor_nuget_push = 'false'
+
+    if(-Not $env:APPVEYOR_PULL_REQUEST_NUMBER) {
+      if($env:appveyor_repo_tag -eq 'True') {
+        if($env:appveyor_repo_tag_name -match '^[0-9]') {
+           $env:appveyor_nuget_push = 'true'
+        }
+      }
+    }
+build:
+  project: src/CppAst.sln
+  verbosity: minimal
+before_package:
+- cmd: >-
+     msbuild /t:pack /p:Configuration=Release CppAst/CppAst.csproj
+
+     msbuild /t:Clean CppAst/CppAst.csproj
+     
+     msbuild /t:pack /p:Configuration=Release;SignAssembly=true CppAst/CppAst.csproj
+artifacts:
+- path: src\CppAst\Bin\Release\*.nupkg
+  name: CppAst Nugets
+deploy:
+- provider: NuGet
+  api_key:
+    secure: 7cthHh+wYWZjhqxaxR6QObRaRnstvFkQOY7MkxIsC5kpQEBlKZXuinf0IybbYxJt
+  on:
+    appveyor_nuget_push: true
