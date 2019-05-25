@@ -1,4 +1,4 @@
 [submodule "ext/ClangSharp"]
 	path = ext/ClangSharp
 	url = https://github.com/xoofx/ClangSharp.git
-	branch = master
+	branch = cppast
