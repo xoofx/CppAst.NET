@@ -15,7 +15,7 @@
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/xoofx/CppAst</RepositoryUrl>
     <VersionSuffix Condition="'$(VersionSuffix)' != '' AND '$(BuildNumber)' != ''">$(VersionSuffix)-$(BuildNumber)</VersionSuffix>
-    <PackageId Condition="'$(SignAssembly)' == 'true'">CppAst.Signed</PackageId>
+    <PackageId>CppAst</PackageId>
     <PackageTags>parser;c++;ast;syntax</PackageTags>
     <PackageReleaseNotes>https://github.com/xoofx/CppAst/blob/master/changelog.md</PackageReleaseNotes>
     <PackageIconUrl>https://raw.githubusercontent.com/xoofx/CppAst/master/img/cppast.png</PackageIconUrl>

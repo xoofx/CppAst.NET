@@ -21,13 +21,6 @@ install:
 build:
   project: src/CppAst.sln
   verbosity: minimal
-before_package:
-- cmd: >-
-     msbuild /t:pack /p:Configuration=Release CppAst/CppAst.csproj
-
-     msbuild /t:Clean CppAst/CppAst.csproj
-     
-     msbuild /t:pack /p:Configuration=Release;SignAssembly=true CppAst/CppAst.csproj
 artifacts:
 - path: src\CppAst\Bin\Release\*.nupkg
   name: CppAst Nugets
