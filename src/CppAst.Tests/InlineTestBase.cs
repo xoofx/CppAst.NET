@@ -22,9 +22,7 @@ namespace CppAst.Tests
 
             File.WriteAllText(headerFile, text);
 
-            options.Files.Add(headerFile);
-
-            return CppParser.Parse(options);
+            return CppParser.Parse(headerFile, options);
         }
 
         public void ParseAssert(string text, Action<CppCompilation> assertCompilation, CppParserOptions options = null)
