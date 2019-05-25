@@ -1,12 +1,18 @@
-﻿using System;
+﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Licensed under the BSD-Clause 2 license.
+// See license.txt file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using ClangSharp;
 
 namespace CppAst
 {
+    /// <summary>
+    /// Internal class used to build the entire C++ model from the libclang representation.
+    /// </summary>
     internal class CppModelBuilder
     {
         private readonly CppCompilation _rootCompilation;

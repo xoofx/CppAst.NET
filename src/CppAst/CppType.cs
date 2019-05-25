@@ -1,0 +1,48 @@
+﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Licensed under the BSD-Clause 2 license.
+// See license.txt file in the project root for full license information.
+
+namespace CppAst
+{
+    /// <summary>
+    /// Base class for C++ types.
+    /// </summary>
+    public abstract class CppType : CppElement
+    {
+        /// <summary>
+        /// Constructor with the specified type kind.
+        /// </summary>
+        /// <param name="typeKind"></param>
+        protected CppType(CppTypeKind typeKind)
+        {
+            TypeKind = typeKind;
+        }
+        
+        /// <summary>
+        /// Gets the <see cref="CppTypeKind"/> of this instance.
+        /// </summary>
+        public CppTypeKind TypeKind { get; }
+
+        protected bool Equals(CppType other)
+        {
+            return TypeKind == other.TypeKind;
+        }
+
+        public virtual bool IsEquivalent(CppType other)
+        {
+            return Equals((object)other);
+        }
+        
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            return obj is CppType type && Equals(type);
+        }
+
+        public override int GetHashCode()
+        {
+            return (int) TypeKind;
+        }
+    }
+}

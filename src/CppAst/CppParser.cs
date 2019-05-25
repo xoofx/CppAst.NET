@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Licensed under the BSD-Clause 2 license.
+// See license.txt file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,62 +10,29 @@ using ClangSharp;
 
 namespace CppAst
 {
-    public class CppParserOptions
-    {
-        public CppParserOptions()
-        {
-            IsCplusplus = true;
-            IncludeFolders = new List<string>();
-            Defines = new List<string>();
-            AdditionalArguments = new List<string>()
-            {
-                "-Wno-pragma-once-outside-header"
-            };
-            AutoSquashTypedef = true;
-            ParseMacros = false;
-            ParseComments = true;
-            DefaultWindowsCompatibility = "19.0";
-        }
-        
-        public List<string> IncludeFolders { get; }
-
-        public List<string> Defines { get; }
-
-        public List<string> AdditionalArguments { get; }
-
-        public bool IsCplusplus { get; set; }
-
-        public bool AutoSquashTypedef { get; set; }
-
-        public bool ParseComments { get; set; }
-
-        public bool IsWindows { get; set; }
-
-        public bool ParseMacros { get; set; }
-
-        public string DefaultWindowsCompatibility { get; set; }
-
-        public CppParserOptions EnableMacros()
-        {
-            ParseMacros = true;
-            return this;
-        }
-
-        public CppParserOptions EnableWindows()
-        {
-            IsWindows = true;
-            return this;
-        }
-    }
-
+    /// <summary>
+    /// C/C++ Parser entry point functions.
+    /// </summary>
     public static class CppParser
     {
+        /// <summary>
+        /// Parse the specified single file.
+        /// </summary>
+        /// <param name="cppFile">A path to a C/C++ file on the disk to parse</param>
+        /// <param name="options">Options used for parsing this file (e.g include folders...)</param>
+        /// <returns>The result of the compilation</returns>
         public static CppCompilation Parse(string cppFile, CppParserOptions options = null)
         {
             var files = new List<string>() {cppFile};
             return Parse(files, options);
         }
 
+        /// <summary>
+        /// Parse the specified single file.
+        /// </summary>
+        /// <param name="cppFiles">A list of path to C/C++ header files on the disk to parse</param>
+        /// <param name="options">Options used for parsing this file (e.g include folders...)</param>
+        /// <returns>The result of the compilation</returns>
         public static CppCompilation Parse(List<string> cppFiles, CppParserOptions options = null)
         {
             if (cppFiles == null) throw new ArgumentNullException(nameof(cppFiles));
@@ -83,11 +54,10 @@ namespace CppAst
                 arguments.Add("-xc++");
             }
 
-            if (options.IsWindows)
+            if (options.IsWindowsPlatform)
             {
                 arguments.Add($"-DWIN32");
                 arguments.Add($"-D_WIN32");
-                arguments.Add("-Wno-microsoft-enum-value");
                 arguments.Add($"-fms-compatibility-version={options.DefaultWindowsCompatibility}");
             }
 
