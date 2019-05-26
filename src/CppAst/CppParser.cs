@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using ClangSharp;
 
 namespace CppAst
@@ -16,24 +17,58 @@ namespace CppAst
     public static class CppParser
     {
         /// <summary>
+        /// Parse the specified C++ text in-memory.
+        /// </summary>
+        /// <param name="cppText">A string with a C/C++ text</param>
+        /// <param name="options">Options used for parsing this file (e.g include folders...)</param>
+        /// <param name="cppFilename">Optional path to a file only used for reporting errors. Default is 'content'</param>
+        /// <returns>The result of the compilation</returns>
+        public static CppCompilation Parse(string cppText, CppParserOptions options = null, string cppFilename = "content")
+        {
+            if (cppText == null) throw new ArgumentNullException(nameof(cppText));
+            var cppFiles = new List<CppFileOrString> {new CppFileOrString() {Filename = cppFilename, Content = cppText,}};
+            return ParseInternal(cppFiles, options);
+        }
+        
+        /// <summary>
         /// Parse the specified single file.
         /// </summary>
-        /// <param name="cppFile">A path to a C/C++ file on the disk to parse</param>
+        /// <param name="cppFilename">A path to a C/C++ file on the disk to parse</param>
         /// <param name="options">Options used for parsing this file (e.g include folders...)</param>
         /// <returns>The result of the compilation</returns>
-        public static CppCompilation Parse(string cppFile, CppParserOptions options = null)
+        public static CppCompilation ParseFile(string cppFilename, CppParserOptions options = null)
         {
-            var files = new List<string>() {cppFile};
-            return Parse(files, options);
+            if (cppFilename == null) throw new ArgumentNullException(nameof(cppFilename));
+            var files = new List<string>() {cppFilename};
+            return ParseFiles(files, options);
         }
 
         /// <summary>
         /// Parse the specified single file.
         /// </summary>
+        /// <param name="cppFilenameList">A list of path to C/C++ header files on the disk to parse</param>
+        /// <param name="options">Options used for parsing this file (e.g include folders...)</param>
+        /// <returns>The result of the compilation</returns>
+        public static CppCompilation ParseFiles(List<string> cppFilenameList, CppParserOptions options = null)
+        {
+            if (cppFilenameList == null) throw new ArgumentNullException(nameof(cppFilenameList));
+
+            var cppFiles = new List<CppFileOrString>();
+            foreach (var cppFilepath in cppFilenameList)
+            {
+                if (string.IsNullOrEmpty(cppFilepath)) throw new InvalidOperationException("A null or empty filename is invalid in the list");
+                cppFiles.Add(new CppFileOrString() { Filename = cppFilepath });
+            }
+            return ParseInternal(cppFiles, options);
+        }
+
+        /// <summary>
+        /// Private method parsing file or content.
+        /// </summary>
         /// <param name="cppFiles">A list of path to C/C++ header files on the disk to parse</param>
         /// <param name="options">Options used for parsing this file (e.g include folders...)</param>
         /// <returns>The result of the compilation</returns>
-        public static CppCompilation Parse(List<string> cppFiles, CppParserOptions options = null)
+        private static CppCompilation ParseInternal(List<CppFileOrString> cppFiles, CppParserOptions options = null)
         {
             if (cppFiles == null) throw new ArgumentNullException(nameof(cppFiles));
 
@@ -80,14 +115,31 @@ namespace CppAst
 
             using (var createIndex = CXIndex.Create())
             {
-                var builder = new CppModelBuilder {AutoSquashTypedef = options.AutoSquashTypedef};
+                var builder = new CppModelBuilder { AutoSquashTypedef = options.AutoSquashTypedef };
                 var compilation = builder.RootCompilation;
 
                 foreach (var file in cppFiles)
                 {
-                    var filePath = Path.Combine(Environment.CurrentDirectory, file);
+                    CXTranslationUnit translationUnit;
+                    CXErrorCode translationUnitError;
 
-                    var translationUnitError = CXTranslationUnit.Parse(createIndex, filePath, argumentsArray, Array.Empty<CXUnsavedFile>(), translationFlags, out CXTranslationUnit translationUnit);
+                    string filePath;
+                    if (file.Content == null)
+                    {
+                        filePath = Path.Combine(Environment.CurrentDirectory, file.Filename);
+                        translationUnitError = CXTranslationUnit.Parse(createIndex, filePath, argumentsArray, Array.Empty<CXUnsavedFile>(), translationFlags, out translationUnit);
+                    }
+                    else
+                    {
+                        filePath = file.Filename ?? "content";
+                        translationUnitError = CXTranslationUnit.Parse(createIndex, filePath, argumentsArray, new CXUnsavedFile[] { new CXUnsavedFile()
+                        {
+                            Contents = file.Content,
+                            Filename = filePath,
+                            Length = (uint)Encoding.UTF8.GetByteCount(file.Content)
+
+                        }}, translationFlags, out translationUnit);
+                    }
                     bool skipProcessing = false;
 
                     if (translationUnitError != CXErrorCode.CXError_Success)
@@ -133,6 +185,18 @@ namespace CppAst
                 }
 
                 return compilation;
+            }
+        }
+
+        private struct CppFileOrString
+        {
+            public string Filename;
+
+            public string Content;
+
+            public override string ToString()
+            {
+                return $"{nameof(Filename)}: {Filename}, {nameof(Content)}: {Content}";
             }
         }
     }

@@ -6,29 +6,22 @@ namespace CppAst.Tests
 {
     public class InlineTestBase
     {
-        public CppParserOptions GetDefaultOptions()
+        public void ParseAssert(string text, Action<CppCompilation> assertCompilation, CppParserOptions options = null)
         {
-            return new CppParserOptions();
-        }
-        
-        public CppCompilation Parse(string text, CppParserOptions options = null)
-        {
-            if (text == null) throw new ArgumentNullException(nameof(text));
-            options = options ?? GetDefaultOptions();
+            if (assertCompilation == null) throw new ArgumentNullException(nameof(assertCompilation));
 
+            options = options ?? new CppParserOptions();
             var currentDirectory = Environment.CurrentDirectory;
             var headerFilename = $"{TestContext.CurrentContext.Test.FullName}-{TestContext.CurrentContext.Test.ID}.h";
             var headerFile = Path.Combine(currentDirectory, headerFilename);
 
+            // Parse in memory
+            var compilation = CppParser.Parse(text, options, headerFilename);
+            assertCompilation(compilation);
+
+            // Parse single file from disk
             File.WriteAllText(headerFile, text);
-
-            return CppParser.Parse(headerFile, options);
-        }
-
-        public void ParseAssert(string text, Action<CppCompilation> assertCompilation, CppParserOptions options = null)
-        {
-            if (assertCompilation == null) throw new ArgumentNullException(nameof(assertCompilation));
-            var compilation = Parse(text, options);
+            compilation = CppParser.ParseFile(headerFile, options);
             assertCompilation(compilation);
         }
     }

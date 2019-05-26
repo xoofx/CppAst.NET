@@ -79,7 +79,8 @@ namespace CppAst.Tests
                         Assert.AreEqual(CppTokenKind.Punctuation, macro.Tokens[2].Kind);
                     }
                 }
-                , GetDefaultOptions().EnableMacros());
+                , new CppParserOptions().EnableMacros()
+            );
         }
    }
 }
