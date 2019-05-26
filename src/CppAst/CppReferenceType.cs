@@ -7,7 +7,7 @@ using System;
 namespace CppAst
 {
     /// <summary>
-    /// A C++ reference type (e.g `int&`)
+    /// A C++ reference type (e.g `int&amp;`)
     /// </summary>
     public sealed class CppReferenceType : CppType
     {

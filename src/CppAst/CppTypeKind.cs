@@ -18,7 +18,7 @@ namespace CppAst
         /// </summary>
         Pointer,
         /// <summary>
-        /// A reference type (e.g `int&`)
+        /// A reference type (e.g `int&amp;`)
         /// </summary>
         Reference,
         /// <summary>
