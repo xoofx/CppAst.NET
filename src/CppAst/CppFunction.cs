@@ -30,6 +30,8 @@ namespace CppAst
         /// Gets or sets the attribute flags.
         /// </summary>
         public CppAttributeFlags AttributeFlags { get; set; }
+        public CppCallingConvention CallingConvention { get; set; }
+
 
         /// <summary>
         /// Gets or sets the storage qualifier.

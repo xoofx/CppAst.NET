@@ -25,6 +25,11 @@ namespace CppAst
         }
 
         /// <summary>
+        /// Gets or sets the calling convention of this function type.
+        /// </summary>
+        public CppCallingConvention CallingConvention { get; set; }
+
+        /// <summary>
         /// Gets or sets the return type of this function type.
         /// </summary>
         public CppType ReturnType { get; set; }

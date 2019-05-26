@@ -499,6 +499,8 @@ namespace CppAst
             var returnType = GetCppType(cursor.ResultType.Declaration, cursor.ResultType, cursor, data);
             cppFunction.ReturnType = returnType;
 
+            cppFunction.CallingConvention = GetCallingConvention(cursor.Type);
+
             int i = 0;
             cursor.VisitChildren((argCursor, functionCursor, clientData) =>
             {
@@ -541,6 +543,54 @@ namespace CppAst
             }, data);
 
             return cppFunction;
+        }
+
+        private CppCallingConvention GetCallingConvention(CXType type)
+        {
+            var callingConv = type.FunctionTypeCallingConv;
+            switch (callingConv)
+            {
+                case CXCallingConv.CXCallingConv_Default:
+                    return CppCallingConvention.Default;
+                case CXCallingConv.CXCallingConv_C:
+                    return CppCallingConvention.C;
+                case CXCallingConv.CXCallingConv_X86StdCall:
+                    return CppCallingConvention.X86StdCall;
+                case CXCallingConv.CXCallingConv_X86FastCall:
+                    return CppCallingConvention.X86FastCall;
+                case CXCallingConv.CXCallingConv_X86ThisCall:
+                    return CppCallingConvention.X86ThisCall;
+                case CXCallingConv.CXCallingConv_X86Pascal:
+                    return CppCallingConvention.X86Pascal;
+                case CXCallingConv.CXCallingConv_AAPCS:
+                    return CppCallingConvention.AAPCS;
+                case CXCallingConv.CXCallingConv_AAPCS_VFP:
+                    return CppCallingConvention.AAPCS_VFP;
+                case CXCallingConv.CXCallingConv_X86RegCall:
+                    return CppCallingConvention.X86RegCall;
+                case CXCallingConv.CXCallingConv_IntelOclBicc:
+                    return CppCallingConvention.IntelOclBicc;
+                case CXCallingConv.CXCallingConv_Win64:
+                    return CppCallingConvention.Win64;
+                case CXCallingConv.CXCallingConv_X86_64SysV:
+                    return CppCallingConvention.X86_64SysV;
+                case CXCallingConv.CXCallingConv_X86VectorCall:
+                    return CppCallingConvention.X86VectorCall;
+                case CXCallingConv.CXCallingConv_Swift:
+                    return CppCallingConvention.Swift;
+                case CXCallingConv.CXCallingConv_PreserveMost:
+                    return CppCallingConvention.PreserveMost;
+                case CXCallingConv.CXCallingConv_PreserveAll:
+                    return CppCallingConvention.PreserveAll;
+                case CXCallingConv.CXCallingConv_AArch64VectorCall:
+                    return CppCallingConvention.AArch64VectorCall;
+                case CXCallingConv.CXCallingConv_Invalid:
+                    return CppCallingConvention.Invalid;
+                case CXCallingConv.CXCallingConv_Unexposed:
+                    return CppCallingConvention.Unexposed;
+                default:
+                    return CppCallingConvention.Unexposed;
+            }
         }
 
         private CppType VisitTypeDefDecl(CXCursor cursor, CXCursor parent, CXClientData data)
@@ -716,7 +766,10 @@ namespace CppAst
             // Gets the return type
             var returnType = GetCppType(type.ResultType.Declaration, type.ResultType, cursor, data);
 
-            var cppFunction = new CppFunctionType(returnType);
+            var cppFunction = new CppFunctionType(returnType)
+            {
+                CallingConvention = GetCallingConvention(type)
+            };
 
             for (uint i = 0; i < type.NumArgTypes; i++)
             {
