@@ -27,11 +27,14 @@ namespace CppAst
         public CppVisibility Visibility { get; set; }
 
         /// <summary>
-        /// Gets or sets the attribute flags.
+        /// Gets or sets the calling convention.
         /// </summary>
-        public CppAttributeFlags AttributeFlags { get; set; }
         public CppCallingConvention CallingConvention { get; set; }
 
+        /// <summary>
+        /// Gets the attached attributes. Might be null.
+        /// </summary>
+        public List<CppAttribute> Attributes { get; set; }
 
         /// <summary>
         /// Gets or sets the storage qualifier.

@@ -63,7 +63,7 @@ namespace CppAst
         /// <summary>
         /// Gets or sets a boolean indicating to compile header files for the windows platforms (e.g will define `WIN32` and clang <see cref="DefaultWindowsCompatibility"/> mode for example )
         /// </summary>
-        public bool IsWindowsPlatform { get; set; }
+        public bool IsWindows { get; set; }
 
         /// <summary>
         /// Gets or sets a boolean indicating whether to parse macros. Default is <c>false</c>.
@@ -86,12 +86,12 @@ namespace CppAst
         }
 
         /// <summary>
-        /// Sets <see cref="IsWindowsPlatform"/> to <c>true</c> and return this instance.
+        /// Sets <see cref="IsWindows"/> to <c>true</c> and return this instance.
         /// </summary>
         /// <returns>This instance</returns>
         public CppParserOptions EnableWindowsPlatform()
         {
-            IsWindowsPlatform = true;
+            IsWindows = true;
             return this;
         }
     }

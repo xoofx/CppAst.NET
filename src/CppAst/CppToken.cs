@@ -32,7 +32,7 @@ namespace CppAst
         /// Gets or sets the text of this token.
         /// </summary>
         public string Text { get; set; }
-        
+
         public override string ToString()
         {
             return Text;
@@ -45,7 +45,7 @@ namespace CppAst
             foreach (var token in tokens)
             {
                 // If previous token and new token are identifiers/keyword, we need a space between them
-                if (IsTokenIdentifierOrKeyword(previousKind) && IsTokenIdentifierOrKeyword(token.Kind))
+                if (previousKind.IsIdentifierOrKeyword() && token.Kind.IsIdentifierOrKeyword())
                 {
                     builder.Append(" ");
                 }
@@ -54,8 +54,19 @@ namespace CppAst
 
             return builder.ToString();
         }
+    }
 
-        private static bool IsTokenIdentifierOrKeyword(CppTokenKind kind)
+    /// <summary>
+    /// Extensions for <see cref="CppTokenKind"/>
+    /// </summary>
+    public static class CppTokenKindExtensions
+    {
+        /// <summary>
+        /// Gets a boolean indicating whether this token kind is an identifier or keyword
+        /// </summary>
+        /// <param name="kind">The token kind</param>
+        /// <returns><c>true</c> if the token is an identifier or keyword, <c>false</c> otherwise</returns>
+        public static bool IsIdentifierOrKeyword(this CppTokenKind kind)
         {
             return kind == CppTokenKind.Identifier || kind == CppTokenKind.Keyword;
         }

@@ -3,6 +3,7 @@
 // See license.txt file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace CppAst
@@ -25,6 +26,11 @@ namespace CppAst
         /// Gets or sets the storage qualifier of this field/variable.
         /// </summary>
         public CppStorageQualifier StorageQualifier { get; set; }
+
+        /// <summary>
+        /// Gets attached attributes. Might be null.
+        /// </summary>
+        public List<CppAttribute> Attributes { get; set; }
 
         /// <summary>
         /// Gets the type of this field/variable.

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using ClangSharp;
 
 namespace CppAst
@@ -270,6 +271,8 @@ namespace CppAst
 
         private CppMacro ParseMacro(CXCursor cursor)
         {
+            // TODO: reuse internal class Tokenizer
+
             // As we don't have an API to check macros, we are 
             var range = cursor.Extent;
             CXToken[] tokens = null;
@@ -402,6 +405,8 @@ namespace CppAst
             };
             containerContext.DeclarationContainer.Fields.Add(cppField);
 
+            cppField.Attributes = ParseAttributes(cursor);
+
             if (cursor.Kind == CXCursorKind.CXCursor_VarDecl)
             {
                 var resultEval = clang.Cursor_Evaluate(cursor);
@@ -499,6 +504,7 @@ namespace CppAst
             var returnType = GetCppType(cursor.ResultType.Declaration, cursor.ResultType, cursor, data);
             cppFunction.ReturnType = returnType;
 
+            cppFunction.Attributes = ParseFunctionAttributes(cursor, cppFunction.Name);
             cppFunction.CallingConvention = GetCallingConvention(cursor.Type);
 
             int i = 0;
@@ -510,7 +516,7 @@ namespace CppAst
                         var argName = GetCursorSpelling(argCursor);
 
                         if (string.IsNullOrEmpty(argName))
-                            argName = "param" + i;
+                            argName = "__arg" + i;
 
                         var parameter = new CppParameter(GetCppType(argCursor.Type.Declaration, argCursor.Type, functionCursor, clientData), argName);
 
@@ -518,23 +524,13 @@ namespace CppAst
 
                         i++;
                         break;
-                    case CXCursorKind.CXCursor_FirstAttr:
-                    case CXCursorKind.CXCursor_VisibilityAttr:
-                        // TODO
-                        break;
-                    case CXCursorKind.CXCursor_TypeRef:
-                        break;
-
-                    case CXCursorKind.CXCursor_DLLExport:
-                        cppFunction.AttributeFlags |= CppAttributeFlags.DllExport;
-                        break;
-
-                    case CXCursorKind.CXCursor_DLLImport:
-                        cppFunction.AttributeFlags |= CppAttributeFlags.DllImport;
-                        break;
 
                     default:
-                        WarningUnhandled(cursor, parent);
+                        // Attributes should be parsed by ParseAttributes()
+                        if (!(argCursor.Kind >= CXCursorKind.CXCursor_FirstAttr && argCursor.Kind <= CXCursorKind.CXCursor_LastAttr))
+                        {
+                            WarningUnhandled(cursor, parent);
+                        }
                         break;
                 }
 
@@ -591,6 +587,238 @@ namespace CppAst
                 default:
                     return CppCallingConvention.Unexposed;
             }
+        }
+
+        private List<CppAttribute> ParseAttributes(CXCursor cursor)
+        {
+            var tokenizer = new Tokenizer(cursor);
+            var tokenIt = new TokenIterator(tokenizer);
+
+            List<CppAttribute> attributes = null;
+            while (tokenIt.CanPeek)
+            {
+                if (ParseAttributes(tokenIt, ref attributes))
+                {
+                    continue;
+                }
+                break;
+            }
+            return attributes;
+        }
+
+        private List<CppAttribute> ParseFunctionAttributes(CXCursor cursor, string functionName)
+        {
+            // TODO: This function is not 100% correct when parsing tokens up to the function name
+            // we assume to find the function name immediately followed by a `(`
+            // but some return type parameter could actually interfere with that
+            // Ideally we would need to parse more properly return type and skip parenthesis for example
+            var tokenizer = new Tokenizer(cursor);
+            var tokenIt = new TokenIterator(tokenizer);
+
+            // Parse leading attributes
+            List<CppAttribute> attributes = null;
+            while (tokenIt.CanPeek)
+            {
+                if (ParseAttributes(tokenIt, ref attributes))
+                {
+                    continue;
+                }
+                break;
+            }
+
+            if (!tokenIt.CanPeek)
+            {
+                return attributes;
+            }
+
+            // Find function name (We only support simple function name declaration)
+            if (!tokenIt.Find(functionName, "("))
+            {
+                return attributes;
+            }
+
+            Debug.Assert(tokenIt.PeekText() == functionName);
+            tokenIt.Next();
+            Debug.Assert(tokenIt.PeekText() == "(");
+            tokenIt.Next();
+
+            int parentCount = 1;
+            while (parentCount > 0 && tokenIt.CanPeek)
+            {
+                var text = tokenIt.PeekText();
+                if (text == "(")
+                {
+                    parentCount++;
+                }
+                else if (text == ")")
+                {
+                    parentCount--;
+                }
+                tokenIt.Next();
+            }
+
+            if (parentCount != 0)
+            {
+                return attributes;
+            }
+
+            while (tokenIt.CanPeek)
+            {
+                if (ParseAttributes(tokenIt, ref attributes))
+                {
+                    continue;
+                }
+                // Skip the token if we can parse it.
+                tokenIt.Next();
+            }
+
+            return attributes;
+        }
+
+        private bool ParseAttributes(TokenIterator tokenIt, ref List<CppAttribute> attributes)
+        {
+            // Parse C++ attributes
+            // [[<attribute>]]
+            if (tokenIt.Skip("[", "["))
+            {
+                CppAttribute attribute;
+                while (ParseAttribute(tokenIt, out attribute))
+                {
+                    if (attributes == null)
+                    {
+                        attributes = new List<CppAttribute>();
+                    }
+                    attributes.Add(attribute);
+
+                    tokenIt.Skip(",");
+                }
+
+                return tokenIt.Skip("]", "]");
+            }
+            
+            // Parse GCC or clang attributes
+            // __attribute__((<attribute>))
+            if (tokenIt.Skip("__attribute__", "(", "("))
+            {
+                CppAttribute attribute;
+                while (ParseAttribute(tokenIt, out attribute))
+                {
+                    if (attributes == null)
+                    {
+                        attributes = new List<CppAttribute>();
+                    }
+                    attributes.Add(attribute);
+
+                    tokenIt.Skip(",");
+                }
+
+                return tokenIt.Skip(")", ")");
+            }
+
+            // Parse MSVC attributes
+            // __declspec(<attribute>)
+            if (tokenIt.Skip("__declspec", "("))
+            {
+                CppAttribute attribute;
+                while (ParseAttribute(tokenIt, out attribute))
+                {
+                    if (attributes == null)
+                    {
+                        attributes = new List<CppAttribute>();
+                    }
+                    attributes.Add(attribute);
+
+                    tokenIt.Skip(",");
+                }
+                return tokenIt.Skip(")");
+            }
+
+            return false;
+        }
+
+        private bool ParseDirectAttribute(CXCursor cursor, ref List<CppAttribute> attributes)
+        {
+            var tokenizer = new Tokenizer(cursor);
+            var tokenIt = new TokenIterator(tokenizer);
+            if (ParseAttribute(tokenIt, out var attribute))
+            {
+                if (attributes == null)
+                {
+                    attributes = new List<CppAttribute>();
+                }
+                attributes.Add(attribute);
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool ParseAttribute(TokenIterator tokenIt, out CppAttribute attribute)
+        {
+            // (identifier ::)? identifier ('(' tokens ')' )? (...)?
+            attribute = null;
+            var token = tokenIt.Peek();
+            if (token == null || !token.Kind.IsIdentifierOrKeyword())
+            {
+                return false;
+            }
+            tokenIt.Next(out token);
+
+            var firstToken = token;
+
+            // try (identifier ::)?
+            string scope = null;
+            if (tokenIt.Skip("::"))
+            {
+                scope = token.Text;
+
+                token = tokenIt.Peek();
+                if (token == null || !token.Kind.IsIdentifierOrKeyword())
+                {
+                    return false;
+                }
+                tokenIt.Next(out token);
+            }
+
+            // identifier
+            string tokenIdentifier = token.Text;
+
+            string arguments = null;
+
+            // ('(' tokens ')' )?
+            if (tokenIt.Skip("("))
+            {
+                var builder = new StringBuilder();
+                var previousTokenKind = CppTokenKind.Punctuation;
+                while (tokenIt.PeekText() != ")" && tokenIt.Next(out token))
+                {
+                    if (token.Kind.IsIdentifierOrKeyword() && previousTokenKind.IsIdentifierOrKeyword())
+                    {
+                        builder.Append(" ");
+                    }
+                    previousTokenKind = token.Kind;
+                    builder.Append(token.Text);
+                }
+
+                if (!tokenIt.Skip(")"))
+                {
+                    return false;
+                }
+                arguments = builder.ToString();
+            }
+
+            var isVariadic = tokenIt.Skip("...");
+
+            var previousToken = tokenIt.PreviousToken();
+
+            attribute = new CppAttribute(tokenIdentifier)
+            {
+                Span = new CppSourceSpan(firstToken.Span.Start, previousToken.Span.End),
+                Scope = scope,
+                Arguments = arguments,
+                IsVariadic = isVariadic,
+            };
+            return true;
         }
 
         private CppType VisitTypeDefDecl(CXCursor cursor, CXCursor parent, CXClientData data)
@@ -800,6 +1028,233 @@ namespace CppAst
         protected void WarningUnhandled(CXCursor cursor, CXCursor parent)
         {
             _rootCompilation.Diagnostics.Warning($"Unhandled cursor kind: {cursor.KindSpelling} in {parent.KindSpelling}.", GetSourceLocation(cursor.Location));
+        }
+        
+        /// <summary>
+        /// Internal class to iterate on tokens
+        /// </summary>
+        private class TokenIterator
+        {
+            private readonly Tokenizer _tokens;
+            private int _index;
+
+            public TokenIterator(Tokenizer tokens)
+            {
+                _tokens = tokens;
+            }
+
+            public bool Skip(string expectedText)
+            {
+                if (_index < _tokens.Count)
+                {
+                    if (_tokens.GetString(_index) == expectedText)
+                    {
+                        _index++;
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            public CppToken PreviousToken()
+            {
+                if (_index > 0)
+                {
+                    return _tokens[_index - 1];
+                }
+
+                return null;
+            }
+
+            public bool Skip(params string[] expectedTokens)
+            {
+                var startIndex = _index;
+                foreach (var expectedToken in expectedTokens)
+                {
+                    if (startIndex < _tokens.Count)
+                    {
+                        if (_tokens.GetString(startIndex) == expectedToken)
+                        {
+                            startIndex++;
+                            continue;
+                        }
+                    }
+                    return false;
+                }
+                _index = startIndex;
+                return true;
+            }
+
+            public bool Find(params string[] expectedTokens)
+            {
+                var startIndex = _index;
+                restart:
+                while (startIndex < _tokens.Count)
+                {
+                    var firstIndex = startIndex;
+                    foreach (var expectedToken in expectedTokens)
+                    {
+                        if (startIndex < _tokens.Count)
+                        {
+                            if (_tokens.GetString(startIndex) == expectedToken)
+                            {
+                                startIndex++;
+                                continue;
+                            }
+                        }
+                        startIndex = firstIndex + 1;
+                        goto restart;
+                    }
+                    _index = firstIndex;
+                    return true;
+                }
+                return false;
+            }
+
+            public bool Next(out CppToken token)
+            {
+                token = null;
+                if (_index < _tokens.Count)
+                {
+                    token = _tokens[_index];
+                    _index++;
+                    return true;
+                }
+                return false;
+            }
+
+            public bool CanPeek => _index < _tokens.Count;
+
+            public bool Next()
+            {
+                if (_index < _tokens.Count)
+                {
+                    _index++;
+                    return true;
+                }
+                return false;
+            }
+
+            public CppToken Peek()
+            {
+                if (_index < _tokens.Count)
+                {
+                    return _tokens[_index];
+                }
+                return null;
+            }
+
+            public string PeekText()
+            {
+                if (_index < _tokens.Count)
+                {
+                    return _tokens.GetString(_index);
+                }
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Internal class to tokenize
+        /// </summary>
+        [DebuggerTypeProxy(typeof(TokenizerDebuggerType))]
+        private class Tokenizer
+        {
+            private readonly CXToken[] _tokens;
+            private CppToken[] _cppTokens;
+            private readonly CXTranslationUnit _tu;
+
+            public Tokenizer(CXCursor cursor)
+            {
+                var range = cursor.Extent;
+                _tokens = null;
+                var tu = cursor.TranslationUnit;
+                tu.Tokenize(range, out _tokens);
+                _tu = tu;
+            }
+
+            public int Count => _tokens?.Length ?? 0;
+
+            public CppToken this[int i]
+            {
+                get
+                {
+                    // Only create a tokenizer if necessary
+                    if (_cppTokens == null)
+                    {
+                        _cppTokens = new CppToken[_tokens.Length];
+                    }
+
+                    ref var cppToken = ref _cppTokens[i];
+                    if (cppToken != null)
+                    {
+                        return cppToken;
+                    }
+
+                    var token = _tokens[i];
+                    CppTokenKind cppTokenKind = 0;
+                    switch (token.Kind)
+                    {
+                        case CXTokenKind.CXToken_Punctuation:
+                            cppTokenKind = CppTokenKind.Punctuation;
+                            break;
+                        case CXTokenKind.CXToken_Keyword:
+                            cppTokenKind = CppTokenKind.Keyword;
+                            break;
+                        case CXTokenKind.CXToken_Identifier:
+                            cppTokenKind = CppTokenKind.Identifier;
+                            break;
+                        case CXTokenKind.CXToken_Literal:
+                            cppTokenKind = CppTokenKind.Literal;
+                            break;
+                        case CXTokenKind.CXToken_Comment:
+                            cppTokenKind = CppTokenKind.Comment;
+                            break;
+                        default:
+                            break;
+                    }
+
+                    var tokenStr = token.GetSpelling(_tu).CString;
+
+                    var tokenRange = token.GetExtent(_tu);
+                    cppToken = new CppToken(cppTokenKind, tokenStr)
+                    {
+                        Span = new CppSourceSpan(GetSourceLocation(tokenRange.Start), GetSourceLocation(tokenRange.End))
+                    };
+                    return cppToken;
+                }
+            }
+
+            public string GetString(int i)
+            {
+                var token = _tokens[i];
+                return token.GetSpelling(_tu).CString;
+            }
+        }
+
+        private class TokenizerDebuggerType
+        {
+            private readonly Tokenizer _tokenizer;
+
+            public TokenizerDebuggerType(Tokenizer tokenizer)
+            {
+                _tokenizer = tokenizer;
+            }
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public object[] Items
+            {
+                get
+                {
+                    var array = new object[_tokenizer.Count];
+                    for (int i = 0; i < _tokenizer.Count; i++)
+                    {
+                        array[i] = _tokenizer[i];
+                    }
+                    return array;
+                }
+            }
         }
 
         private class CppContainerContext

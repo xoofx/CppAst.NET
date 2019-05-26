@@ -89,10 +89,11 @@ namespace CppAst
                 arguments.Add("-xc++");
             }
 
-            if (options.IsWindowsPlatform)
+            if (options.IsWindows)
             {
                 arguments.Add($"-DWIN32");
                 arguments.Add($"-D_WIN32");
+                arguments.Add("-fms-extensions");
                 arguments.Add($"-fms-compatibility-version={options.DefaultWindowsCompatibility}");
             }
 
