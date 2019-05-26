@@ -2,6 +2,7 @@
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
+using System.Collections.Generic;
 using System.Text;
 
 namespace CppAst
@@ -61,6 +62,14 @@ namespace CppAst
                 hashCode = (hashCode * 397) ^ (Parent != null ? Parent.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ (Name != null ? Name.GetHashCode() : 0);
                 return hashCode;
+            }
+        }
+
+        public IEnumerable<CppElement> Children()
+        {
+            foreach (var item in Items)
+            {
+                yield return item;
             }
         }
 

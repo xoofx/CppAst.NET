@@ -3,6 +3,7 @@
 // See license.txt file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 
 namespace CppAst
 {
@@ -73,6 +74,14 @@ namespace CppAst
         public override string ToString()
         {
             return $"namespace {Name} {{...}}";
+        }
+
+        public IEnumerable<CppElement> Children()
+        {
+            foreach (var item in CppContainerHelper.Children(this))
+            {
+                yield return item;
+            }
         }
     }
 }

@@ -129,5 +129,18 @@ namespace CppAst
             builder.Append(" { ... }");
             return builder.ToString();
         }
+
+        public IEnumerable<CppElement> Children()
+        {
+            foreach (var item in CppContainerHelper.Children(this))
+            {
+                yield return item;
+            }
+
+            foreach (var item in Constructors)
+            {
+                yield return item;
+            }
+        }
     }
 }
