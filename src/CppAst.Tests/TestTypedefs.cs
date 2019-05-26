@@ -53,10 +53,46 @@ typedef double Type_double;
                         var typedef = compilation.Typedefs[i];
                         var expectedType = primitives[i];
                         Assert.AreEqual(expectedType, typedef.Type);
-                        Assert.AreEqual("Type_" + expectedType.ToString().Replace(" ", "_") , typedef.Name);
+                        Assert.AreEqual("Type_" + expectedType.ToString().Replace(" ", "_"), typedef.Name);
                     }
                 }
-                , GetDefaultOptions());
+            );
+        }
+
+        [Test]
+        public void TestSquash()
+        {
+            var text = @"
+// Test typedef collapsing
+typedef struct {
+    int field0;
+} MyStruct;
+";
+
+            ParseAssert(text,
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(1, compilation.Classes.Count);
+                    Assert.AreEqual("MyStruct", compilation.Classes[0].Name);
+                }
+            );
+
+
+            ParseAssert(@text,
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(1, compilation.Classes.Count);
+                    Assert.AreEqual(1, compilation.Typedefs.Count);
+                    Assert.AreEqual("", compilation.Classes[0].Name);
+                    Assert.AreEqual("MyStruct", compilation.Typedefs[0].Name);
+                },
+                new CppParserOptions() { AutoSquashTypedef = false }
+            );
+
         }
     }
 }

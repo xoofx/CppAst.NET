@@ -39,7 +39,7 @@ enum class Enum2 : short
                         var cppEnum = compilation.Enums[0];
                         Assert.AreEqual("Enum0", cppEnum.Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppEnum.IntegerType.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType)cppEnum.IntegerType).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType) cppEnum.IntegerType).Kind);
                         Assert.AreEqual(3, cppEnum.Items.Count);
                         Assert.False(cppEnum.IsScoped);
                         Assert.AreEqual("Enum0_item0", cppEnum.Items[0].Name);
@@ -54,7 +54,7 @@ enum class Enum2 : short
                         var cppEnum = compilation.Enums[1];
                         Assert.AreEqual("Enum1", cppEnum.Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppEnum.IntegerType.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType)cppEnum.IntegerType).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType) cppEnum.IntegerType).Kind);
                         Assert.AreEqual(3, cppEnum.Items.Count);
                         Assert.True(cppEnum.IsScoped);
                         Assert.AreEqual("item0", cppEnum.Items[0].Name);
@@ -69,7 +69,7 @@ enum class Enum2 : short
                         var cppEnum = compilation.Enums[2];
                         Assert.AreEqual("Enum2", cppEnum.Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppEnum.IntegerType.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.Short, ((CppPrimitiveType)cppEnum.IntegerType).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Short, ((CppPrimitiveType) cppEnum.IntegerType).Kind);
                         Assert.AreEqual(3, cppEnum.Items.Count);
                         Assert.True(cppEnum.IsScoped);
                         Assert.AreEqual("item0", cppEnum.Items[0].Name);
@@ -80,7 +80,7 @@ enum class Enum2 : short
                         Assert.AreEqual(5, cppEnum.Items[2].Value);
                     }
                 }
-                , GetDefaultOptions());
+            );
         }
     }
 }

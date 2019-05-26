@@ -721,10 +721,8 @@ namespace CppAst
             for (uint i = 0; i < type.NumArgTypes; i++)
             {
                 var argType = type.GetArgType(i);
-                var argName = "param" + i;
-
-                var parameter = new CppParameter(GetCppType(argType.Declaration, argType, type.Declaration, data), argName);
-                cppFunction.ParameterTypes.Add(parameter);
+                var cppType = GetCppType(argType.Declaration, argType, type.Declaration, data);
+                cppFunction.ParameterTypes.Add(cppType);
             }
 
             return cppFunction;

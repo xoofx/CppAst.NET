@@ -30,14 +30,14 @@ int function1(int a, float b);
                         Assert.AreEqual(2, cppFunction.Parameters.Count);
                         Assert.AreEqual("a", cppFunction.Parameters[0].Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppFunction.Parameters[0].Type.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType)cppFunction.Parameters[0].Type).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType) cppFunction.Parameters[0].Type).Kind);
                         Assert.AreEqual("b", cppFunction.Parameters[1].Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppFunction.Parameters[1].Type.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.Float, ((CppPrimitiveType)cppFunction.Parameters[1].Type).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Float, ((CppPrimitiveType) cppFunction.Parameters[1].Type).Kind);
                         Assert.AreEqual("int", cppFunction.ReturnType.ToString());
                     }
                 }
-                , GetDefaultOptions());
+            );
         }
     }
 }

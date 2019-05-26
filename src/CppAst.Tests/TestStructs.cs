@@ -56,7 +56,7 @@ public:
                         Assert.AreEqual(1, cppStruct.Fields.Count);
                         Assert.AreEqual("field0", cppStruct.Fields[0].Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppStruct.Fields[0].Type.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType)cppStruct.Fields[0].Type).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType) cppStruct.Fields[0].Type).Kind);
                     }
 
                     {
@@ -64,16 +64,16 @@ public:
                         Assert.AreEqual(2, cppStruct.Fields.Count);
                         Assert.AreEqual("field0", cppStruct.Fields[0].Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppStruct.Fields[0].Type.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType)cppStruct.Fields[0].Type).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType) cppStruct.Fields[0].Type).Kind);
                         Assert.AreEqual(CppVisibility.Private, cppStruct.Fields[0].Visibility);
 
                         Assert.AreEqual("field1", cppStruct.Fields[1].Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppStruct.Fields[1].Type.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.Float, ((CppPrimitiveType)cppStruct.Fields[1].Type).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Float, ((CppPrimitiveType) cppStruct.Fields[1].Type).Kind);
                         Assert.AreEqual(CppVisibility.Public, cppStruct.Fields[1].Visibility);
                     }
                 }
-                , GetDefaultOptions());
+            );
         }
     }
 }

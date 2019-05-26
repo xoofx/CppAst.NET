@@ -21,7 +21,7 @@ namespace CppAst
         public CppFunctionType(CppType returnType) : base(CppTypeKind.Function)
         {
             ReturnType = returnType ?? throw new ArgumentNullException(nameof(returnType));
-            ParameterTypes = new List<CppParameter>();
+            ParameterTypes = new List<CppType>();
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace CppAst
         /// <summary>
         /// Gets the types of the function parameters.
         /// </summary>
-        public List<CppParameter> ParameterTypes { get; }
+        public List<CppType> ParameterTypes { get; }
 
         private bool Equals(CppFunctionType other)
         {
