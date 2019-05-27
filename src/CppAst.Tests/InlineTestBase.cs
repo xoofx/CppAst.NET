@@ -17,6 +17,11 @@ namespace CppAst.Tests
 
             // Parse in memory
             var compilation = CppParser.Parse(text, options, headerFilename);
+            foreach (var diagnosticsMessage in compilation.Diagnostics.Messages)
+            {
+                Console.WriteLine(diagnosticsMessage);
+            }
+
             assertCompilation(compilation);
 
             // Parse single file from disk

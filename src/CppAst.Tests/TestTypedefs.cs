@@ -8,6 +8,12 @@ namespace CppAst.Tests
         public void TestSimple()
         {
             ParseAssert(@"
+typedef void Type_void;
+
+typedef bool Type_bool;
+
+typedef wchar_t Type_wchar;
+
 typedef char Type_char;
 typedef unsigned char Type_unsigned_char;
 
@@ -27,10 +33,16 @@ typedef double Type_double;
                 {
                     Assert.False(compilation.HasErrors);
 
-                    Assert.AreEqual(10, compilation.Typedefs.Count);
+                    Assert.AreEqual(13, compilation.Typedefs.Count);
 
                     var primitives = new CppPrimitiveType[]
                     {
+                        CppPrimitiveType.Void,
+
+                        CppPrimitiveType.Bool,
+
+                        CppPrimitiveType.WChar,
+
                         CppPrimitiveType.Char,
                         CppPrimitiveType.UnsignedChar,
 
