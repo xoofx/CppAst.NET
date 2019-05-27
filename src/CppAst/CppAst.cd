@@ -1,0 +1,275 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="CppAst.CppElement" Collapsed="true">
+    <Position X="3.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAIAAAA=</HashCode>
+      <FileName>CppElement.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CppAst.CppAttribute" Collapsed="true">
+    <Position X="0.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAACAAAAAACAEAAAAAAQAAAAAAAAAIAAAAAAAAAA=</HashCode>
+      <FileName>CppAttribute.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CppAst.CppBaseType" Collapsed="true">
+    <Position X="0.75" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAQIAAAAAAAA=</HashCode>
+      <FileName>CppBaseType.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CppAst.CppEnumItem" Collapsed="true">
+    <Position X="0.75" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAEAAAAAAQAAAAAAAAAAAAgAAAAAAA=</HashCode>
+      <FileName>CppEnumItem.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CppAst.CppField" Collapsed="true">
+    <Position X="5.25" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAAAAAAAAEAAAAAAQQAABAAAABAQAAAAAAAAA=</HashCode>
+      <FileName>CppField.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CppAst.CppFunction" Collapsed="true">
+    <Position X="5.25" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AFAABAAAAAAAAAAUAAAAAAQQAAAAAAABAIEAAAAEAAA=</HashCode>
+      <FileName>CppFunction.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="1.271" />
+  </Class>
+  <Class Name="CppAst.CppGlobalDeclarationContainer" Collapsed="true">
+    <Position X="8.25" Y="1.75" Width="2.5" />
+    <AssociationLine Name="Classes" Type="CppAst.CppClass" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="8.938" Y="2.441" />
+        <Point X="8.938" Y="11.346" />
+        <Point X="6.75" Y="11.346" />
+      </Path>
+    </AssociationLine>
+    <AssociationLine Name="Enums" Type="CppAst.CppEnum" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="9.125" Y="2.441" />
+        <Point X="9.125" Y="13.096" />
+        <Point X="6.75" Y="13.096" />
+      </Path>
+    </AssociationLine>
+    <AssociationLine Name="Fields" Type="CppAst.CppField" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="8.75" Y="2.441" />
+        <Point X="8.75" Y="6.688" />
+        <Point X="6.75" Y="6.688" />
+      </Path>
+    </AssociationLine>
+    <AssociationLine Name="Functions" Type="CppAst.CppFunction" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="8.562" Y="2.441" />
+        <Point X="8.562" Y="5.346" />
+        <Point X="6.75" Y="5.346" />
+      </Path>
+    </AssociationLine>
+    <AssociationLine Name="Macros" Type="CppAst.CppMacro" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="8.312" Y="2.441" />
+        <Point X="8.312" Y="3.846" />
+        <Point X="6.75" Y="3.846" />
+      </Path>
+    </AssociationLine>
+    <AssociationLine Name="Namespaces" Type="CppAst.CppNamespace" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="10.625" Y="2.441" />
+        <Point X="10.625" Y="5.048" />
+        <Point X="11.75" Y="5.048" />
+      </Path>
+    </AssociationLine>
+    <AssociationLine Name="Typedefs" Type="CppAst.CppTypedef" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="9.312" Y="2.441" />
+        <Point X="9.312" Y="14.346" />
+        <Point X="6.75" Y="14.346" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAEAAAEAAAAAAAAEAAIAAgAAAAAIAACAAAAAgAA=</HashCode>
+      <FileName>CppGlobalDeclarationContainer.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Classes" />
+      <Property Name="Enums" />
+      <Property Name="Fields" />
+      <Property Name="Functions" />
+      <Property Name="Macros" />
+      <Property Name="Namespaces" />
+      <Property Name="Typedefs" />
+    </ShowAsCollectionAssociation>
+    <Lollipop Position="1.3" />
+  </Class>
+  <Class Name="CppAst.CppMacro" Collapsed="true">
+    <Position X="5.25" Y="3.5" Width="1.5" />
+    <InheritanceLine Type="CppAst.CppElement" FixedToPoint="true">
+      <Path>
+        <Point X="4" Y="1.062" />
+        <Point X="4" Y="3.346" />
+        <Point X="6" Y="3.346" />
+        <Point X="6" Y="3.5" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAEAAAAEAAAAAAQAAAAAAAAAAIAgAAABAAA=</HashCode>
+      <FileName>CppMacro.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CppAst.CppNamespace" Collapsed="true">
+    <Position X="11.75" Y="4.75" Width="1.5" />
+    <InheritanceLine Type="CppAst.CppElement" FixedToPoint="true">
+      <Path>
+        <Point X="4" Y="1.062" />
+        <Point X="4" Y="1.312" />
+        <Point X="12.5" Y="1.312" />
+        <Point X="12.5" Y="4.75" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAEAAAEAAAAEgAAEAAYAAAAAAIAIAACAAAAAgAA=</HashCode>
+      <FileName>CppNamespace.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="1.262" />
+  </Class>
+  <Class Name="CppAst.CppParameter" Collapsed="true">
+    <Position X="0.75" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAEgAAAAAQAAABAAIAAAQAAAAAAAAA=</HashCode>
+      <FileName>CppParameter.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CppAst.CppToken" Collapsed="true">
+    <Position X="0.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAQBAAAAEAAAAAAAAAAAAAAAAAAAACAAAAAA=</HashCode>
+      <FileName>CppToken.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CppAst.CppType" Collapsed="true">
+    <Position X="3.25" Y="8" Width="1.5" />
+    <InheritanceLine Type="CppAst.CppElement" FixedToPoint="true">
+      <Path>
+        <Point X="4" Y="1.062" />
+        <Point X="4" Y="8" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAgAAAAAAAAAIAAIAAAAAAAAAAQAA=</HashCode>
+      <FileName>CppType.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CppAst.CppValue" Collapsed="true">
+    <Position X="0.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAgAAAAAAA=</HashCode>
+      <FileName>CppValue.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CppAst.CppArrayType" Collapsed="true">
+    <Position X="0.75" Y="9.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAABAAAAAAAgAAEgAAAAAAAAAAAAIAAAAAAAAAAAAA=</HashCode>
+      <FileName>CppArrayType.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CppAst.CppClass" Collapsed="true">
+    <Position X="5.25" Y="11" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAEEAAAEQAAAEgAAEAAYAAAAAAIAIAAGAAAAAgAA=</HashCode>
+      <FileName>CppClass.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="1.3" />
+  </Class>
+  <Class Name="CppAst.CppEnum" Collapsed="true">
+    <Position X="5.25" Y="12.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAAAAACAAEkAAEAAQAAAAAAIAAAAAACAAAAAA=</HashCode>
+      <FileName>CppEnum.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="1.3" />
+  </Class>
+  <Class Name="CppAst.CppFunctionType" Collapsed="true">
+    <Position X="0.75" Y="13.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAAAAAAAAAAAAAEgAAAAAAAAAAAAIAAAAAAAAAEAgA=</HashCode>
+      <FileName>CppFunctionType.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CppAst.CppPointerType" Collapsed="true">
+    <Position X="0.75" Y="10.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAABAAAAAAAAAAEgAAAAAAAAAAAAIAAAAAAAAAAAAA=</HashCode>
+      <FileName>CppPointerType.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CppAst.CppPrimitiveType" Collapsed="true">
+    <Position X="5.25" Y="9.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAABIAACkgAAADAIAAAACAKAAIAAAAAAigGA=</HashCode>
+      <FileName>CppPrimitiveType.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CppAst.CppQualifiedType" Collapsed="true">
+    <Position X="0.75" Y="15.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAABAAAAAAAAAAEiAAAAAAAAAAAAIAAAAAAAAAAAAA=</HashCode>
+      <FileName>CppQualifiedType.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CppAst.CppReferenceType" Collapsed="true">
+    <Position X="0.75" Y="11.25" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAABAAAAAAAAAAEgAAAAAAAAAAAAIAAAAAAAAAAAAA=</HashCode>
+      <FileName>CppReferenceType.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CppAst.CppTemplateParameterType" Collapsed="true">
+    <Position X="0.75" Y="12.25" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAEgAAAAAQAAAAAAIAAAAAAAAAAAAA=</HashCode>
+      <FileName>CppTemplateParameterType.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CppAst.CppTypedef" Collapsed="true">
+    <Position X="5.25" Y="14" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAAAAAAAAEgAAAAAQAAAAAAIAAAQAAAAAAQAA=</HashCode>
+      <FileName>CppTypedef.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="1.3" />
+  </Class>
+  <Class Name="CppAst.CppUnexposedType" Collapsed="true">
+    <Position X="0.75" Y="14.25" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAEgAAAAAQAAAAAAIAAAAAAAAAAAAA=</HashCode>
+      <FileName>CppUnexposedType.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CppAst.CppCompilation" Collapsed="true">
+    <Position X="11.75" Y="6" Width="1.5" />
+    <Members>
+      <Property Name="System" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAIAAAAIAAAAAAAAAAAAAAAAIAAAAAAAAAAA=</HashCode>
+      <FileName>CppCompilation.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="System" />
+    </ShowAsAssociation>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

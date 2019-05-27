@@ -2,6 +2,7 @@
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
+using System;
 using System.Linq;
 using NUnit.Framework;
 
@@ -20,6 +21,28 @@ void *fun2(int align) __attribute__((alloc_align(1)));
 ",
                 compilation =>
                 {
+
+                    // Print diagnostic messages
+                    foreach (var message in compilation.Diagnostics.Messages)
+                        Console.WriteLine(message);
+
+                    // Print All enums
+                    foreach (var cppEnum in compilation.Enums)
+                        Console.WriteLine(cppEnum);
+
+                    // Print All functions
+                    foreach (var cppFunction in compilation.Functions)
+                        Console.WriteLine(cppFunction);
+
+                    // Print All classes, structs
+                    foreach (var cppClass in compilation.Classes)
+                        Console.WriteLine(cppClass);
+
+                    // Print All typedefs
+                    foreach (var cppTypedef in compilation.Typedefs)
+                        Console.WriteLine(cppTypedef);
+
+
                     Assert.False(compilation.HasErrors);
 
                     Assert.AreEqual(1, compilation.Fields.Count);

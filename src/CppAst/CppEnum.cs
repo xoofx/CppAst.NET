@@ -92,12 +92,11 @@ namespace CppAst
 
             if (IntegerType != null && !(IntegerType is CppPrimitiveType primitive && primitive.Kind == CppPrimitiveKind.Int))
             {
-                builder.Append(" : ");
+                builder.Append(": ");
                 builder.Append(IntegerType.GetDisplayName());
-                builder.Append(" ");
             }
 
-            builder.Append("{...}");
+            builder.Append(" {...}");
             return builder.ToString();
         }
     }
