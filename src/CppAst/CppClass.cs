@@ -42,6 +42,11 @@ namespace CppAst
         public CppVisibility Visibility { get; set; }
 
         /// <summary>
+        /// Gets the list of attached attributes. Might be null.
+        /// </summary>
+        public List<CppAttribute> Attributes { get; set; }
+
+        /// <summary>
         /// Gets or sets a boolean indicating if this type is a definition. If <c>false</c> the type was only declared but is not defined.
         /// </summary>
         public bool IsDefinition { get; set; }

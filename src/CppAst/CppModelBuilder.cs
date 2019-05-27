@@ -160,6 +160,7 @@ namespace CppAst
             var cppStruct = GetOrCreateDeclarationContainer<CppClass>(cursor, data, out var context);
             if (cursor.IsDefinition && !cppStruct.IsDefinition)
             {
+                cppStruct.Attributes =  ParseAttributes(cursor);
                 cppStruct.IsDefinition = true;
                 context.IsChildrenVisited = true;
                 cursor.VisitChildren(VisitMember, data);
@@ -605,6 +606,14 @@ namespace CppAst
             {
                 if (ParseAttributes(tokenIt, ref attributes))
                 {
+                    continue;
+                }
+
+                // If we have a keyword, try to skip it and process following elements
+                // for example attribute put right after a struct __declspec(uuid("...")) Test {...}
+                if (tokenIt.Peek().Kind == CppTokenKind.Keyword) 
+                {
+                    tokenIt.Next();
                     continue;
                 }
                 break;

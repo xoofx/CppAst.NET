@@ -64,5 +64,37 @@ void *fun2(int align) __attribute__((alloc_align(1)));
                 new CppParserOptions().ConfigureForWindowsMsvc() // Force using X86 to get __stdcall calling convention
             );
         }
+
+        [Test]
+        public void TestStructAttributes()
+        {
+            ParseAssert(@"
+struct __declspec(uuid(""1841e5c8-16b0-489b-bcc8-44cfb0d5deae"")) __declspec(novtable) Test{
+    int a;
+    int b;
+};", compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(1, compilation.Classes.Count);
+
+                    Assert.NotNull(compilation.Classes[0].Attributes);
+
+                    Assert.AreEqual(2, compilation.Classes[0].Attributes.Count);
+
+                    {
+                        var attr = compilation.Classes[0].Attributes[0];
+                        Assert.AreEqual("uuid", attr.Name);
+                        Assert.AreEqual("\"1841e5c8-16b0-489b-bcc8-44cfb0d5deae\"", attr.Arguments);
+                    }
+
+                    {
+                        var attr = compilation.Classes[0].Attributes[1];
+                        Assert.AreEqual("novtable", attr.Name);
+                        Assert.Null(attr.Arguments);
+                    }
+                },
+                new CppParserOptions().ConfigureForWindowsMsvc());
+        }
     }
 }
