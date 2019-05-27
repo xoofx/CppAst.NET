@@ -6,7 +6,7 @@
     <!--<VersionSuffix>alpha</VersionSuffix>
     <BuildNumber>001</BuildNumber>-->
     <PackageId>CppAst</PackageId>
-    <Description>CppAst provides a C/C++ parser for header files with access to the full AST, comments and macros for .NET Framework and .NET Core</Description>
+    <Description>CppAst is a .NET library providing a C/C++ parser for header files with access to the full AST, comments and macros</Description>
     <Copyright>Alexandre Mutel</Copyright>
     <Authors>Alexandre Mutel</Authors>
     <PackageTags>parser;c++;ast;syntax</PackageTags>

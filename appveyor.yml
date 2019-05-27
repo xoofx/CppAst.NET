@@ -25,10 +25,11 @@ before_package:
 - cmd: >-
      msbuild /t:pack /p:Configuration=Release CppAst/CppAst.csproj
 artifacts:
-- path: src\CppAst\Bin\Release\*.nupkg
-  name: CppAst Nugets
+- path: src\**\*nupkg
+  name: NuGet packages
 deploy:
 - provider: NuGet
+  artifact: /.*\.(nupkg|snupkg)/
   api_key:
     secure: 7cthHh+wYWZjhqxaxR6QObRaRnstvFkQOY7MkxIsC5kpQEBlKZXuinf0IybbYxJt
   on:
