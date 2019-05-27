@@ -410,30 +410,313 @@ namespace CppAst
 
             if (cursor.Kind == CXCursorKind.CXCursor_VarDecl)
             {
-                var resultEval = clang.Cursor_Evaluate(cursor);
-
-                switch (resultEval.Kind)
-                {
-                    case CXEvalResultKind.CXEval_Int:
-                        cppField.DefaultValue = new CppValue(resultEval.AsLongLong);
-                        break;
-                    case CXEvalResultKind.CXEval_Float:
-                        cppField.DefaultValue = new CppValue(resultEval.AsDouble);
-                        break;
-                    case CXEvalResultKind.CXEval_ObjCStrLiteral:
-                    case CXEvalResultKind.CXEval_StrLiteral:
-                    case CXEvalResultKind.CXEval_CFStr:
-                        cppField.DefaultValue = new CppValue(resultEval.AsStr);
-                        break;
-                    case CXEvalResultKind.CXEval_UnExposed:
-                        break;
-                    default:
-                        _rootCompilation.Diagnostics.Warning($"Not supported field default value {cursor}", GetSourceLocation(cursor.Location));
-                        break;
-                }
+                VisitInitValue(cursor, data, out var fieldExpr, out var fieldValue);
+                cppField.InitValue = fieldValue;
+                cppField.InitExpression = fieldExpr;
             }
 
             return cppField;
+        }
+
+        private void VisitInitValue(CXCursor cursor, CXClientData data, out CppExpression expression, out CppValue value)
+        {
+            CppExpression localExpression = null;
+            CppValue localValue = null;
+
+            cursor.VisitChildren((initCursor, varCursor, clientData) =>
+            {
+                if (IsExpression(initCursor))
+                {
+                    localExpression = VisitExpression(initCursor, varCursor, clientData);
+                    return CXChildVisitResult.CXChildVisit_Break;
+                }
+                return CXChildVisitResult.CXChildVisit_Continue;
+            }, data);
+
+            // Still tries to extract the compiled value
+            var resultEval = clang.Cursor_Evaluate(cursor);
+            switch (resultEval.Kind)
+            {
+                case CXEvalResultKind.CXEval_Int:
+                    localValue = new CppValue(resultEval.AsLongLong);
+                    break;
+                case CXEvalResultKind.CXEval_Float:
+                    localValue = new CppValue(resultEval.AsDouble);
+                    break;
+                case CXEvalResultKind.CXEval_ObjCStrLiteral:
+                case CXEvalResultKind.CXEval_StrLiteral:
+                case CXEvalResultKind.CXEval_CFStr:
+                    localValue = new CppValue(resultEval.AsStr);
+                    break;
+                case CXEvalResultKind.CXEval_UnExposed:
+                    break;
+                default:
+                    _rootCompilation.Diagnostics.Warning($"Not supported field default value {cursor}", GetSourceLocation(cursor.Location));
+                    break;
+            }
+
+            expression = localExpression;
+            value = localValue;
+        }
+
+
+
+
+
+
+
+        private static bool IsExpression(CXCursor cursor)
+        {
+            return cursor.Kind >= CXCursorKind.CXCursor_FirstExpr && cursor.Kind <= CXCursorKind.CXCursor_LastExpr;
+        }
+
+        private CppExpression VisitExpression(CXCursor cursor, CXCursor parent, CXClientData data)
+        {
+            CppExpression expr = null;
+            bool visitChildren = false;
+            switch (cursor.Kind)
+            {
+                case CXCursorKind.CXCursor_UnexposedExpr:
+                    expr = new CppRawExpression(CppExpressionKind.Unexposed);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_DeclRefExpr:
+                    expr = new CppRawExpression(CppExpressionKind.DeclRef);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_MemberRefExpr:
+                    expr = new CppRawExpression(CppExpressionKind.MemberRef);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_CallExpr:
+                    expr = new CppRawExpression(CppExpressionKind.Call);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_ObjCMessageExpr:
+                    expr = new CppRawExpression(CppExpressionKind.ObjCMessage);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_BlockExpr:
+                    expr = new CppRawExpression(CppExpressionKind.Block);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_IntegerLiteral:
+                    expr = new CppLiteralExpression(CppExpressionKind.IntegerLiteral, GetCursorAsText(cursor));
+                    break;
+                case CXCursorKind.CXCursor_FloatingLiteral:
+                    expr = new CppLiteralExpression(CppExpressionKind.FloatingLiteral, GetCursorAsText(cursor));
+                    break;
+                case CXCursorKind.CXCursor_ImaginaryLiteral:
+                    expr = new CppLiteralExpression(CppExpressionKind.ImaginaryLiteral, GetCursorAsText(cursor));
+                    break;
+                case CXCursorKind.CXCursor_StringLiteral:
+                    expr = new CppLiteralExpression(CppExpressionKind.StringLiteral, GetCursorAsText(cursor));
+                    break;
+                case CXCursorKind.CXCursor_CharacterLiteral:
+                    expr = new CppLiteralExpression(CppExpressionKind.CharacterLiteral, GetCursorAsText(cursor));
+                    break;
+                case CXCursorKind.CXCursor_ParenExpr:
+                    expr = new CppParenExpression();
+                    visitChildren = true;
+                    break;
+                case CXCursorKind.CXCursor_UnaryOperator:
+                    var tokens = new Tokenizer(cursor);
+                    expr = new CppUnaryExpression(CppExpressionKind.UnaryOperator)
+                    {
+                        Operator = tokens.Count > 0 ? tokens.GetString(0) : string.Empty
+                    };
+                    visitChildren = true;
+                    break;
+                case CXCursorKind.CXCursor_ArraySubscriptExpr:
+                    expr = new CppRawExpression(CppExpressionKind.ArraySubscript);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_BinaryOperator:
+                    expr = new CppBinaryExpression(CppExpressionKind.BinaryOperator);
+                    visitChildren = true;
+                    break;
+                case CXCursorKind.CXCursor_CompoundAssignOperator:
+                    expr = new CppRawExpression(CppExpressionKind.CompoundAssignOperator);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_ConditionalOperator:
+                    expr = new CppRawExpression(CppExpressionKind.ConditionalOperator);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_CStyleCastExpr:
+                    expr = new CppRawExpression(CppExpressionKind.CStyleCast);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_CompoundLiteralExpr:
+                    expr = new CppRawExpression(CppExpressionKind.CompoundLiteral);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_InitListExpr:
+                    expr = new CppInitListExpression();
+                    visitChildren = true;
+                    break;
+                case CXCursorKind.CXCursor_AddrLabelExpr:
+                    expr = new CppRawExpression(CppExpressionKind.AddrLabel);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_StmtExpr:
+                    expr = new CppRawExpression(CppExpressionKind.Stmt);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_GenericSelectionExpr:
+                    expr = new CppRawExpression(CppExpressionKind.GenericSelection);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_GNUNullExpr:
+                    expr = new CppRawExpression(CppExpressionKind.GNUNull);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_CXXStaticCastExpr:
+                    expr = new CppRawExpression(CppExpressionKind.CXXStaticCast);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_CXXDynamicCastExpr:
+                    expr = new CppRawExpression(CppExpressionKind.CXXDynamicCast);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_CXXReinterpretCastExpr:
+                    expr = new CppRawExpression(CppExpressionKind.CXXReinterpretCast);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_CXXConstCastExpr:
+                    expr = new CppRawExpression(CppExpressionKind.CXXConstCast);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_CXXFunctionalCastExpr:
+                    expr = new CppRawExpression(CppExpressionKind.CXXFunctionalCast);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_CXXTypeidExpr:
+                    expr = new CppRawExpression(CppExpressionKind.CXXTypeid);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_CXXBoolLiteralExpr:
+                    expr = new CppRawExpression(CppExpressionKind.CXXBoolLiteral);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_CXXNullPtrLiteralExpr:
+                    expr = new CppRawExpression(CppExpressionKind.CXXNullPtrLiteral);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_CXXThisExpr:
+                    expr = new CppRawExpression(CppExpressionKind.CXXThis);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_CXXThrowExpr:
+                    expr = new CppRawExpression(CppExpressionKind.CXXThrow);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_CXXNewExpr:
+                    expr = new CppRawExpression(CppExpressionKind.CXXNew);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_CXXDeleteExpr:
+                    expr = new CppRawExpression(CppExpressionKind.CXXDelete);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_UnaryExpr:
+                    expr = new CppRawExpression(CppExpressionKind.Unary);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_ObjCStringLiteral:
+                    expr = new CppRawExpression(CppExpressionKind.ObjCStringLiteral);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_ObjCEncodeExpr:
+                    expr = new CppRawExpression(CppExpressionKind.ObjCEncode);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_ObjCSelectorExpr:
+                    expr = new CppRawExpression(CppExpressionKind.ObjCSelector);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_ObjCProtocolExpr:
+                    expr = new CppRawExpression(CppExpressionKind.ObjCProtocol);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_ObjCBridgedCastExpr:
+                    expr = new CppRawExpression(CppExpressionKind.ObjCBridgedCast);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_PackExpansionExpr:
+                    expr = new CppRawExpression(CppExpressionKind.PackExpansion);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_SizeOfPackExpr:
+                    expr = new CppRawExpression(CppExpressionKind.SizeOfPack);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_LambdaExpr:
+                    expr = new CppRawExpression(CppExpressionKind.Lambda);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_ObjCBoolLiteralExpr:
+                    expr = new CppRawExpression(CppExpressionKind.ObjCBoolLiteral);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_ObjCSelfExpr:
+                    expr = new CppRawExpression(CppExpressionKind.ObjCSelf);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_OMPArraySectionExpr:
+                    expr = new CppRawExpression(CppExpressionKind.OMPArraySection);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_ObjCAvailabilityCheckExpr:
+                    expr = new CppRawExpression(CppExpressionKind.ObjCAvailabilityCheck);
+                    AppendTokensToExpression(cursor, expr);
+                    break;
+                case CXCursorKind.CXCursor_FixedPointLiteral:
+                    expr = new CppLiteralExpression(CppExpressionKind.FixedPointLiteral, GetCursorAsText(cursor));
+                    break;
+                default:
+                    return null;
+            }
+
+            AssignSourceSpan(cursor, expr);
+
+            if (visitChildren)
+            {
+                cursor.VisitChildren((listCursor, initListCursor, clientData) =>
+                {
+                    var item = VisitExpression(listCursor, initListCursor, data);
+                    if (item != null)
+                    {
+                        expr.AddArgument(item);
+                    }
+
+                    return CXChildVisitResult.CXChildVisit_Continue;
+                }, data);
+            }
+
+            switch (cursor.Kind)
+            {
+                case CXCursorKind.CXCursor_BinaryOperator:
+                    var beforeOperatorOffset = expr.Arguments[0].Span.End.Offset;
+                    var afterOperatorOffset = expr.Arguments[1].Span.Start.Offset;
+                    ((CppBinaryExpression)expr).Operator = GetCursorAsTextBetweenOffset(cursor, beforeOperatorOffset, afterOperatorOffset);
+                    break;
+            }
+
+            return expr;
+        }
+
+        private void AppendTokensToExpression(CXCursor cursor, CppExpression expression)
+        {
+            if (expression is CppRawExpression tokensExpr)
+            {
+                var tokenizer = new Tokenizer(cursor);
+                for (int i = 0; i < tokenizer.Count; i++)
+                {
+                    tokensExpr.Tokens.Add(tokenizer[i]);
+                }
+                tokensExpr.UpdateTextFromTokens();
+            }
         }
 
         private CppEnum VisitEnumDecl(CXCursor cursor, CXCursor parent, CXClientData data)
@@ -529,6 +812,11 @@ namespace CppAst
 
                         cppFunction.Parameters.Add(parameter);
 
+                        // Visit default parameter value
+                        VisitInitValue(argCursor, data, out var paramExpr, out var paramValue);
+                        parameter.InitValue = paramValue;
+                        parameter.InitExpression = paramExpr;
+
                         i++;
                         break;
 
@@ -538,6 +826,10 @@ namespace CppAst
                         {
                             WarningUnhandled(cursor, parent);
                         }
+
+                        
+
+
                         break;
                 }
 
@@ -864,6 +1156,44 @@ namespace CppAst
             
             _typedefs.Add(fulltypeDefName, type);
             return type;
+        }
+
+        private string GetCursorAsText(CXCursor cursor)
+        {
+            var tokenizer = new Tokenizer(cursor);
+            var builder = new StringBuilder();
+            var previousTokenKind = CppTokenKind.Punctuation;
+            for (int i = 0; i < tokenizer.Count; i++)
+            {
+                var token = tokenizer[i];
+                if (previousTokenKind.IsIdentifierOrKeyword() && token.Kind.IsIdentifierOrKeyword())
+                {
+                    builder.Append(" ");
+                }
+                builder.Append(token.Text);
+            }
+            return builder.ToString();
+        }
+
+        private string GetCursorAsTextBetweenOffset(CXCursor cursor, int startOffset, int endOffset)
+        {
+            var tokenizer = new Tokenizer(cursor);
+            var builder = new StringBuilder();
+            var previousTokenKind = CppTokenKind.Punctuation;
+            for (int i = 0; i < tokenizer.Count; i++)
+            {
+                var token = tokenizer[i];
+                if (previousTokenKind.IsIdentifierOrKeyword() && token.Kind.IsIdentifierOrKeyword())
+                {
+                    builder.Append(" ");
+                }
+
+                if (token.Span.Start.Offset > startOffset && token.Span.End.Offset < endOffset)
+                {
+                    builder.Append(token.Text);
+                }
+            }
+            return builder.ToString();
         }
 
         private string GetCursorSpelling(CXCursor cursor)

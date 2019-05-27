@@ -51,8 +51,8 @@ const int var3 = 123;
                         Assert.AreEqual("var3", cppField.Name);
                         Assert.AreEqual(CppTypeKind.Qualified, cppField.Type.TypeKind);
                         Assert.AreEqual(CppTypeQualifier.Const, ((CppQualifiedType) cppField.Type).Qualifier);
-                        Assert.NotNull(cppField.DefaultValue);
-                        Assert.AreEqual(123, cppField.DefaultValue.Value);
+                        Assert.NotNull(cppField.InitExpression);
+                        Assert.AreEqual("123", cppField.InitExpression.ToString());
                     }
                 }
             );

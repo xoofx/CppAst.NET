@@ -41,9 +41,14 @@ namespace CppAst
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets the associated default value.
+        /// Gets the associated init value (either an integer or a string...)
         /// </summary>
-        public CppValue DefaultValue { get; set; } 
+        public CppValue InitValue { get; set; }
+
+        /// <summary>
+        /// Gets the associated init value as an expression.
+        /// </summary>
+        public CppExpression InitExpression { get; set; }
 
         public override string ToString()
         {
@@ -65,10 +70,10 @@ namespace CppAst
             builder.Append(" ");
             builder.Append(Name);
 
-            if (DefaultValue?.Value != null)
+            if (InitExpression != null)
             {
                 builder.Append(" = ");
-                builder.Append(DefaultValue);
+                builder.Append(InitExpression);
             }
 
             return builder.ToString();

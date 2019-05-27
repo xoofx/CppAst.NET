@@ -35,8 +35,13 @@ namespace CppAst
         /// <summary>
         /// Gets or sets the default value.
         /// </summary>
-        public CppValue DefaultValue { get; set; }
+        public CppValue InitValue { get; set; }
 
+        /// <summary>
+        /// Gets or sets the default value as an expression.
+        /// </summary>
+        public CppExpression InitExpression { get; set; }
+        
         private bool Equals(CppParameter other)
         {
             return Equals(Type, other.Type) && Equals(Name, other.Name);
@@ -57,7 +62,7 @@ namespace CppAst
 
         public override string ToString()
         {
-            return DefaultValue?.Value != null ? $"{Type.GetDisplayName()} {Name} = {DefaultValue}" : $"{Type.GetDisplayName()} {Name}";
+            return InitExpression != null ? $"{Type.GetDisplayName()} {Name} = {InitExpression}" : $"{Type.GetDisplayName()} {Name}";
         }
     }
 }
