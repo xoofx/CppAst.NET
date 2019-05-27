@@ -989,7 +989,7 @@ namespace CppAst
 
                 default:
                 {
-                    Unhandled(cursor, type);
+                    Unhandled(cursor, parent, type);
                     return CppPrimitiveType.Void;
                 }
             }
@@ -1017,23 +1017,23 @@ namespace CppAst
 
         private void Unhandled(CXCursor cursor)
         {
-            _rootCompilation.Diagnostics.Error($"Unhandled cursor kind: {cursor.KindSpelling}.", GetSourceLocation(cursor.Location));
+            _rootCompilation.Diagnostics.Error($"Unhandled declaration: {cursor}.", GetSourceLocation(cursor.Location));
         }
 
-        private void Unhandled(CXCursor cursor, CXType type)
+        private void Unhandled(CXCursor cursor, CXCursor parent, CXType type)
         {
-            _rootCompilation.Diagnostics.Error($"The type `{type}` of kind `{type.KindSpelling} is not supported at `{cursor}`", GetSourceLocation(cursor.Location));
+            _rootCompilation.Diagnostics.Error($"The type `{type}` of kind `{type.KindSpelling}` is not supported at `{parent}`", GetSourceLocation(parent.Location));
         }
 
         protected CXChildVisitResult Unhandled(CXCursor cursor, CXCursor parent)
         {
-            _rootCompilation.Diagnostics.Error($"Unhandled cursor kind: {cursor.KindSpelling} in {parent.KindSpelling}.", GetSourceLocation(cursor.Location));
+            _rootCompilation.Diagnostics.Error($"Unhandled declaration: {cursor} in {parent}.", GetSourceLocation(cursor.Location));
             return CXChildVisitResult.CXChildVisit_Break;
         }
 
         protected void WarningUnhandled(CXCursor cursor, CXCursor parent)
         {
-            _rootCompilation.Diagnostics.Warning($"Unhandled cursor kind: {cursor.KindSpelling} in {parent.KindSpelling}.", GetSourceLocation(cursor.Location));
+            _rootCompilation.Diagnostics.Warning($"Unhandled declaration: {cursor} in {parent}.", GetSourceLocation(cursor.Location));
         }
         
         /// <summary>
