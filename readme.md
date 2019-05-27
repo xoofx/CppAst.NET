@@ -4,7 +4,28 @@
 
 CppAst provides a C/C++ parser for header files with access to the full AST, comments and macros for .NET Framework and .NET Core
 
-> CppAst relies on Clang/libclang `8.0.0`
+## Purpose
+
+> The target primary usage of this library is to serve as a simple foundation for domain oriented PInvoke/Interop codegen
+
+## Features
+
+- Compatible with `.NET Framework 4.6+` and `.NET Standard 2.0`
+- Using `Clang/libclang 8.0.0`
+- Allow to parse *in-memory* C/C++ text and C/C++ files from the disk
+- Simple AST model
+- Full type system
+- Provides basic access to attributes (`_declspec(...)` or `__attribute__((...))`)
+- Provides access to attached comments
+- Provides access to macro definitions, including tokens via the option `CppParserOptions.ParseMacros` (default is `false`)
+
+## Documentation
+
+Check the [user guide](doc/readme.md) documentation from the `doc/` folder.
+
+## Usage Example
+
+You can jump-start with the `CppParser.Parse` method:
 
 ```C#
 // Parse a C++ files
@@ -45,27 +66,9 @@ struct MyStruct { ... }
 typedef MyStruct* MyStructPtr
 ```
 
-## Purpose
-
-> **The target primary usage of this library is to serve as a simple foundation for domain oriented PInvoke/Interop codegen**
-
-## Features
-
-- Clang/libclang 8.0.0
-- Allow to parse *in-memory* C/C++ text and C/C++ files from the disk
-- Simple AST model
-- Full type system
-- Provides basic access to attributes (`_declspec(...)` or `__attribute__((...))`)
-- Provides access to attached comments
-- Provides access to macro definitions, including tokens via the option `CppParserOptions.ParseMacros` (default is `false`)
-
 ## Binaries
 
 This library is distributed as a NuGet package [![NuGet](https://img.shields.io/nuget/v/CppAst.svg)](https://www.nuget.org/packages/CppAst/)
-
-## Documentation
-
-Check the [user guide](doc/readme.md) documentation from the `doc/` folder.
 
 ## Known issues
 
