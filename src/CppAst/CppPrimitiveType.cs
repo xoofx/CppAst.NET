@@ -125,6 +125,8 @@ namespace CppAst
                     return "double";
                 case CppPrimitiveKind.LongDouble:
                     return "long double";
+                case CppPrimitiveKind.Bool:
+                    return "bool";
                 default:
                     throw new InvalidOperationException($"Unhandled PrimitiveKind: {Kind}");
             }

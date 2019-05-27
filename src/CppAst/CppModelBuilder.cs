@@ -470,6 +470,11 @@ namespace CppAst
             var contextContainer = GetOrCreateDeclarationContainer(cursor.SemanticParent, data);
             var container = contextContainer.DeclarationContainer;
 
+            if (container == null)
+            {
+                return null;
+            }
+
             var cppFunction = new CppFunction(GetCursorSpelling(cursor))
             {
                 Visibility = contextContainer.CurrentVisibility,
