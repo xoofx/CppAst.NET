@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.3 (27 May 2019)
+- Fix exception on ToString if the type is a bool
+
 ## 0.1.2 (27 May 2019)
 - Change from error to warning in case of non supported features by libclang
 
