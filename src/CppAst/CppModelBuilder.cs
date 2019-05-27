@@ -989,8 +989,8 @@ namespace CppAst
 
                 default:
                 {
-                    Unhandled(cursor, parent, type);
-                    return CppPrimitiveType.Void;
+                    WarningUnhandled(cursor, parent, type);
+                    return new CppUnexposedType(type.ToString());
                 }
             }
         }
@@ -1017,18 +1017,12 @@ namespace CppAst
 
         private void Unhandled(CXCursor cursor)
         {
-            _rootCompilation.Diagnostics.Error($"Unhandled declaration: {cursor}.", GetSourceLocation(cursor.Location));
+            _rootCompilation.Diagnostics.Warning($"Unhandled declaration: {cursor}.", GetSourceLocation(cursor.Location));
         }
 
-        private void Unhandled(CXCursor cursor, CXCursor parent, CXType type)
+        private void WarningUnhandled(CXCursor cursor, CXCursor parent, CXType type)
         {
-            _rootCompilation.Diagnostics.Error($"The type `{type}` of kind `{type.KindSpelling}` is not supported at `{parent}`", GetSourceLocation(parent.Location));
-        }
-
-        protected CXChildVisitResult Unhandled(CXCursor cursor, CXCursor parent)
-        {
-            _rootCompilation.Diagnostics.Error($"Unhandled declaration: {cursor} in {parent}.", GetSourceLocation(cursor.Location));
-            return CXChildVisitResult.CXChildVisit_Break;
+            _rootCompilation.Diagnostics.Warning($"The type `{type}` of kind `{type.KindSpelling}` is not supported in `{parent}`", GetSourceLocation(parent.Location));
         }
 
         protected void WarningUnhandled(CXCursor cursor, CXCursor parent)
