@@ -38,14 +38,7 @@ void *fun2(int align) __attribute__((alloc_align(1)));
                     Assert.AreEqual("alloc_align(1)", compilation.Functions[2].Attributes[0].ToString());
 
                 },
-                new CppParserOptions()
-                {
-                    IsWindows = true,
-                    AdditionalArguments =
-                    {
-                        "--target=i686-pc-win32"
-                    }
-                }
+                new CppParserOptions().ConfigureForWindowsMsvc() // Force using X86 to get __stdcall calling convention
             );
         }
     }

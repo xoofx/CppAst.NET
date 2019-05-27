@@ -84,17 +84,14 @@ namespace CppAst
             arguments.AddRange(normalizedIncludePaths.Select(x => $"-I{x}"));
             arguments.AddRange(options.Defines.Select(x => $"-D{x}"));
 
-            if (options.IsCplusplus && !arguments.Contains("-xc++"))
+            if (options.ParseAsCpp && !arguments.Contains("-xc++"))
             {
                 arguments.Add("-xc++");
             }
 
-            if (options.IsWindows)
+            if (!arguments.Any(x => x.StartsWith("--target=")))
             {
-                arguments.Add($"-DWIN32");
-                arguments.Add($"-D_WIN32");
-                arguments.Add("-fms-extensions");
-                arguments.Add($"-fms-compatibility-version={options.DefaultWindowsCompatibility}");
+                arguments.Add($"--target={GetTripleFromOptions(options)}");
             }
 
             if (options.ParseComments)
@@ -186,6 +183,36 @@ namespace CppAst
                 }
 
                 return compilation;
+            }
+        }
+
+        private static string GetTripleFromOptions(CppParserOptions options)
+        {
+            // From https://clang.llvm.org/docs/CrossCompilation.html
+            // <arch><sub>-<vendor>-<sys>-<abi>
+            var targetCpu = GetTargetCpuAsString(options.TargetCpu);
+            var targetCpuSub = options.TargetCpuSub ?? string.Empty;
+            var targetVendor = options.TargetVendor ?? "pc";
+            var targetSystem = options.TargetSystem ?? "windows";
+            var targetAbi = options.TargetAbi ?? "";
+
+            return $"{targetCpu}{targetCpuSub}-{targetVendor}-{targetSystem}-{targetAbi}";
+        }
+
+        private static string GetTargetCpuAsString(CppTargetCpu targetCpu)
+        {
+            switch (targetCpu)
+            {
+                case CppTargetCpu.X86:
+                    return "i686";
+                case CppTargetCpu.X86_64:
+                    return "x86_64";
+                case CppTargetCpu.ARM:
+                    return "arm";
+                case CppTargetCpu.ARM64:
+                    return "aarch64";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(targetCpu), targetCpu, null);
             }
         }
 
