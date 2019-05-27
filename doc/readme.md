@@ -10,6 +10,7 @@ The entry point for parsing a C/C++ header files with CppAst is the class [`CppP
 
 These methods return a [`CppCompilation`](../src/CppAst/CppCompilation.cs) object which contains:
 
+- A property `HasErrors` sets to `true` if any `CppParser.Parse` methods failed to compile the header files.
 - A `Diagnostics` property to fetch any compilation errors
 - Several list of C/C++ elements via the `CppCompilation` properties:
   - `Macros`
@@ -46,7 +47,7 @@ foreach(var cppStruct in compilation.Classes)
 
 ## Parser options
 
-You can configure the behavior of the parser by passing a `CppParserOptions` object:
+You can configure the behavior of the parser by passing a [`CppParserOptions`]((../src/CppAst/CppParserOptions.cs)) object:
 
 ```c#
 var options = new CppParserOptions()
@@ -61,29 +62,29 @@ var compilation = CppParser.ParseFile("...",  options);
 
 ## Source information
 
-All elements inherit from the base class `CppElement` that provides precise source span/location information via the property `CppElement.Span`
+All elements inherit from the base class [`CppElement`](../src/CppAst/CppElement.cs) that provides precise source span/location information via the property `CppElement.Span`
 
 ## Containers
 
 A few C/C++ elements can be container of other C++ elements:
 
-- A `CppCompilation` root container for all global scope C/C++ elements\
-- A `CppClass` can contain fields, classes/structs/unions, methods...
-- A `CppNamespace` can contain fields, classes/structs/unions, methods, nested namespaces
+- A [`CppCompilation`](../src/CppAst/CppCompilation.cs) root container for all global scope C/C++ elements\
+- A [`CppClass`](../src/CppAst/CppClass.cs) can contain fields, classes/structs/unions, methods...
+- A [`CppNamespace`](../src/CppAst/CppNamespace.cs) can contain fields, classes/structs/unions, methods, nested namespaces
 
 ## Type System
 
 All the type class in CppAst inherit from the class `CppType`:
 
-- `CppPrimitiveType` for all primitive types (e.g `int`, `char`, `unsigned int`)
-- `CppClass` for struct, class and union. Use the property `CppClass.ClassKind` to detect which type is the underlying class
-- `CppEnum` for enum types (C++ scoped and regular enums)
-- `CppTypedef` for a typedef (e.g `typedef int MyInteger`)
-- `CppArrayType` for array types (e.g `int[5]`)
-- `CppPointerType` for pointer types (e.g `int*`)
-- `CppReferenceType` for reference types (e.g `int&`)
-- `CppQualifiedType` for qualified types (e.g `const int`)
-- `CppFunctionType` for function types (e.g `void (*)(int, int)`)
+- [`CppPrimitiveType`](../src/CppAst/CppPrimitiveType.cs) for all primitive types (e.g `int`, `char`, `unsigned int`)
+- [`CppClass`](../src/CppAst/CppClass.cs) for struct, class and union. Use the property `CppClass.ClassKind` to detect which type is the underlying class
+- [`CppEnum`](../src/CppAst/CppEnum.cs) for enum types (C++ scoped and regular enums)
+- [`CppTypedef`](../src/CppAst/CppTypedef.cs) for a typedef (e.g `typedef int MyInteger`)
+- [`CppPointerType`](../src/CppAst/CppPointerType.cs) for pointer types (e.g `int*`)
+- [`CppReferenceType`](../src/CppAst/CppReferenceType.cs) for reference types (e.g `int&`)
+- [`CppArrayType`](../src/CppAst/CppArrayType.cs) for array types (e.g `int[5]`)
+- [`CppQualifiedType`](../src/CppAst/CppQualifiedType.cs) for qualified types (e.g `const int`)
+- [`CppFunctionType`]((../src/CppAst/CppFunctionType.cs)) for function types (e.g `void (*)(int, int)`)
 
 ## Advanced
 
@@ -101,7 +102,7 @@ var options = new CppParserOptions().ConfigureForWindowsMsvc();
 
 ### Disable typedef auto-squash
 
-By default, CppAst will squash a typedef to an unamed struct/union, rename the struct and discard the typedef:
+By default, CppAst will squash a typedef to an un-named struct/union, rename the struct and discard the typedef:
 
 ```C
 typedef struct { int a; int b; } MyStruct;
