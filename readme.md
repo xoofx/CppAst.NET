@@ -17,6 +17,7 @@ CppAst provides a C/C++ parser for header files with access to the full AST, com
 - Full type system
 - Provides basic access to attributes (`_declspec(...)` or `__attribute__((...))`)
 - Provides access to attached comments
+- Provides access to expressions for variable and parameter init value (e.g `const int x = (1 + 2) << 1` the `(1 + 2) << 1` will be retrievable as a binary expression from the AST)
 - Provides access to macro definitions, including tokens via the option `CppParserOptions.ParseMacros` (default is `false`)
 
 ## Documentation

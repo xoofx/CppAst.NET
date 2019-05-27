@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.0 (27 May 2019)
+- Add support for expressions for init value for fields and parameters
+
 ## 0.1.3 (27 May 2019)
 - Fix exception on ToString if the type is a bool
 
