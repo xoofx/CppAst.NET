@@ -766,7 +766,8 @@ namespace CppAst
                 return null;
             }
 
-            var cppFunction = new CppFunction(GetCursorSpelling(cursor))
+            var functionName = GetCursorSpelling(cursor);
+            var cppFunction = new CppFunction(functionName)
             {
                 Visibility = contextContainer.CurrentVisibility,
                 StorageQualifier = GetStorageQualifier(cursor)
