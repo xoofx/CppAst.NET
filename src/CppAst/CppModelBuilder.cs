@@ -1188,7 +1188,7 @@ namespace CppAst
                     builder.Append(" ");
                 }
 
-                if (token.Span.Start.Offset > startOffset && token.Span.End.Offset < endOffset)
+                if (token.Span.Start.Offset >= startOffset && token.Span.End.Offset <= endOffset)
                 {
                     builder.Append(token.Text);
                 }

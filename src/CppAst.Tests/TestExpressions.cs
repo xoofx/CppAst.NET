@@ -77,7 +77,29 @@ const int x = ~(128 + 2);
                 Assert.AreEqual("~(128 + 2)", cppField.InitExpression.ToString());
             });
         }
-        
+
+        [Test]
+        public void TestBinaryOr()
+        {
+            ParseAssert(@"
+const int x = 12|1;
+", compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+                Assert.AreEqual(1, compilation.Fields.Count);
+                var cppField = compilation.Fields[0];
+
+                Assert.NotNull(cppField.InitValue?.Value);
+                var result = 12|1;
+                Assert.AreEqual(result, cppField.InitValue.Value);
+
+                Assert.NotNull(cppField.InitExpression);
+                Assert.IsInstanceOf<CppBinaryExpression>(cppField.InitExpression);
+
+                Assert.AreEqual("12 | 1", cppField.InitExpression.ToString());
+            });
+        }
+
         [Test]
         public void TestParameterDefaultValue()
         {
