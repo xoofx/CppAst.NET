@@ -116,25 +116,44 @@ namespace CppAst
                 var builder = new CppModelBuilder { AutoSquashTypedef = options.AutoSquashTypedef };
                 var compilation = builder.RootCompilation;
 
-                foreach (var file in cppFiles)
+                var writeToTemp = cppFiles.All(f => f.Content == null);
+
+                string rootFileName = null;
+                string rootFileContent = null;
+                
+                if (writeToTemp)
+                {
+                    var tempFileName = Path.GetTempFileName() + "_cppast.h";
+                    var tempBuilder = new StringBuilder();
+                    foreach (var file in cppFiles)
+                    {
+                        var filePath = Path.Combine(Environment.CurrentDirectory, file.Filename);
+                        tempBuilder.AppendLine($"#include \"{filePath}\"");
+                    }
+                    File.WriteAllText(tempFileName, tempBuilder.ToString());
+                    rootFileName = tempFileName;
+                }
+                else
+                {
+                    rootFileName = cppFiles[0].Filename ?? "content";
+                    rootFileContent = cppFiles[0].Content;
+                }
+
                 {
                     CXTranslationUnit translationUnit;
                     CXErrorCode translationUnitError;
 
-                    string filePath;
-                    if (file.Content == null)
+                    if (rootFileContent == null)
                     {
-                        filePath = Path.Combine(Environment.CurrentDirectory, file.Filename);
-                        translationUnitError = CXTranslationUnit.Parse(createIndex, filePath, argumentsArray, Array.Empty<CXUnsavedFile>(), translationFlags, out translationUnit);
+                        translationUnitError = CXTranslationUnit.Parse(createIndex, rootFileName, argumentsArray, Array.Empty<CXUnsavedFile>(), translationFlags, out translationUnit);
                     }
                     else
                     {
-                        filePath = file.Filename ?? "content";
-                        translationUnitError = CXTranslationUnit.Parse(createIndex, filePath, argumentsArray, new CXUnsavedFile[] { new CXUnsavedFile()
+                        translationUnitError = CXTranslationUnit.Parse(createIndex, rootFileName, argumentsArray, new CXUnsavedFile[] { new CXUnsavedFile()
                         {
-                            Contents = file.Content,
-                            Filename = filePath,
-                            Length = (uint)Encoding.UTF8.GetByteCount(file.Content)
+                            Contents = rootFileContent,
+                            Filename = rootFileName,
+                            Length = (uint)Encoding.UTF8.GetByteCount(rootFileContent)
 
                         }}, translationFlags, out translationUnit);
                     }
@@ -142,7 +161,7 @@ namespace CppAst
 
                     if (translationUnitError != CXErrorCode.CXError_Success)
                     {
-                        compilation.Diagnostics.Error($"Parsing failed due to '{translationUnitError}'", new CppSourceLocation(filePath, 0, 1, 1));
+                        compilation.Diagnostics.Error($"Parsing failed due to '{translationUnitError}'", new CppSourceLocation(rootFileName, 0, 1, 1));
                         skipProcessing = true;
                     }
                     else if (translationUnit.NumDiagnostics != 0)
@@ -172,13 +191,14 @@ namespace CppAst
 
                     if (skipProcessing)
                     {
-                        compilation.Diagnostics.Warning($"Skipping '{file}' due to one or more errors listed above.", new CppSourceLocation(filePath, 0, 1, 1));
-                        continue;
+                        compilation.Diagnostics.Warning($"Compilation aborted due to one or more errors listed above.", new CppSourceLocation(rootFileName, 0, 1, 1));
                     }
-
-                    using (translationUnit)
+                    else
                     {
-                        translationUnit.Cursor.VisitChildren(builder.VisitTranslationUnit, clientData: default);
+                        using (translationUnit)
+                        {
+                            translationUnit.Cursor.VisitChildren(builder.VisitTranslationUnit, clientData: default);
+                        }
                     }
                 }
 
