@@ -187,6 +187,12 @@ namespace CppAst
                     var containerContext = GetOrCreateDeclarationContainer(parent, data);
                     var cppEnum = (CppEnum) containerContext.Container;
                     var enumItem = new CppEnumItem(GetCursorSpelling(cursor), cursor.EnumConstantDeclValue);
+
+                    CppExpression enumItemExpression;
+                    CppValue enumValue;
+                    VisitInitValue(cursor, data, out enumItemExpression, out enumValue);
+                    enumItem.ValueExpression = enumItemExpression;
+
                     cppEnum.Items.Add(enumItem);
                     element = enumItem;
                     break;

@@ -30,9 +30,15 @@ namespace CppAst
         /// </summary>
         public long Value { get; set; }
 
+        /// <summary>
+        /// Gets the value of this enum item as an expression.
+        /// </summary>
+        public CppExpression ValueExpression { get; set; }
+
+
         public override string ToString()
         {
-            return $"{Name} = {Value}";
+            return $"{Name} = {ValueExpression}";
         }
     }
 }
