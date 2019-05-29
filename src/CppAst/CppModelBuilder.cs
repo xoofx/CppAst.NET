@@ -20,6 +20,7 @@ namespace CppAst
         private readonly CppContainerContext _rootContainerContext;
         private readonly Dictionary<string, CppContainerContext> _containers;
         private readonly Dictionary<string, CppType> _typedefs;
+        private bool _isEntryVisitSystem;
 
         public CppModelBuilder()
         {
@@ -39,6 +40,7 @@ namespace CppAst
 
             _rootContainerContext.Container = _rootCompilation;
 
+            _isEntryVisitSystem = cursor.Location.IsInSystemHeader;
             if (cursor.Location.IsInSystemHeader)
             {
                 _rootContainerContext.Container = _rootCompilation.System;
@@ -1045,16 +1047,13 @@ namespace CppAst
                         i++;
                         break;
 
+                    // Don't generate a warning for unsupported cursor
                     default:
-                        // Attributes should be parsed by ParseAttributes()
-                        if (!(argCursor.Kind >= CXCursorKind.CXCursor_FirstAttr && argCursor.Kind <= CXCursorKind.CXCursor_LastAttr))
-                        {
-                            WarningUnhandled(cursor, parent);
-                        }
-
-                        
-
-
+                        //// Attributes should be parsed by ParseAttributes()
+                        //if (!(argCursor.Kind >= CXCursorKind.CXCursor_FirstAttr && argCursor.Kind <= CXCursorKind.CXCursor_LastAttr))
+                        //{
+                        //    WarningUnhandled(cursor, parent);
+                        //}
                         break;
                 }
 
@@ -1581,17 +1580,28 @@ namespace CppAst
 
         private void Unhandled(CXCursor cursor)
         {
-            _rootCompilation.Diagnostics.Warning($"Unhandled declaration: {cursor}.", GetSourceLocation(cursor.Location));
+            var cppLocation = GetSourceLocation(cursor.Location);
+            _rootCompilation.Diagnostics.Warning($"Unhandled declaration: {cursor}.", cppLocation);
         }
 
         private void WarningUnhandled(CXCursor cursor, CXCursor parent, CXType type)
         {
-            _rootCompilation.Diagnostics.Warning($"The type `{type}` of kind `{type.KindSpelling}` is not supported in `{parent}`", GetSourceLocation(parent.Location));
+            var cppLocation = GetSourceLocation(cursor.Location);
+            if (cppLocation.Line == 0)
+            {
+                cppLocation = GetSourceLocation(parent.Location);
+            }
+            _rootCompilation.Diagnostics.Warning($"The type `{type}` of kind `{type.KindSpelling}` is not supported in `{parent}`", cppLocation);
         }
 
         protected void WarningUnhandled(CXCursor cursor, CXCursor parent)
         {
-            _rootCompilation.Diagnostics.Warning($"Unhandled declaration: {cursor} in {parent}.", GetSourceLocation(cursor.Location));
+            var cppLocation = GetSourceLocation(cursor.Location);
+            if (cppLocation.Line == 0)
+            {
+                cppLocation = GetSourceLocation(parent.Location);
+            }
+            _rootCompilation.Diagnostics.Warning($"Unhandled declaration: {cursor} in {parent}.", cppLocation);
         }
         
         /// <summary>
