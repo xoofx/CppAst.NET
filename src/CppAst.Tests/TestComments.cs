@@ -44,11 +44,11 @@ enum Enum0
                     var cppElements = compilation.Children().ToList();
                     Assert.AreEqual(4, cppElements.Count);
 
-                    var results = cppElements.Select(x => (x.Comment, x.GetType())).ToList();
+                    var results = cppElements.Select(x => (x.Comment.ToString(), x.GetType())).ToList();
 
                     Assert.AreEqual(1, compilation.Enums.Count);
 
-                    results.AddRange(compilation.Enums[0].Children().Select(x => (x.Comment, x.GetType())));
+                    results.AddRange(compilation.Enums[0].Children().Select(x => (x.Comment.ToString(), x.GetType())));
 
                     var expectedResults = new List<(string, Type)>()
                     {
@@ -63,6 +63,57 @@ enum Enum0
                     Assert.AreEqual(expectedResults, results);
                }
             );
+        }
+
+        [Test]
+        public void TestComplex()
+        {
+            ParseAssert(@"
+/// This is a comment of function1.
+/// 
+/// With more `details` in the <b>comment</b>.
+/// And another line with \a x and \a y in italics
+/// 
+/// @see function1
+/// 
+/// @param a this is a parameter comment
+/// @param b this is b parameter comment
+/// @return an integer value
+/// 
+/// \code{.cpp}
+/// this is a comment
+/// \endcode
+/// 
+/// \exception FileNotFoundException if file does not exist.
+int function1(int a, int b);
+
+
+", compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+
+                var expectedText = @"This is a comment of function1.
+With more `details` in the <b>comment</b>.And another line with @a x and @a y in italics
+
+@see function1
+
+@param a this is a parameter comment
+@param b this is b parameter comment
+@return an integer value
+
+@code {.cpp}
+ this is a comment
+@endcode
+
+@exception FileNotFoundException if file does not exist.";
+
+                Assert.AreEqual(1, compilation.Functions.Count);
+                var resultText = compilation.Functions[0].Comment?.ToString();
+
+                expectedText = expectedText.Replace("\r\n", "\n");
+                resultText = resultText?.Replace("\r\n", "\n");
+                Assert.AreEqual(expectedText, resultText);
+            });
         }
     }
 }

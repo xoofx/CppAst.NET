@@ -261,19 +261,237 @@ namespace CppAst
                     WarningUnhandled(cursor, parent);
                     break;
             }
-            // Assign a comment
-            var comment = cursor.BriefCommentText.CString;
-            if (element != null && comment != null && element.Comment == null)
-            {
-                element.Comment = comment;
-            }
 
             if (element != null)
             {
+                element.Comment = GetComment(cursor);
                 AssignSourceSpan(cursor, element);
             }
 
             return CXChildVisitResult.CXChildVisit_Continue;
+        }
+
+        private CppComment GetComment(CXCursor cursor)
+        {
+            var cxComment = cursor.ParsedComment;
+            return GetComment(cxComment);
+        }
+
+        private CppComment GetComment(CXComment cxComment)
+        {
+            var cppKind = GetCommentKind(cxComment.Kind);
+
+            CppComment cppComment = null;
+
+            bool removeTrailingEmptyText = false;
+
+            switch (cppKind)
+            {
+                case CppCommentKind.Null:
+                    return null;
+
+                case CppCommentKind.Text:
+                    cppComment = new CppCommentText()
+                    {
+                        Text = cxComment.TextComment_Text.ToString()?.TrimStart()
+                    };
+                    break;
+
+                case CppCommentKind.InlineCommand:
+                    var inline = new CppCommentInlineCommand();
+                    inline.CommandName = cxComment.InlineCommandComment_CommandName.ToString();
+                    cppComment = inline;
+                    switch (cxComment.InlineCommandComment_RenderKind)
+                    {
+                        case CXCommentInlineCommandRenderKind.CXCommentInlineCommandRenderKind_Normal:
+                            inline.RenderKind = CppCommentInlineCommandRenderKind.Normal;
+                            break;
+                        case CXCommentInlineCommandRenderKind.CXCommentInlineCommandRenderKind_Bold:
+                            inline.RenderKind = CppCommentInlineCommandRenderKind.Bold;
+                            break;
+                        case CXCommentInlineCommandRenderKind.CXCommentInlineCommandRenderKind_Monospaced:
+                            inline.RenderKind = CppCommentInlineCommandRenderKind.Monospaced;
+                            break;
+                        case CXCommentInlineCommandRenderKind.CXCommentInlineCommandRenderKind_Emphasized:
+                            inline.RenderKind = CppCommentInlineCommandRenderKind.Emphasized;
+                            break;
+                    }
+
+                    for (uint i = 0; i < cxComment.InlineCommandComment_NumArgs; i++)
+                    {
+                        inline.Arguments.Add(cxComment.InlineCommandComment_GetArgText(i).ToString());
+                    }
+                    break;
+
+                case CppCommentKind.HtmlStartTag:
+                    var htmlStartTag = new CppCommentHtmlStartTag();
+                    htmlStartTag.TagName = cxComment.HtmlTagComment_TagName.ToString();
+                    htmlStartTag.IsSelfClosing = cxComment.HtmlStartTagComment_IsSelfClosing;
+                    for (uint i = 0; i < cxComment.HtmlStartTag_NumAttrs; i++)
+                    {
+                        htmlStartTag.Attributes.Add(new KeyValuePair<string, string>(
+                            cxComment.HtmlStartTag_GetAttrName(i).ToString(),
+                            cxComment.HtmlStartTag_GetAttrValue(i).ToString()
+                            ));
+                    }
+                    cppComment = htmlStartTag;
+                    break;
+
+                case CppCommentKind.HtmlEndTag:
+                    var htmlEndTag = new CppCommentHtmlEndTag();
+                    htmlEndTag.TagName = cxComment.HtmlTagComment_TagName.ToString();
+                    cppComment = htmlEndTag;
+                    break;
+
+                case CppCommentKind.Paragraph:
+                    cppComment = new CppCommentParagraph();
+                    break;
+
+                case CppCommentKind.BlockCommand:
+                    var blockComment = new CppCommentBlockCommand();
+                    blockComment.CommandName = cxComment.BlockCommandComment_CommandName.ToString();
+                    for (uint i = 0; i < cxComment.BlockCommandComment_NumArgs; i++)
+                    {
+                        blockComment.Arguments.Add(cxComment.BlockCommandComment_GetArgText(i).ToString());
+                    }
+
+                    removeTrailingEmptyText = true;
+                    cppComment = blockComment;
+                    break;
+
+                case CppCommentKind.ParamCommand:
+                    var paramComment = new CppCommentParamCommand();
+                    paramComment.CommandName = "param";
+                    paramComment.ParamName = cxComment.ParamCommandComment_ParamName.ToString();
+                    paramComment.IsDirectionExplicit = cxComment.ParamCommandComment_IsDirectionExplicit;
+                    paramComment.IsParamIndexValid = cxComment.ParamCommandComment_IsParamIndexValid;
+                    paramComment.ParamIndex = (int)cxComment.ParamCommandComment_ParamIndex;
+                    switch (cxComment.ParamCommandComment_Direction)
+                    {
+                        case CXCommentParamPassDirection.CXCommentParamPassDirection_In:
+                            paramComment.Direction = CppCommentParamDirection.In;
+                            break;
+                        case CXCommentParamPassDirection.CXCommentParamPassDirection_Out:
+                            paramComment.Direction = CppCommentParamDirection.Out;
+                            break;
+                        case CXCommentParamPassDirection.CXCommentParamPassDirection_InOut:
+                            paramComment.Direction = CppCommentParamDirection.InOut;
+                            break;
+                    }
+
+                    removeTrailingEmptyText = true;
+                    cppComment = paramComment;
+                    break;
+
+                case CppCommentKind.TemplateParamCommand:
+                    var tParamComment = new CppCommentTemplateParamCommand();
+                    tParamComment.CommandName = "tparam";
+                    tParamComment.ParamName = cxComment.TParamCommandComment_ParamName.ToString();
+                    tParamComment.Depth = (int)cxComment.TParamCommandComment_Depth;
+                    // TODO: index
+                    tParamComment.IsPositionValid = cxComment.TParamCommandComment_IsParamPositionValid;
+
+                    removeTrailingEmptyText = true;
+                    cppComment = tParamComment;
+                    break;
+                case CppCommentKind.VerbatimBlockCommand:
+                    var verbatimBlock = new CppCommentVerbatimBlockCommand();
+                    verbatimBlock.CommandName = cxComment.BlockCommandComment_CommandName.ToString();
+                    for (uint i = 0; i < cxComment.BlockCommandComment_NumArgs; i++)
+                    {
+                        verbatimBlock.Arguments.Add(cxComment.BlockCommandComment_GetArgText(i).ToString());
+                    }
+                    cppComment = verbatimBlock;
+                    break;
+                case CppCommentKind.VerbatimBlockLine:
+                    cppComment = new CppCommentVerbatimBlockLine()
+                    {
+                        Text = cxComment.VerbatimBlockLineComment_Text.ToString()
+                    };
+                    break;
+                case CppCommentKind.VerbatimLine:
+                    cppComment = new CppCommentVerbatimLine()
+                    {
+                        Text = cxComment.VerbatimLineComment_Text.ToString()
+                    };
+                    break;
+                case CppCommentKind.Full:
+                    cppComment = new CppCommentFull();
+                    break;
+                default:
+                    return null;
+            }
+
+            Debug.Assert(cppComment != null);
+
+            for (uint i = 0; i < cxComment.NumChildren; i++)
+            {
+                var cxChildComment = cxComment.GetChild(i);
+                var cppChildComment = GetComment(cxChildComment);
+                if (cppChildComment != null)
+                {
+                    if (cppComment.Children == null)
+                    {
+                        cppComment.Children = new List<CppComment>();
+                    }
+                    cppComment.Children.Add(cppChildComment);
+                }
+            }
+
+            if (removeTrailingEmptyText)
+            {
+                RemoveTrailingEmptyText(cppComment);
+            }
+
+            return cppComment;
+        }
+
+        private static void RemoveTrailingEmptyText(CppComment cppComment)
+        {
+            // Remove the last paragraph if it is an empty string text
+            if (cppComment.Children != null && cppComment.Children.Count > 0 && cppComment.Children[cppComment.Children.Count - 1] is CppCommentParagraph paragraph)
+            {
+                // Remove the last paragraph if it is an empty string text
+                if (paragraph.Children != null && paragraph.Children.Count > 0 && paragraph.Children[paragraph.Children.Count - 1] is CppCommentText text && string.IsNullOrWhiteSpace(text.Text))
+                {
+                    paragraph.Children.RemoveAt(paragraph.Children.Count - 1);
+                }
+            }
+        }
+
+        private CppCommentKind GetCommentKind(CXCommentKind kind)
+        {
+            switch (kind)
+            {
+                case CXCommentKind.CXComment_Null:
+                    return CppCommentKind.Null;
+                case CXCommentKind.CXComment_Text:
+                    return CppCommentKind.Text;
+                case CXCommentKind.CXComment_InlineCommand:
+                    return CppCommentKind.InlineCommand;
+                case CXCommentKind.CXComment_HTMLStartTag:
+                    return CppCommentKind.HtmlStartTag;
+                case CXCommentKind.CXComment_HTMLEndTag:
+                    return CppCommentKind.HtmlEndTag;
+                case CXCommentKind.CXComment_Paragraph:
+                    return CppCommentKind.Paragraph;
+                case CXCommentKind.CXComment_BlockCommand:
+                    return CppCommentKind.BlockCommand;
+                case CXCommentKind.CXComment_ParamCommand:
+                    return CppCommentKind.ParamCommand;
+                case CXCommentKind.CXComment_TParamCommand:
+                    return CppCommentKind.TemplateParamCommand;
+                case CXCommentKind.CXComment_VerbatimBlockCommand:
+                    return CppCommentKind.VerbatimBlockCommand;
+                case CXCommentKind.CXComment_VerbatimBlockLine:
+                    return CppCommentKind.VerbatimBlockLine;
+                case CXCommentKind.CXComment_VerbatimLine:
+                    return CppCommentKind.VerbatimLine;
+                case CXCommentKind.CXComment_FullComment:
+                    return CppCommentKind.Full;
+                default:
+                    throw new ArgumentOutOfRangeException($"Unsupported comment kind `{kind}`");
+            }
         }
 
         private CppMacro ParseMacro(CXCursor cursor)
