@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0 (29 May 2019)
+- Add better support for comment with full structured comments (paragraph, block commands, parameters...)
+- Fix warning with invalid file/line/column `(0, 0)`
+- Remove some unnecessary warnings
+
 ## 0.2.0 (27 May 2019)
 - Add support for expressions for init value for fields and parameters
 
