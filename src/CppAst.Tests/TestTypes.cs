@@ -33,10 +33,10 @@ typedef int& f1; // reference type
                         new CppArrayType(CppPrimitiveType.Int, 5),
                         new CppPointerType(new CppFunctionType(CppPrimitiveType.Void)
                         {
-                            ParameterTypes =
+                            Parameters =
                             {
-                                CppPrimitiveType.Int,
-                                CppPrimitiveType.Float,
+                                new CppParameter(CppPrimitiveType.Int, "a"),
+                                new CppParameter(CppPrimitiveType.Float, "b"),
                             }
                         }),
                         new CppReferenceType(CppPrimitiveType.Int),

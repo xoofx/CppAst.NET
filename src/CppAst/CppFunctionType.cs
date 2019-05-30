@@ -21,7 +21,7 @@ namespace CppAst
         public CppFunctionType(CppType returnType) : base(CppTypeKind.Function)
         {
             ReturnType = returnType ?? throw new ArgumentNullException(nameof(returnType));
-            ParameterTypes = new List<CppType>();
+            Parameters = new List<CppParameter>();
         }
 
         /// <summary>
@@ -35,14 +35,33 @@ namespace CppAst
         public CppType ReturnType { get; set; }
         
         /// <summary>
-        /// Gets the types of the function parameters.
+        /// Gets a list of the parameters.
         /// </summary>
-        public List<CppType> ParameterTypes { get; }
+        public List<CppParameter> Parameters { get; }
 
         private bool Equals(CppFunctionType other)
         {
-            return base.Equals(other) && ReturnType.Equals(other.ReturnType) && ParameterTypes.SequenceEqual(other.ParameterTypes);
+            if (base.Equals(other) && ReturnType.Equals(other.ReturnType))
+            {
+                if (Parameters.Count != other.Parameters.Count)
+                {
+                    return false;
+                }
 
+                for (int i = 0; i < Parameters.Count; i++)
+                {
+                    var fromType = Parameters[i].Type;
+                    var otherType = other.Parameters[i].Type;
+                    if (!fromType.Equals(otherType))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            return false;
         }
 
         public override bool Equals(object obj)
@@ -56,9 +75,9 @@ namespace CppAst
             {
                 int hashCode = base.GetHashCode();
                 hashCode = (hashCode * 397) ^ ReturnType.GetHashCode();
-                foreach (var parameterType in ParameterTypes)
+                foreach (var parameter in Parameters)
                 {
-                    hashCode = (hashCode * 397) ^ parameterType.GetHashCode();
+                    hashCode = (hashCode * 397) ^ parameter.Type.GetHashCode();
                 }
                 return hashCode;
             }
@@ -70,9 +89,9 @@ namespace CppAst
             builder.Append(ReturnType.GetDisplayName());
             builder.Append(" ");
             builder.Append("(*)(");
-            for (var i = 0; i < ParameterTypes.Count; i++)
+            for (var i = 0; i < Parameters.Count; i++)
             {
-                var param = ParameterTypes[i];
+                var param = Parameters[i];
                 if (i > 0) builder.Append(", ");
                 builder.Append(param);
             }

@@ -1362,7 +1362,7 @@ namespace CppAst
             }
 
             var contextContainer = GetOrCreateDeclarationContainer(cursor.SemanticParent, data);
-            var underlyingTypeDefType = GetCppType(cursor.TypedefDeclUnderlyingType.Declaration, cursor.TypedefDeclUnderlyingType, parent, data);
+            var underlyingTypeDefType = GetCppType(cursor.TypedefDeclUnderlyingType.Declaration, cursor.TypedefDeclUnderlyingType, cursor, data);
 
             var typedefName = GetCursorSpelling(cursor);
 
@@ -1548,7 +1548,7 @@ namespace CppAst
                 }
 
                 case CXTypeKind.CXType_Attributed:
-                    return GetCppType(type.CanonicalType.Declaration, type.CanonicalType, parent, data);
+                    return GetCppType(type.ModifierType.Declaration, type.ModifierType, parent, data);
 
                 default:
                 {
@@ -1562,18 +1562,35 @@ namespace CppAst
         {
             // Gets the return type
             var returnType = GetCppType(type.ResultType.Declaration, type.ResultType, cursor, data);
-
+            
             var cppFunction = new CppFunctionType(returnType)
             {
                 CallingConvention = GetCallingConvention(type)
             };
 
-            for (uint i = 0; i < type.NumArgTypes; i++)
+            // We don't use this but use the visitor children to try to recover the parameter names
+            
+//            for (uint i = 0; i < type.NumArgTypes; i++)
+//            {
+//                var argType = type.GetArgType(i);
+//                var cppType = GetCppType(argType.Declaration, argType, type.Declaration, data);
+//                cppFunction.ParameterTypes.Add(cppType);
+//            }
+
+            bool isParsingParameter = false;
+            parent.VisitChildren((cxCursor, parent1, clientData) =>
             {
-                var argType = type.GetArgType(i);
-                var cppType = GetCppType(argType.Declaration, argType, type.Declaration, data);
-                cppFunction.ParameterTypes.Add(cppType);
-            }
+                if (cxCursor.Kind == CXCursorKind.CXCursor_ParmDecl)
+                {
+                    var name = GetCursorSpelling(cxCursor);
+                    var parameterType = GetCppType(cxCursor.Type.Declaration, cxCursor.Type, cxCursor, data);
+
+                    cppFunction.Parameters.Add(new CppParameter(parameterType, name));
+                    isParsingParameter = true;
+                }
+                return isParsingParameter ? CXChildVisitResult.CXChildVisit_Continue : CXChildVisitResult.CXChildVisit_Recurse;
+            }, data);
+
 
             return cppFunction;
         }
