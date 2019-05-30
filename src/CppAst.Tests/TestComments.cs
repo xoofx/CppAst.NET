@@ -93,7 +93,8 @@ int function1(int a, int b);
                 Assert.False(compilation.HasErrors);
 
                 var expectedText = @"This is a comment of function1.
-With more `details` in the <b>comment</b>.And another line with @a x and @a y in italics
+With more `details` in the <b>comment</b>.
+And another line with @a x and @a y in italics
 
 @see function1
 
