@@ -9,17 +9,16 @@ namespace CppAst
     /// <summary>
     /// A C++ qualified type (e.g `const int`)
     /// </summary>
-    public sealed class CppQualifiedType : CppType
+    public sealed class CppQualifiedType : CppTypeWithElementType
     {
         /// <summary>
         /// Constructor for a C++ qualified type.
         /// </summary>
         /// <param name="qualifier">The C++ qualified (e.g `const`)</param>
         /// <param name="elementType">The element type (e.g `int`)</param>
-        public CppQualifiedType(CppTypeQualifier qualifier, CppType elementType) : base(CppTypeKind.Qualified)
+        public CppQualifiedType(CppTypeQualifier qualifier, CppType elementType) : base(CppTypeKind.Qualified, elementType)
         {
             Qualifier = qualifier;
-            ElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
         }
 
         /// <summary>
@@ -27,19 +26,9 @@ namespace CppAst
         /// </summary>
         public CppTypeQualifier Qualifier { get; }
 
-        /// <summary>
-        /// Gets the element type.
-        /// </summary>
-        public CppType ElementType { get; }
-
-        public override string ToString()
-        {
-            return $"{Qualifier.ToString().ToLowerInvariant()} {ElementType.GetDisplayName()}";
-        }
-
         private bool Equals(CppQualifiedType other)
         {
-            return base.Equals(other) && Qualifier == other.Qualifier && ElementType.Equals(other.ElementType);
+            return base.Equals(other) && Qualifier == other.Qualifier;
         }
 
         public override bool Equals(object obj)
@@ -51,11 +40,19 @@ namespace CppAst
         {
             unchecked
             {
-                int hashCode = base.GetHashCode();
-                hashCode = (hashCode * 397) ^ (int) Qualifier;
-                hashCode = (hashCode * 397) ^ ElementType.GetHashCode();
-                return hashCode;
+                return (base.GetHashCode() * 397) ^ (int) Qualifier;
             }
+        }
+
+        public override CppType GetCanonicalType()
+        {
+            var elementTypeCanonical = ElementType.GetCanonicalType();
+            return ReferenceEquals(elementTypeCanonical, ElementType) ? this : new CppQualifiedType(Qualifier, elementTypeCanonical);
+        }
+
+        public override string ToString()
+        {
+            return $"{Qualifier.ToString().ToLowerInvariant()} {ElementType.GetDisplayName()}";
         }
     }
 }

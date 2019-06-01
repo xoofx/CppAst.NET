@@ -64,7 +64,7 @@ typedef double Type_double;
                     {
                         var typedef = compilation.Typedefs[i];
                         var expectedType = primitives[i];
-                        Assert.AreEqual(expectedType, typedef.Type);
+                        Assert.AreEqual(expectedType, typedef.ElementType);
                         Assert.AreEqual("Type_" + expectedType.ToString().Replace(" ", "_"), typedef.Name);
                     }
                 }

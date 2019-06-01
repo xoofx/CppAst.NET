@@ -149,5 +149,10 @@ namespace CppAst
                 return (base.GetHashCode() * 397) ^ (int) Kind;
             }
         }
+
+        public override CppType GetCanonicalType()
+        {
+            return this;
+        }
     }
 }

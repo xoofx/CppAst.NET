@@ -28,11 +28,6 @@ namespace CppAst
             return TypeKind == other.TypeKind;
         }
 
-        public virtual bool IsEquivalent(CppType other)
-        {
-            return Equals((object)other);
-        }
-        
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj)) return false;
@@ -44,5 +39,11 @@ namespace CppAst
         {
             return (int) TypeKind;
         }
+
+        /// <summary>
+        /// Gets the canonical type of this type instance.
+        /// </summary>
+        /// <returns>A canonical type of this type instance</returns>
+        public abstract CppType GetCanonicalType();
     }
 }

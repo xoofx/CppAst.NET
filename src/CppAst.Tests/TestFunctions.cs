@@ -55,7 +55,7 @@ typedef void (*function1)(int, float);
                     Assert.AreEqual(2, compilation.Typedefs.Count);
 
                     {
-                        var cppType = compilation.Typedefs[0].Type;
+                        var cppType = compilation.Typedefs[0].ElementType;
                         Assert.AreEqual(CppTypeKind.Pointer, cppType.TypeKind);
                         var cppPointerType = (CppPointerType) cppType;
                         Assert.AreEqual(CppTypeKind.Function, cppPointerType.ElementType.TypeKind);
@@ -70,7 +70,7 @@ typedef void (*function1)(int, float);
                     }
                     
                     {
-                        var cppType = compilation.Typedefs[1].Type;
+                        var cppType = compilation.Typedefs[1].ElementType;
                         Assert.AreEqual(CppTypeKind.Pointer, cppType.TypeKind);
                         var cppPointerType = (CppPointerType) cppType;
                         Assert.AreEqual(CppTypeKind.Function, cppPointerType.ElementType.TypeKind);

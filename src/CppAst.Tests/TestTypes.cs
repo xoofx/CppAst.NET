@@ -13,21 +13,26 @@ namespace CppAst.Tests
         public void TestSimple()
         {
             ParseAssert(@"
+typedef int& t0; // reference type
+typedef const float t1;
 char* f0; // pointer type
-const int f2 = 5; // qualified type
-int f3[5]; // array type
-void (*f4)(int arg1, float arg2); // function type
-typedef int& f1; // reference type
+const int f1 = 5; // qualified type
+int f2[5]; // array type
+void (*f3)(int arg1, float arg2); // function type
+t1* f4;
 ",
                 compilation =>
                 {
                     Assert.False(compilation.HasErrors);
 
-                    Assert.AreEqual(4, compilation.Fields.Count);
-                    Assert.AreEqual(1, compilation.Typedefs.Count);
+                    Assert.AreEqual(5, compilation.Fields.Count);
+                    Assert.AreEqual(2, compilation.Typedefs.Count);
 
                     var types = new CppType[]
                     {
+                        new CppReferenceType(CppPrimitiveType.Int),
+                        new CppQualifiedType(CppTypeQualifier.Const, CppPrimitiveType.Float),
+
                         new CppPointerType(CppPrimitiveType.Char),
                         new CppQualifiedType(CppTypeQualifier.Const, CppPrimitiveType.Int),
                         new CppArrayType(CppPrimitiveType.Int, 5),
@@ -39,12 +44,11 @@ typedef int& f1; // reference type
                                 new CppParameter(CppPrimitiveType.Float, "b"),
                             }
                         }),
-                        new CppReferenceType(CppPrimitiveType.Int),
+                        new CppPointerType(new CppQualifiedType(CppTypeQualifier.Const, CppPrimitiveType.Float)),
                     };
 
-                    var parsedTypes = compilation.Fields.Select(x => x.Type).Concat(compilation.Typedefs.Select(x => x.Type)).ToList();
-
-                    Assert.AreEqual(types, parsedTypes);
+                    var canonicalTypes = compilation.Typedefs.Select(x => x.GetCanonicalType()).Concat(compilation.Fields.Select(x => x.Type.GetCanonicalType())).ToList();
+                    Assert.AreEqual(types, canonicalTypes);
                 }
             );
         }

@@ -83,6 +83,11 @@ namespace CppAst
             }
         }
 
+        public override CppType GetCanonicalType()
+        {
+            return this;
+        }
+
         public override string ToString()
         {
             var builder = new StringBuilder();

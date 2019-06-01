@@ -9,17 +9,16 @@ namespace CppAst
     /// <summary>
     /// A C++ typedef (e.g `typedef int XXX`)
     /// </summary>
-    public sealed class CppTypedef : CppType, ICppMemberWithVisibility
+    public sealed class CppTypedef : CppTypeWithElementType, ICppMemberWithVisibility
     {
         /// <summary>
         /// Creates a new instance of a typedef.
         /// </summary>
         /// <param name="name">Name of the typedef (e.g `XXX`)</param>
         /// <param name="type">Underlying type.</param>
-        public CppTypedef(string name, CppType type) : base(CppTypeKind.Typedef)
+        public CppTypedef(string name, CppType type) : base(CppTypeKind.Typedef, type)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
-            Type = type ?? throw new ArgumentNullException(nameof(type));
         }
 
         /// <summary>
@@ -32,20 +31,9 @@ namespace CppAst
         /// </summary>
         public string Name { get; set; }
 
-        /// <summary>
-        /// Gets the underlying type of this typedef.
-        /// </summary>
-        public CppType Type { get; }
-
         private bool Equals(CppTypedef other)
         {
-            return base.Equals(other) && Name.Equals(other.Name) && Type.Equals(other.Type);
-        }
-
-        public override bool IsEquivalent(CppType other)
-        {
-            // Special case for typedef, as they are aliasing, we don't care about the name
-            return Type.IsEquivalent(other);
+            return base.Equals(other) && string.Equals(Name, other.Name);
         }
 
         public override bool Equals(object obj)
@@ -57,16 +45,18 @@ namespace CppAst
         {
             unchecked
             {
-                int hashCode = base.GetHashCode();
-                hashCode = (hashCode * 397) ^ Name.GetHashCode();
-                hashCode = (hashCode * 397) ^ Type.GetHashCode();
-                return hashCode;
+                return (base.GetHashCode() * 397) ^ Name.GetHashCode();
             }
+        }
+
+        public override CppType GetCanonicalType()
+        {
+            return ElementType.GetCanonicalType();
         }
 
         public override string ToString()
         {
-            return $"typedef {Type.GetDisplayName()} {Name}";
+            return $"typedef {ElementType.GetDisplayName()} {Name}";
         }
     }
 }

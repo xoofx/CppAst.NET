@@ -65,6 +65,11 @@ namespace CppAst
             }
         }
 
+        public override CppType GetCanonicalType()
+        {
+            return this;
+        }
+
         public IEnumerable<CppElement> Children()
         {
             foreach (var item in Items)

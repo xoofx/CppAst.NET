@@ -9,23 +9,17 @@ namespace CppAst
     /// <summary>
     /// A C++ array (e.g int[5] or int[])
     /// </summary>
-    public sealed class CppArrayType : CppType, IEquatable<CppArrayType>
+    public sealed class CppArrayType : CppTypeWithElementType, IEquatable<CppArrayType>
     {
         /// <summary>
         /// Constructor of a C++ array.
         /// </summary>
         /// <param name="elementType">The element type (e.g `int`)</param>
         /// <param name="size">The size of the array. 0 means an unbound array</param>
-        public CppArrayType(CppType elementType, int size) : base(CppTypeKind.Array)
+        public CppArrayType(CppType elementType, int size) : base(CppTypeKind.Array, elementType)
         { 
-            ElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
             Size = size;
         }
-
-        /// <summary>
-        /// Gets the type of the array element.
-        /// </summary>
-        public CppType ElementType { get; }
 
         /// <summary>
         /// Gets the size of the array.
@@ -36,7 +30,7 @@ namespace CppAst
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return base.Equals(other) && ElementType.Equals(other.ElementType) && Size == other.Size;
+            return base.Equals(other) && Size == other.Size;
         }
 
         public override bool Equals(object obj)
@@ -48,11 +42,15 @@ namespace CppAst
         {
             unchecked
             {
-                int hashCode = base.GetHashCode();
-                hashCode = (hashCode * 397) ^ ElementType.GetHashCode();
-                hashCode = (hashCode * 397) ^ Size;
-                return hashCode;
+                return (base.GetHashCode() * 397) ^ Size;
             }
+        }
+        
+        public override CppType GetCanonicalType()
+        {
+            var elementTypeCanonical = ElementType.GetCanonicalType();
+            if (ReferenceEquals(elementTypeCanonical, ElementType)) return this;
+            return new CppArrayType(elementTypeCanonical, Size);
         }
 
         public override string ToString()

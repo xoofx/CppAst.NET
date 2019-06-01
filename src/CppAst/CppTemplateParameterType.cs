@@ -42,7 +42,12 @@ namespace CppAst
                 return (base.GetHashCode() * 397) ^ Name.GetHashCode();
             }
         }
-        
+
+        public override CppType GetCanonicalType()
+        {
+            return this;
+        }
+
         public override string ToString()
         {
             return Name;

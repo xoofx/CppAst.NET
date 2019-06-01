@@ -9,43 +9,26 @@ namespace CppAst
     /// <summary>
     /// A C++ pointer type (e.g `int*`)
     /// </summary>
-    public sealed class CppPointerType : CppType
+    public sealed class CppPointerType : CppTypeWithElementType
     {
         /// <summary>
         /// Constructor of a pointer type.
         /// </summary>
         /// <param name="elementType">The element type pointed to.</param>
-        public CppPointerType(CppType elementType) : base(CppTypeKind.Pointer)
+        public CppPointerType(CppType elementType) : base(CppTypeKind.Pointer, elementType)
         {
-            ElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
-        }
-
-        /// <summary>
-        /// Gets the element type pointed by this pointer type.
-        /// </summary>
-        public CppType ElementType { get; }
-
-        private bool Equals(CppPointerType other)
-        {
-            return base.Equals(other) && ElementType.Equals(other.ElementType);
-        }
-
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppPointerType other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return (base.GetHashCode() * 397) ^ ElementType.GetHashCode();
-            }
         }
 
         public override string ToString()
         {
             return $"{ElementType.GetDisplayName()}*";
+        }
+
+        public override CppType GetCanonicalType()
+        {
+            var elementTypeCanonical = ElementType.GetCanonicalType();
+            if (ReferenceEquals(elementTypeCanonical, ElementType)) return this;
+            return new CppPointerType(elementTypeCanonical);
         }
     }
 }

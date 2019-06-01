@@ -9,43 +9,25 @@ namespace CppAst
     /// <summary>
     /// A C++ reference type (e.g `int&amp;`)
     /// </summary>
-    public sealed class CppReferenceType : CppType
+    public sealed class CppReferenceType : CppTypeWithElementType
     {
         /// <summary>
         /// Constructor of a reference type.
         /// </summary>
         /// <param name="elementType">The element type referenced to.</param>
-        public CppReferenceType(CppType elementType) : base(CppTypeKind.Reference)
+        public CppReferenceType(CppType elementType) : base(CppTypeKind.Reference, elementType)
         {
-            ElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
-        }
-
-        /// <summary>
-        /// Gets the element type referenced by this reference type.
-        /// </summary>
-        public CppType ElementType { get; }
-
-        private bool Equals(CppReferenceType other)
-        {
-            return base.Equals(other) && ElementType.Equals(other.ElementType);
-        }
-
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppReferenceType other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return (base.GetHashCode() * 397) ^ ElementType.GetHashCode();
-            }
         }
 
         public override string ToString()
         {
             return $"{ElementType.GetDisplayName()}&";
+        }
+
+        public override CppType GetCanonicalType()
+        {
+            var elementTypeCanonical = ElementType.GetCanonicalType();
+            return ReferenceEquals(elementTypeCanonical, ElementType) ? this : new CppReferenceType(elementTypeCanonical);
         }
     }
 }
