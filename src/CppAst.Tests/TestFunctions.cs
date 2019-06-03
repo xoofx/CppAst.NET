@@ -86,8 +86,63 @@ typedef void (*function1)(int, float);
 
                 }
             );
-        }        
-        
-        
+        }
+
+
+        [Test]
+        public void TestFunctionExport()
+        {
+            var text = @"
+#ifdef WIN32
+#define EXPORT_API __declspec(dllexport)
+#else
+#define EXPORT_API __attribute__((visibility(""default"")))
+#endif
+EXPORT_API int function0();
+int function1();
+";
+                
+            ParseAssert(text,
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(2, compilation.Functions.Count);
+
+                    {
+                        var cppFunction = compilation.Functions[0];
+                        Assert.AreEqual(1, cppFunction.Attributes.Count); 
+                        Assert.True(cppFunction.IsPublicExport());
+                    }
+                    {
+                        var cppFunction = compilation.Functions[1];
+                        Assert.Null(cppFunction.Attributes);
+                        Assert.False(cppFunction.IsPublicExport());
+                    }
+                }
+            );
+
+            ParseAssert(text,
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(2, compilation.Functions.Count);
+
+                    {
+                        var cppFunction = compilation.Functions[0];
+                        Assert.AreEqual(1, cppFunction.Attributes.Count);
+                        Assert.True(cppFunction.IsPublicExport());
+                    }
+                    {
+                        var cppFunction = compilation.Functions[1];
+                        Assert.Null(cppFunction.Attributes);
+                        Assert.False(cppFunction.IsPublicExport());
+                    }
+                }, new CppParserOptions().ConfigureForWindowsMsvc()
+            );
+        }
+
+
     }
 }

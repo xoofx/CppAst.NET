@@ -55,20 +55,4 @@ namespace CppAst
             return builder.ToString();
         }
     }
-
-    /// <summary>
-    /// Extensions for <see cref="CppTokenKind"/>
-    /// </summary>
-    public static class CppTokenKindExtensions
-    {
-        /// <summary>
-        /// Gets a boolean indicating whether this token kind is an identifier or keyword
-        /// </summary>
-        /// <param name="kind">The token kind</param>
-        /// <returns><c>true</c> if the token is an identifier or keyword, <c>false</c> otherwise</returns>
-        public static bool IsIdentifierOrKeyword(this CppTokenKind kind)
-        {
-            return kind == CppTokenKind.Identifier || kind == CppTokenKind.Keyword;
-        }
-    }
 }
