@@ -10,7 +10,7 @@ namespace CppAst
     /// <summary>
     /// A C++ function/method declaration.
     /// </summary>
-    public sealed class CppFunction : CppElement, ICppMemberWithVisibility, ICppTemplateOwner
+    public sealed class CppFunction : CppElement, ICppMemberWithVisibility, ICppTemplateOwner, ICppContainer
     {
         /// <summary>
         /// Creates a new instance of a function/method with the specified name.
@@ -19,7 +19,7 @@ namespace CppAst
         public CppFunction(string name)
         {
             Name = name;
-            Parameters = new List<CppParameter>();
+            Parameters = new CppContainerList<CppParameter>(this);
             TemplateParameters = new List<CppTemplateParameterType>();
         }
 
@@ -57,7 +57,7 @@ namespace CppAst
         /// <summary>
         /// Gets a list of the parameters.
         /// </summary>
-        public List<CppParameter> Parameters { get; }
+        public CppContainerList<CppParameter> Parameters { get; }
 
         /// <summary>
         /// Gets or sets the flags of this function.
@@ -122,6 +122,11 @@ namespace CppAst
                 builder.Append(" = 0");
             }
             return builder.ToString();
+        }
+
+        public IEnumerable<CppElement> Children()
+        {
+            return Parameters;
         }
     }
 }

@@ -12,7 +12,7 @@ namespace CppAst
     /// <summary>
     /// A C++ function type (e.g `void (*)(int arg1, int arg2)`)
     /// </summary>
-    public sealed class CppFunctionType : CppType
+    public sealed class CppFunctionType : CppType, ICppContainer
     {
         /// <summary>
         /// Constructor of a function type.
@@ -21,7 +21,7 @@ namespace CppAst
         public CppFunctionType(CppType returnType) : base(CppTypeKind.Function)
         {
             ReturnType = returnType ?? throw new ArgumentNullException(nameof(returnType));
-            Parameters = new List<CppParameter>();
+            Parameters = new CppContainerList<CppParameter>(this);
         }
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace CppAst
         /// <summary>
         /// Gets a list of the parameters.
         /// </summary>
-        public List<CppParameter> Parameters { get; }
+        public CppContainerList<CppParameter> Parameters { get; }
 
         private bool Equals(CppFunctionType other)
         {
@@ -81,6 +81,11 @@ namespace CppAst
                 }
                 return hashCode;
             }
+        }
+
+        public IEnumerable<CppElement> Children()
+        {
+            return Parameters;
         }
 
         public override CppType GetCanonicalType()
