@@ -11,7 +11,7 @@ namespace CppAst
     /// <summary>
     /// A C++ field (of a struct/class) or global variable.
     /// </summary>
-    public sealed class CppField : CppElement, ICppMemberWithVisibility
+    public sealed class CppField : CppDeclaration, ICppMemberWithVisibility
     {
         public CppField(CppType type, string name)
         {

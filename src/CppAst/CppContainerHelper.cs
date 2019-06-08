@@ -10,7 +10,7 @@ namespace CppAst
     /// </summary>
     internal static class CppContainerHelper
     {
-        public static IEnumerable<CppElement> Children(ICppGlobalDeclarationContainer container)
+        public static IEnumerable<ICppDeclaration> Children(ICppGlobalDeclarationContainer container)
         {
             foreach (var item in container.Enums)
             {
@@ -43,7 +43,7 @@ namespace CppAst
             }
         }
 
-        public static IEnumerable<CppElement> Children(ICppDeclarationContainer container)
+        public static IEnumerable<ICppDeclaration> Children(ICppDeclarationContainer container)
         {
             foreach (var item in container.Enums)
             {

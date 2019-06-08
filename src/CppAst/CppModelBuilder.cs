@@ -266,8 +266,12 @@ namespace CppAst
 
             if (element != null)
             {
-                element.Comment = GetComment(cursor);
                 AssignSourceSpan(cursor, element);
+            }
+
+            if (element is ICppDeclaration cppDeclaration)
+            {
+                cppDeclaration.Comment = GetComment(cursor);
             }
 
             return CXChildVisitResult.CXChildVisit_Continue;

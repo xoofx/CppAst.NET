@@ -10,7 +10,7 @@ namespace CppAst
     /// <summary>
     /// A C++ function/method declaration.
     /// </summary>
-    public sealed class CppFunction : CppElement, ICppMemberWithVisibility, ICppTemplateOwner, ICppContainer
+    public sealed class CppFunction : CppDeclaration, ICppMemberWithVisibility, ICppTemplateOwner, ICppContainer
     {
         /// <summary>
         /// Creates a new instance of a function/method with the specified name.
@@ -124,7 +124,7 @@ namespace CppAst
             return builder.ToString();
         }
 
-        public IEnumerable<CppElement> Children()
+        public IEnumerable<ICppDeclaration> Children()
         {
             return Parameters;
         }

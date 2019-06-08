@@ -10,7 +10,7 @@ namespace CppAst
     /// <summary>
     /// Defines a C++ namespace. This is only one level of namespace (e.g `A` in `A::B::C`)
     /// </summary>
-    public class CppNamespace : CppElement, ICppMember, ICppGlobalDeclarationContainer
+    public class CppNamespace : CppDeclaration, ICppMember, ICppGlobalDeclarationContainer
     {
         /// <summary>
         /// Creates a namespace with the specified name.
@@ -76,7 +76,7 @@ namespace CppAst
             return $"namespace {Name} {{...}}";
         }
 
-        public IEnumerable<CppElement> Children()
+        public IEnumerable<ICppDeclaration> Children()
         {
             foreach (var item in CppContainerHelper.Children(this))
             {

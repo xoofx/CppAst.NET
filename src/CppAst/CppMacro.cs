@@ -10,7 +10,7 @@ namespace CppAst
     /// <summary>
     /// A C++ Macro, only valid if the parser is initialized with <see cref="CppParserOptions.ParseMacros"/>
     /// </summary>
-    public class CppMacro : CppElement
+    public class CppMacro : CppElement, ICppMember
     {
         /// <summary>
         /// Creates a new instance of a macro.

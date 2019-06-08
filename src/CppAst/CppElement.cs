@@ -15,11 +15,6 @@ namespace CppAst
         public CppSourceSpan Span;
 
         /// <summary>
-        /// Gets or sets the comment attached to this element. Might be null.
-        /// </summary>
-        public CppComment Comment { get; set; }
-
-        /// <summary>
         /// Gets or sets the parent container of this element. Might be null.
         /// </summary>
         public ICppContainer Parent { get; internal set; }

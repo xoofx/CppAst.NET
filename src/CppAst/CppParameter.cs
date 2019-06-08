@@ -9,7 +9,7 @@ namespace CppAst
     /// <summary>
     /// A C++ function parameter.
     /// </summary>
-    public sealed class CppParameter : CppElement
+    public sealed class CppParameter : CppDeclaration, ICppMember
     {
         /// <summary>
         /// Creates a new instance of a C++ function parameter.
@@ -30,7 +30,7 @@ namespace CppAst
         /// <summary>
         /// Gets the name of this parameter.
         /// </summary>
-        public string Name { get; }
+        public string Name { get; set; }
 
         /// <summary>
         /// Gets or sets the default value.

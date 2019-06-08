@@ -9,7 +9,7 @@ namespace CppAst
     /// <summary>
     /// An enum item of <see cref="CppEnum"/>.
     /// </summary>
-    public sealed class CppEnumItem : CppElement, ICppMember
+    public sealed class CppEnumItem : CppDeclaration, ICppMember
     {
         /// <summary>
         /// Creates a new instance of this enum item.

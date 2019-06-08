@@ -51,13 +51,8 @@ namespace CppAst
         /// <inheritdoc />
         public CppContainerList<CppNamespace> Namespaces { get; }
 
-        public virtual IEnumerable<CppElement> Children()
+        public virtual IEnumerable<ICppDeclaration> Children()
         {
-            foreach (var item in Macros)
-            {
-                yield return item;
-            }
-            
             foreach (var item in CppContainerHelper.Children(this))
             {
                 yield return item;

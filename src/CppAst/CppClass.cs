@@ -11,7 +11,7 @@ namespace CppAst
     /// <summary>
     /// A C++ class, struct or union.
     /// </summary>
-    public sealed class CppClass : CppType, ICppMemberWithVisibility, ICppDeclarationContainer, ICppTemplateOwner
+    public sealed class CppClass : CppTypeDeclaration, ICppMemberWithVisibility, ICppDeclarationContainer, ICppTemplateOwner
     {
         /// <summary>
         /// Creates a new instance. 
@@ -140,7 +140,7 @@ namespace CppAst
             return builder.ToString();
         }
 
-        public IEnumerable<CppElement> Children()
+        public override IEnumerable<ICppDeclaration> Children()
         {
             foreach (var item in CppContainerHelper.Children(this))
             {

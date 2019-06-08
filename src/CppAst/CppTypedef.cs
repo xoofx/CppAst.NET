@@ -9,17 +9,20 @@ namespace CppAst
     /// <summary>
     /// A C++ typedef (e.g `typedef int XXX`)
     /// </summary>
-    public sealed class CppTypedef : CppTypeWithElementType, ICppMemberWithVisibility
+    public sealed class CppTypedef : CppTypeDeclaration, ICppMemberWithVisibility
     {
         /// <summary>
         /// Creates a new instance of a typedef.
         /// </summary>
         /// <param name="name">Name of the typedef (e.g `XXX`)</param>
         /// <param name="type">Underlying type.</param>
-        public CppTypedef(string name, CppType type) : base(CppTypeKind.Typedef, type)
+        public CppTypedef(string name, CppType type) : base(CppTypeKind.Typedef)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
+            ElementType = type;
         }
+
+        public CppType ElementType { get;  }
 
         /// <summary>
         /// Visibility of this element.

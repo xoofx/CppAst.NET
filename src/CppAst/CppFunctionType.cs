@@ -12,7 +12,7 @@ namespace CppAst
     /// <summary>
     /// A C++ function type (e.g `void (*)(int arg1, int arg2)`)
     /// </summary>
-    public sealed class CppFunctionType : CppType, ICppContainer
+    public sealed class CppFunctionType : CppTypeDeclaration
     {
         /// <summary>
         /// Constructor of a function type.
@@ -83,7 +83,7 @@ namespace CppAst
             }
         }
 
-        public IEnumerable<CppElement> Children()
+        public override IEnumerable<ICppDeclaration> Children()
         {
             return Parameters;
         }

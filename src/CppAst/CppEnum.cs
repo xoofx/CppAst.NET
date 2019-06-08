@@ -10,7 +10,7 @@ namespace CppAst
     /// <summary>
     /// A C++ standard or scoped enum.
     /// </summary>
-    public sealed class CppEnum : CppType, ICppMemberWithVisibility, ICppContainer
+    public sealed class CppEnum : CppTypeDeclaration, ICppMemberWithVisibility, ICppContainer
     {
         /// <summary>
         /// Creates a new instance of this enum.
@@ -70,7 +70,7 @@ namespace CppAst
             return this;
         }
 
-        public IEnumerable<CppElement> Children()
+        public IEnumerable<ICppDeclaration> Children()
         {
             foreach (var item in Items)
             {

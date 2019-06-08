@@ -11,6 +11,10 @@ namespace CppAst
     /// </summary>
     public interface ICppContainer
     {
-        IEnumerable<CppElement> Children();
+        /// <summary>
+        /// Gets of declaration from this container.
+        /// </summary>
+        /// <returns>A list of Cpp declaration</returns>
+        IEnumerable<ICppDeclaration> Children();
     }
 }
