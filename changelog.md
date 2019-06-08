@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 (08 Jun 2019)
+- Add support for parsing parameter names for function prototypes
+- Improve ToString of comments with new lines
+- Add CppType.GetCanonicalType. Add CppTypeWithElementType
+- Add extension method CppAttribute/CppFunction.IsPublicExport
+- Make CppFunction and CppFunctionType ICppContainer of CppParameter
+- Add ICppDeclaration
+- Fix issue with Dictionary key already inserted for typedef (#4)
+
 ## 0.3.0 (29 May 2019)
 - Add better support for comment with full structured comments (paragraph, block commands, parameters...)
 - Fix warning with invalid file/line/column `(0, 0)`
