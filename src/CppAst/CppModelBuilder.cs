@@ -1381,8 +1381,16 @@ namespace CppAst
                 contextContainer.DeclarationContainer.Typedefs.Add(typedef);
                 type = typedef;
             }
-            
-            _typedefs.Add(fulltypeDefName, type);
+
+            // The type could have been added separately as part of the GetCppType above
+            if (_typedefs.TryGetValue(fulltypeDefName, out var cppPreviousCppType))
+            {
+                Debug.Assert(cppPreviousCppType.GetType() == type.GetType());
+            }
+            else
+            {
+                _typedefs.Add(fulltypeDefName, type);
+            }
             return type;
         }
 

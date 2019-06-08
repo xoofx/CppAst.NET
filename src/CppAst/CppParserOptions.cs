@@ -19,6 +19,7 @@ namespace CppAst
         public CppParserOptions()
         {
             ParseAsCpp = true;
+            SystemIncludeFolders = new List<string>();
             IncludeFolders = new List<string>();
             Defines = new List<string>();
             AdditionalArguments = new List<string>()
@@ -41,6 +42,11 @@ namespace CppAst
         /// List of the include folders.
         /// </summary>
         public List<string> IncludeFolders { get; }
+
+        /// <summary>
+        /// List of the system include folders.
+        /// </summary>
+        public List<string> SystemIncludeFolders { get; }
 
         /// <summary>
         /// List of the defines.

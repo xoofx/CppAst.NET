@@ -80,8 +80,12 @@ namespace CppAst
             var normalizedIncludePaths = new List<string>();
             normalizedIncludePaths.AddRange(options.IncludeFolders.Select(x => Path.Combine(Environment.CurrentDirectory, x)));
 
+            var normalizedSystemIncludePaths = new List<string>();
+            normalizedSystemIncludePaths.AddRange(options.SystemIncludeFolders.Select(x => Path.Combine(Environment.CurrentDirectory, x)));
+
             arguments.AddRange(options.AdditionalArguments);
             arguments.AddRange(normalizedIncludePaths.Select(x => $"-I{x}"));
+            arguments.AddRange(normalizedSystemIncludePaths.Select(x => $"-isystem{x}"));
             arguments.AddRange(options.Defines.Select(x => $"-D{x}"));
 
             if (options.ParseAsCpp && !arguments.Contains("-xc++"))
