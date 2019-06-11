@@ -41,22 +41,22 @@ namespace CppAst
         /// <summary>
         /// List of the include folders.
         /// </summary>
-        public List<string> IncludeFolders { get; }
+        public List<string> IncludeFolders { get; private set; }
 
         /// <summary>
         /// List of the system include folders.
         /// </summary>
-        public List<string> SystemIncludeFolders { get; }
+        public List<string> SystemIncludeFolders { get; private set; }
 
         /// <summary>
         /// List of the defines.
         /// </summary>
-        public List<string> Defines { get; }
+        public List<string> Defines { get; private set; }
 
         /// <summary>
         /// List of the additional arguments passed directly to the C++ Clang compiler.
         /// </summary>
-        public List<string> AdditionalArguments { get; }
+        public List<string> AdditionalArguments { get; private set; }
 
         /// <summary>
         /// Gets or sets a boolean indicating whether the files will be parser as C++. Default is <c>true</c>. Otherwise parse as C.
@@ -113,6 +113,24 @@ namespace CppAst
         /// </summary>
         public string TargetAbi { get; set; }
 
+
+        /// <summary>
+        /// Clone this instance.
+        /// </summary>
+        /// <returns>Return a copy of this options.</returns>
+        public virtual CppParserOptions Clone()
+        {
+            var newOptions = (CppParserOptions)MemberwiseClone();
+
+            // Copy lists
+            newOptions.IncludeFolders = new List<string>(IncludeFolders);
+            newOptions.SystemIncludeFolders = new List<string>(SystemIncludeFolders);
+            newOptions.Defines = new List<string>(Defines);
+            newOptions.AdditionalArguments = new List<string>(AdditionalArguments);
+
+            return newOptions;
+        }
+        
         /// <summary>
         /// Configure this instance with Windows and MSVC.
         /// </summary>
