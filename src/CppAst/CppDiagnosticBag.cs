@@ -54,6 +54,15 @@ namespace CppAst
             _messages.Add(message);
         }
 
+        public void CopyTo(CppDiagnosticBag dest)
+        {
+            if (dest == null) throw new ArgumentNullException(nameof(dest));
+            foreach (var cppDiagnosticMessage in Messages)
+            {
+                dest.Log(cppDiagnosticMessage);
+            }
+        }
+
         protected void LogMessage(CppLogMessageType type, string message, CppSourceLocation? location = null)
         {
             // Try to recover a proper location
