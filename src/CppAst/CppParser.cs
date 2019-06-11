@@ -16,6 +16,8 @@ namespace CppAst
     /// </summary>
     public static class CppParser
     {
+        public const string CppAstRootFileName = "CppAstRoot.h";
+
         /// <summary>
         /// Parse the specified C++ text in-memory.
         /// </summary>
@@ -120,47 +122,51 @@ namespace CppAst
                 var builder = new CppModelBuilder { AutoSquashTypedef = options.AutoSquashTypedef };
                 var compilation = builder.RootCompilation;
 
-                var writeToTemp = cppFiles.All(f => f.Content == null);
-
-                string rootFileName = null;
+                string rootFileName = CppAstRootFileName;
                 string rootFileContent = null;
                 
-                if (writeToTemp)
+                // Build the root input source file
+                var tempBuilder = new StringBuilder();
+                if (options.PreHeaderText != null)
                 {
-                    var tempFileName = Path.GetTempFileName() + "_cppast.h";
-                    var tempBuilder = new StringBuilder();
-                    foreach (var file in cppFiles)
+                    tempBuilder.AppendLine(options.PreHeaderText);
+                }
+
+                foreach (var file in cppFiles)
+                {
+                    if (file.Content != null)
+                    {
+                        tempBuilder.AppendLine(file.Content);
+                    }
+                    else
                     {
                         var filePath = Path.Combine(Environment.CurrentDirectory, file.Filename);
                         tempBuilder.AppendLine($"#include \"{filePath}\"");
                     }
-                    File.WriteAllText(tempFileName, tempBuilder.ToString());
-                    rootFileName = tempFileName;
                 }
-                else
+
+                if (options.PostHeaderText != null)
                 {
-                    rootFileName = cppFiles[0].Filename ?? "content";
-                    rootFileContent = cppFiles[0].Content;
+                    tempBuilder.AppendLine(options.PostHeaderText);
                 }
+
+                // TODO: Add debug
+                rootFileContent = tempBuilder.ToString();
+
+                compilation.InputText = rootFileContent;
 
                 {
                     CXTranslationUnit translationUnit;
                     CXErrorCode translationUnitError;
 
-                    if (rootFileContent == null)
+                    translationUnitError = CXTranslationUnit.Parse(createIndex, rootFileName, argumentsArray, new CXUnsavedFile[] { new CXUnsavedFile()
                     {
-                        translationUnitError = CXTranslationUnit.Parse(createIndex, rootFileName, argumentsArray, Array.Empty<CXUnsavedFile>(), translationFlags, out translationUnit);
-                    }
-                    else
-                    {
-                        translationUnitError = CXTranslationUnit.Parse(createIndex, rootFileName, argumentsArray, new CXUnsavedFile[] { new CXUnsavedFile()
-                        {
-                            Contents = rootFileContent,
-                            Filename = rootFileName,
-                            Length = (uint)Encoding.UTF8.GetByteCount(rootFileContent)
+                        Contents = rootFileContent,
+                        Filename = rootFileName,
+                        Length = (uint)Encoding.UTF8.GetByteCount(rootFileContent)
 
-                        }}, translationFlags, out translationUnit);
-                    }
+                    }}, translationFlags, out translationUnit);
+
                     bool skipProcessing = false;
 
                     if (translationUnitError != CXErrorCode.CXError_Success)

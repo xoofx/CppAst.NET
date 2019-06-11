@@ -25,6 +25,11 @@ namespace CppAst
         public CppDiagnosticBag Diagnostics { get; }
 
         /// <summary>
+        /// Gets the final input header text used by this compilation.
+        /// </summary>
+        public string InputText { get; set; }
+
+        /// <summary>
         /// Gets a boolean indicating whether this instance has errors. See <see cref="Diagnostics"/> for more details.
         /// </summary>
         public bool HasErrors => Diagnostics.HasErrors;
