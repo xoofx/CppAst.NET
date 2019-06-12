@@ -180,18 +180,22 @@ namespace CppAst
                         {
                             using (var diagnostic = translationUnit.GetDiagnostic(i))
                             {
+
+                                CppSourceLocation location;
+                                var message = GetMessageAndLocation(rootFileContent, diagnostic, out location);
+
                                 switch (diagnostic.Severity)
                                 {
                                     case CXDiagnosticSeverity.CXDiagnostic_Ignored:
                                     case CXDiagnosticSeverity.CXDiagnostic_Note:
-                                        compilation.Diagnostics.Info(diagnostic.ToString(), CppModelBuilder.GetSourceLocation(diagnostic.Location));
+                                        compilation.Diagnostics.Info(message, location);
                                         break;
                                     case CXDiagnosticSeverity.CXDiagnostic_Warning:
-                                        compilation.Diagnostics.Warning(diagnostic.ToString(), CppModelBuilder.GetSourceLocation(diagnostic.Location));
+                                        compilation.Diagnostics.Warning(message, location);
                                         break;
                                     case CXDiagnosticSeverity.CXDiagnostic_Error:
                                     case CXDiagnosticSeverity.CXDiagnostic_Fatal:
-                                        compilation.Diagnostics.Error(diagnostic.ToString(), CppModelBuilder.GetSourceLocation(diagnostic.Location));
+                                        compilation.Diagnostics.Error(message, location);
                                         skipProcessing = true;
                                         break;
                                 }
@@ -214,6 +218,38 @@ namespace CppAst
 
                 return compilation;
             }
+        }
+
+        private static string GetMessageAndLocation(string rootContent, CXDiagnostic diagnostic, out CppSourceLocation location)
+        {
+            var builder = new StringBuilder();
+            builder.Append(diagnostic.ToString());
+            location = CppModelBuilder.GetSourceLocation(diagnostic.Location);
+            if (location.File == CppAstRootFileName)
+            {
+                var reader = new StringReader(rootContent);
+                var lines = new List<string>();
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    lines.Add(line);
+                }
+
+                var lineIndex = location.Line - 1;
+                if (lineIndex < lines.Count)
+                {
+                    builder.AppendLine();
+                    builder.AppendLine(lines[lineIndex]);
+                    for (int i = 0; i < location.Column - 1; i++)
+                    {
+                        builder.Append(i + 1 == location.Column - 1 ? "-" : " ");
+                    }
+
+                    builder.AppendLine("^-");
+                }
+            }
+
+            return builder.ToString();
         }
 
         private static string GetTripleFromOptions(CppParserOptions options)
