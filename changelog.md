@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0 (12 Jun 2019)
+- Add support for adding a pre and post header text for parsing
+- Add detailed error message with extracted source line for root parser input
+
 ## 0.4.0 (08 Jun 2019)
 - Add support for parsing parameter names for function prototypes
 - Improve ToString of comments with new lines
