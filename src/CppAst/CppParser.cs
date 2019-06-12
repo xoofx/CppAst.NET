@@ -16,7 +16,7 @@ namespace CppAst
     /// </summary>
     public static class CppParser
     {
-        public const string CppAstRootFileName = "CppAstRoot.h";
+        public const string CppAstRootFileName = "cppast.input";
 
         /// <summary>
         /// Parse the specified C++ text in-memory.
