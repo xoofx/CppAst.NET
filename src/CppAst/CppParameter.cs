@@ -25,7 +25,7 @@ namespace CppAst
         /// <summary>
         /// Gets the type of this parameter.
         /// </summary>
-        public CppType Type { get; }
+        public CppType Type { get; set; }
 
         /// <summary>
         /// Gets the name of this parameter.

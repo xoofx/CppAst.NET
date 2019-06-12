@@ -35,7 +35,7 @@ namespace CppAst
         /// <summary>
         /// Gets the type of this field/variable.
         /// </summary>
-        public CppType Type { get; }
+        public CppType Type { get; set; }
 
         /// <inheritdoc />
         public string Name { get; set; }
