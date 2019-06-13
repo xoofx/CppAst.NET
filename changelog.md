@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.1 (13 Jun 2019)
+- Make CppField.Type and CppParameter.Type writeable
+
 ## 0.5.0 (12 Jun 2019)
 - Add support for adding a pre and post header text for parsing
 - Add detailed error message with extracted source line for root parser input
