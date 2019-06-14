@@ -994,7 +994,8 @@ namespace CppAst
             var cppFunction = new CppFunction(functionName)
             {
                 Visibility = contextContainer.CurrentVisibility,
-                StorageQualifier = GetStorageQualifier(cursor)
+                StorageQualifier = GetStorageQualifier(cursor),
+                LinkageKind = GetLinkage(cursor.Linkage),
             };
 
             if (cursor.Kind == CXCursorKind.CXCursor_Constructor)
@@ -1065,7 +1066,26 @@ namespace CppAst
             return cppFunction;
         }
 
-        private CppCallingConvention GetCallingConvention(CXType type)
+        private static CppLinkageKind GetLinkage(CXLinkageKind link)
+        {
+            switch (link)
+            {
+                case CXLinkageKind.CXLinkage_Invalid:
+                    return CppLinkageKind.Invalid;
+                case CXLinkageKind.CXLinkage_NoLinkage:
+                    return CppLinkageKind.NoLinkage;
+                case CXLinkageKind.CXLinkage_Internal:
+                    return CppLinkageKind.Internal;
+                case CXLinkageKind.CXLinkage_UniqueExternal:
+                    return CppLinkageKind.UniqueExternal;
+                case CXLinkageKind.CXLinkage_External:
+                    return CppLinkageKind.External;
+                default:
+                    return CppLinkageKind.Invalid;
+            }
+        }
+
+        private static CppCallingConvention GetCallingConvention(CXType type)
         {
             var callingConv = type.FunctionTypeCallingConv;
             switch (callingConv)

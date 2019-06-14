@@ -57,8 +57,8 @@ namespace CppAst
                     if (attr.IsPublicExport()) return true;
                 }
             }
-            return false;
-        }
 
+            return function.LinkageKind == CppLinkageKind.External || function.LinkageKind == CppLinkageKind.UniqueExternal;
+        }
     }
 }
