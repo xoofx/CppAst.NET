@@ -53,8 +53,8 @@ enum Enum0
                     var expectedResults = new List<(string, Type)>()
                     {
                         ("This is a comment of Enum0", typeof(CppEnum)),
-                        ("This is a comment of f0", typeof(CppField)),
                         ("This is a comment of MyStruct0", typeof(CppClass)),
+                        ("This is a comment of f0", typeof(CppField)),
                         ("This is a comment of function0", typeof(CppFunction)),
                         ("This is a comment of Enum0_item0", typeof(CppEnumItem)),
                         ("This is a comment of Enum0_item1", typeof(CppEnumItem)),
