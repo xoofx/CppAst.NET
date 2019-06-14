@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.3 (14 Jun 2019)
+- Add CppFunction.LinkageKind and CppLinkageKind
+
 ## 0.5.2 (14 Jun 2019)
 - Use empty string for anonymous name (e.g structs, parameter names) instead of filling with a predefined name
 
