@@ -112,18 +112,22 @@ namespace CppAst
             switch (ClassKind)
             {
                 case CppClassKind.Class:
-                    builder.Append("class ");
+                    builder.Append("class");
                     break;
                 case CppClassKind.Struct:
-                    builder.Append("struct ");
+                    builder.Append("struct");
                     break;
                 case CppClassKind.Union:
-                    builder.Append("union ");
+                    builder.Append("union");
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            builder.Append(Name);
+
+            if (string.IsNullOrEmpty(Name))
+            {
+                builder.Append(Name);
+            }
 
             if (BaseTypes.Count > 0)
             {

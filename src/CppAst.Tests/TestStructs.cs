@@ -75,5 +75,31 @@ public:
                 }
             );
         }
+
+
+        [Test]
+        public void TestAnonymous()
+        {
+            ParseAssert(@"
+struct
+{
+    int a;
+    int b;
+} c;
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(1, compilation.Classes.Count);
+
+                    {
+                        var cppStruct = compilation.Classes[0];
+                        Assert.AreEqual(string.Empty, cppStruct.Name);
+                        Assert.AreEqual(2, cppStruct.Fields.Count);
+                    }
+                }
+            );
+        }
     }
 }

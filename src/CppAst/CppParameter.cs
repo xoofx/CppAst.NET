@@ -62,6 +62,11 @@ namespace CppAst
 
         public override string ToString()
         {
+            if (string.IsNullOrEmpty(Name))
+            {
+                return InitExpression != null ? $"{Type.GetDisplayName()} = {InitExpression}" : $"{Type.GetDisplayName()}";
+            }
+
             return InitExpression != null ? $"{Type.GetDisplayName()} {Name} = {InitExpression}" : $"{Type.GetDisplayName()} {Name}";
         }
     }

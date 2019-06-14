@@ -1036,9 +1036,6 @@ namespace CppAst
                     case CXCursorKind.CXCursor_ParmDecl:
                         var argName = GetCursorSpelling(argCursor);
 
-                        if (string.IsNullOrEmpty(argName))
-                            argName = "__arg" + i;
-
                         var parameter = new CppParameter(GetCppType(argCursor.Type.Declaration, argCursor.Type, functionCursor, clientData), argName);
 
                         cppFunction.Parameters.Add(parameter);
@@ -1435,13 +1432,6 @@ namespace CppAst
         private string GetCursorSpelling(CXCursor cursor)
         {
             var name = cursor.Spelling.ToString();
-
-            if (string.IsNullOrWhiteSpace(name) && cursor.IsAnonymous)
-            {
-                cursor.Location.GetFileLocation(out var file, out var _, out var _, out var offset);
-                var fileName = Path.GetFileNameWithoutExtension(file.Name.ToString());
-                name = $"__Anonymous{cursor.Type.KindSpelling}_{fileName}_{offset}";
-            }
             return name;
         }
 

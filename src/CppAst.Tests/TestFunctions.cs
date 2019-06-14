@@ -10,12 +10,13 @@ namespace CppAst.Tests
             ParseAssert(@"
 void function0();
 int function1(int a, float b);
+float function2(int);
 ",
                 compilation =>
                 {
                     Assert.False(compilation.HasErrors);
 
-                    Assert.AreEqual(2, compilation.Functions.Count);
+                    Assert.AreEqual(3, compilation.Functions.Count);
 
                     {
                         var cppFunction = compilation.Functions[0];
@@ -35,6 +36,15 @@ int function1(int a, float b);
                         Assert.AreEqual(CppTypeKind.Primitive, cppFunction.Parameters[1].Type.TypeKind);
                         Assert.AreEqual(CppPrimitiveKind.Float, ((CppPrimitiveType) cppFunction.Parameters[1].Type).Kind);
                         Assert.AreEqual("int", cppFunction.ReturnType.ToString());
+                    }
+                    {
+                        var cppFunction = compilation.Functions[2];
+                        Assert.AreEqual("function2", cppFunction.Name);
+                        Assert.AreEqual(1, cppFunction.Parameters.Count);
+                        Assert.AreEqual(string.Empty, cppFunction.Parameters[0].Name);
+                        Assert.AreEqual(CppTypeKind.Primitive, cppFunction.Parameters[0].Type.TypeKind);
+                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType)cppFunction.Parameters[0].Type).Kind);
+                        Assert.AreEqual("float", cppFunction.ReturnType.ToString());
                     }
                 }
             );
