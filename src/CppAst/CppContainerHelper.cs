@@ -17,17 +17,17 @@ namespace CppAst
                 yield return item;
             }
 
-            foreach (var item in container.Fields)
-            {
-                yield return item;
-            }
-
             foreach (var item in container.Classes)
             {
                 yield return item;
             }
 
             foreach (var item in container.Typedefs)
+            {
+                yield return item;
+            }
+
+            foreach (var item in container.Fields)
             {
                 yield return item;
             }
@@ -50,17 +50,17 @@ namespace CppAst
                 yield return item;
             }
 
-            foreach (var item in container.Fields)
-            {
-                yield return item;
-            }
-
             foreach (var item in container.Classes)
             {
                 yield return item;
             }
 
             foreach (var item in container.Typedefs)
+            {
+                yield return item;
+            }
+            
+            foreach (var item in container.Fields)
             {
                 yield return item;
             }
