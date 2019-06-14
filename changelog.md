@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.2 (14 Jun 2019)
+- Use empty string for anonymous name (e.g structs, parameter names) instead of filling with a predefined name
+
 ## 0.5.1 (13 Jun 2019)
 - Make CppField.Type and CppParameter.Type writeable
 
