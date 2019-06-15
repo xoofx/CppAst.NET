@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.5 (15 Jun 2019)
+- Add `CppGlobalDeclarationContainer.FindByName` methods
+
 ## 0.5.4 (15 Jun 2019)
 - Add CppComment.ChildrenToString
 
