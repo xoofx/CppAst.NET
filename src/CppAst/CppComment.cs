@@ -66,6 +66,13 @@ namespace CppAst
             ToString(builder);
             return builder.ToString();
         }
+
+        public string ChildrenToString()
+        {
+            var builder = new StringBuilder();
+            ChildrenToString(builder);
+            return builder.ToString();            
+        }
     }
 
     /// <summary>
