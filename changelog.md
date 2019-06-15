@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.4 (15 Jun 2019)
+- Add CppComment.ChildrenToString
+
 ## 0.5.3 (14 Jun 2019)
 - Add CppFunction.LinkageKind and CppLinkageKind
 
