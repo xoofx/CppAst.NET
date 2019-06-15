@@ -23,6 +23,9 @@ float function2(int);
                         Assert.AreEqual("function0", cppFunction.Name);
                         Assert.AreEqual(0, cppFunction.Parameters.Count);
                         Assert.AreEqual("void", cppFunction.ReturnType.ToString());
+                        
+                        var cppFunction1 = compilation.FindByName<CppFunction>("function0");
+                        Assert.AreEqual(cppFunction, cppFunction1);
                     }
 
                     {
@@ -36,6 +39,9 @@ float function2(int);
                         Assert.AreEqual(CppTypeKind.Primitive, cppFunction.Parameters[1].Type.TypeKind);
                         Assert.AreEqual(CppPrimitiveKind.Float, ((CppPrimitiveType) cppFunction.Parameters[1].Type).Kind);
                         Assert.AreEqual("int", cppFunction.ReturnType.ToString());
+
+                        var cppFunction1 = compilation.FindByName<CppFunction>("function1");
+                        Assert.AreEqual(cppFunction, cppFunction1);
                     }
                     {
                         var cppFunction = compilation.Functions[2];
@@ -45,6 +51,11 @@ float function2(int);
                         Assert.AreEqual(CppTypeKind.Primitive, cppFunction.Parameters[0].Type.TypeKind);
                         Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType)cppFunction.Parameters[0].Type).Kind);
                         Assert.AreEqual("float", cppFunction.ReturnType.ToString());
+
+                        var cppFunction1 = compilation.FindByName<CppFunction>("function2");
+                        Assert.AreEqual(cppFunction, cppFunction1);
+                    }
+                    {
                     }
                 }
             );

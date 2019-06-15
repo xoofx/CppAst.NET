@@ -48,6 +48,9 @@ enum class Enum2 : short
                         Assert.AreEqual(0, cppEnum.Items[0].Value);
                         Assert.AreEqual(1, cppEnum.Items[1].Value);
                         Assert.AreEqual(2, cppEnum.Items[2].Value);
+                        
+                        var cppEnum1 = compilation.FindByName<CppEnum>("Enum0");
+                        Assert.AreEqual(cppEnum, cppEnum1);
                     }
 
                     {
