@@ -12,12 +12,13 @@ int var0;
 int var1;
 extern int var2;
 const int var3 = 123;
+const unsigned int var4 = (unsigned int) 125;
 ",
                 compilation =>
                 {
                     Assert.False(compilation.HasErrors);
 
-                    Assert.AreEqual(4, compilation.Fields.Count);
+                    Assert.AreEqual(5, compilation.Fields.Count);
 
                     {
                         var cppField = compilation.Fields[0];
@@ -53,6 +54,15 @@ const int var3 = 123;
                         Assert.AreEqual(CppTypeQualifier.Const, ((CppQualifiedType) cppField.Type).Qualifier);
                         Assert.NotNull(cppField.InitExpression);
                         Assert.AreEqual("123", cppField.InitExpression.ToString());
+                    }
+                    
+                    {
+                        var cppField = compilation.Fields[4];
+                        Assert.AreEqual("var4", cppField.Name);
+                        Assert.AreEqual(CppTypeKind.Qualified, cppField.Type.TypeKind);
+                        Assert.AreEqual(CppTypeQualifier.Const, ((CppQualifiedType) cppField.Type).Qualifier);
+                        Assert.NotNull(cppField.InitExpression);
+                        Assert.AreEqual("(unsigned int)125", cppField.InitExpression.ToString());
                     }
                 }
             );

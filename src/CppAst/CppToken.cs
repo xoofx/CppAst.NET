@@ -50,6 +50,7 @@ namespace CppAst
                     builder.Append(" ");
                 }
                 builder.Append(token.Text);
+                previousKind = token.Kind;
             }
 
             return builder.ToString();
