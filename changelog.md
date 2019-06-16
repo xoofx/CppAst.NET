@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.6 (16 Jun 2019)
+- Fix tokenization with consecutive identifiers/keywords
+
 ## 0.5.5 (15 Jun 2019)
 - Add `CppGlobalDeclarationContainer.FindByName` methods
 
