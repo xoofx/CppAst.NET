@@ -627,7 +627,7 @@ namespace CppAst
         private CppField VisitFieldOrVariable(CppContainerContext containerContext, CXCursor cursor, CXCursor parent, CXClientData data)
         {
             var fieldName = GetCursorSpelling(cursor);
-            var type = GetCppType(cursor.Type.Declaration, cursor.Type, parent, data);
+            var type = GetCppType(cursor.Type.Declaration, cursor.Type, cursor, data);
 
             var cppField = new CppField(type, fieldName)
             {
