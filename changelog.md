@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.7 (18 Jun 2019)
+- Fix the type of fields with function pointers
+
 ## 0.5.6 (16 Jun 2019)
 - Fix tokenization with consecutive identifiers/keywords
 
