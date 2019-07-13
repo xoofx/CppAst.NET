@@ -2,6 +2,7 @@
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -49,6 +50,12 @@ namespace CppAst
             return base.Equals(other) && Equals(Parent, other.Parent) && Equals(Name, other.Name);
         }
 
+        public override int SizeOf
+        {
+            get => IntegerType?.SizeOf ?? 0; 
+            set => throw new InvalidOperationException("Cannot set the SizeOf an enum as it is determined only by the SizeOf of its underlying IntegerType");
+        }
+
         public override bool Equals(object obj)
         {
             return ReferenceEquals(this, obj) || obj is CppEnum other && Equals(other);
@@ -70,7 +77,7 @@ namespace CppAst
             return this;
         }
 
-        public IEnumerable<ICppDeclaration> Children()
+        public override IEnumerable<ICppDeclaration> Children()
         {
             foreach (var item in Items)
             {

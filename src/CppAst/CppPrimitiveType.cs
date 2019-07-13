@@ -81,6 +81,8 @@ namespace CppAst
         /// </summary>
         public static readonly CppPrimitiveType LongDouble = new CppPrimitiveType(CppPrimitiveKind.LongDouble);
 
+        private readonly int _sizeOf;
+
         /// <summary>
         /// Base constructor of a primitive
         /// </summary>
@@ -88,12 +90,64 @@ namespace CppAst
         private CppPrimitiveType(CppPrimitiveKind kind) : base(CppTypeKind.Primitive)
         {
             Kind = kind;
+            UpdateSize(out _sizeOf);
         }
 
         /// <summary>
         /// The kind of primitive.
         /// </summary>
         public CppPrimitiveKind Kind { get; }
+
+        private void UpdateSize(out int sizeOf)
+        {
+            switch (Kind)
+            {
+                case CppPrimitiveKind.Void:
+                    sizeOf = 0;
+                    break;
+                case CppPrimitiveKind.Bool:
+                    sizeOf = 1;
+                    break;
+                case CppPrimitiveKind.WChar:
+                    sizeOf = 2;
+                    break;
+                case CppPrimitiveKind.Char:
+                    sizeOf = 1;
+                    break;
+                case CppPrimitiveKind.Short:
+                    sizeOf = 2;
+                    break;
+                case CppPrimitiveKind.Int:
+                    sizeOf = 4;
+                    break;
+                case CppPrimitiveKind.LongLong:
+                    sizeOf = 8;
+                    break;
+                case CppPrimitiveKind.UnsignedChar:
+                    sizeOf = 1;
+                    break;
+                case CppPrimitiveKind.UnsignedShort:
+                    sizeOf = 2;
+                    break;
+                case CppPrimitiveKind.UnsignedInt:
+                    sizeOf = 4;
+                    break;
+                case CppPrimitiveKind.UnsignedLongLong:
+                    sizeOf = 8;
+                    break;
+                case CppPrimitiveKind.Float:
+                    sizeOf = 4;
+                    break;
+                case CppPrimitiveKind.Double:
+                    sizeOf = 8;
+                    break;
+                case CppPrimitiveKind.LongDouble:
+                    sizeOf = 8;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
 
         public override string ToString()
         {
@@ -135,6 +189,13 @@ namespace CppAst
         private bool Equals(CppPrimitiveType other)
         {
             return base.Equals(other) && Kind == other.Kind;
+        }
+
+        public override int SizeOf
+        {
+            get => _sizeOf;
+            
+            set => throw new InvalidOperationException("Cannot set the SizeOf of a primitive type");
         }
 
         public override bool Equals(object obj)

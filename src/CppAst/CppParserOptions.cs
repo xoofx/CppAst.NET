@@ -31,7 +31,7 @@ namespace CppAst
             ParseComments = true;
 
             // Default triple targets
-            TargetCpu = CppTargetCpu.X86;
+            TargetCpu = IntPtr.Size == 8 ? CppTargetCpu.X86_64 : CppTargetCpu.X86;
             TargetCpuSub = string.Empty;
             TargetVendor = "pc";
             TargetSystem = "windows";

@@ -164,6 +164,7 @@ namespace CppAst
             {
                 cppStruct.Attributes =  ParseAttributes(cursor);
                 cppStruct.IsDefinition = true;
+                cppStruct.SizeOf = (int)cursor.Type.SizeOf;
                 context.IsChildrenVisited = true;
                 cursor.VisitChildren(VisitMember, data);
             }
@@ -1527,7 +1528,7 @@ namespace CppAst
                     return CppPrimitiveType.LongDouble;
 
                 case CXTypeKind.CXType_Pointer:
-                    return new CppPointerType(GetCppType(type.PointeeType.Declaration, type.PointeeType, parent, data));
+                    return new CppPointerType(GetCppType(type.PointeeType.Declaration, type.PointeeType, parent, data)) { SizeOf = (int)type.SizeOf };
 
                 case CXTypeKind.CXType_LValueReference:
                     return new CppReferenceType(GetCppType(type.PointeeType.Declaration, type.PointeeType, parent, data));
@@ -1566,7 +1567,7 @@ namespace CppAst
 
                 case CXTypeKind.CXType_Unexposed:
                 {
-                    return new CppUnexposedType(type.ToString());
+                    return new CppUnexposedType(type.ToString())  { SizeOf = (int)type.SizeOf };
                 }
 
                 case CXTypeKind.CXType_Attributed:
@@ -1575,7 +1576,7 @@ namespace CppAst
                 default:
                 {
                     WarningUnhandled(cursor, parent, type);
-                    return new CppUnexposedType(type.ToString());
+                    return new CppUnexposedType(type.ToString()) { SizeOf = (int)type.SizeOf };
                 }
             }
         }

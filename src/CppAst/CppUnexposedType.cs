@@ -33,6 +33,8 @@ namespace CppAst
             return base.Equals(other) && Name.Equals(other.Name);
         }
 
+        public override int SizeOf { get; set; }
+
         public override bool Equals(object obj)
         {
             return ReferenceEquals(this, obj) || obj is CppTemplateParameterType other && Equals(other);

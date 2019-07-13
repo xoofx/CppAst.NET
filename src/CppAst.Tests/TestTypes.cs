@@ -2,6 +2,7 @@
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
+using System;
 using System.Linq;
 using NUnit.Framework;
 
@@ -30,7 +31,7 @@ t1* f4;
 
                     var types = new CppType[]
                     {
-                        new CppReferenceType(CppPrimitiveType.Int),
+                        new CppReferenceType(CppPrimitiveType.Int) ,
                         new CppQualifiedType(CppTypeQualifier.Const, CppPrimitiveType.Float),
 
                         new CppPointerType(CppPrimitiveType.Char),
@@ -43,12 +44,13 @@ t1* f4;
                                 new CppParameter(CppPrimitiveType.Int, "a"),
                                 new CppParameter(CppPrimitiveType.Float, "b"),
                             }
-                        }),
-                        new CppPointerType(new CppQualifiedType(CppTypeQualifier.Const, CppPrimitiveType.Float)),
+                        }) { SizeOf = IntPtr.Size },
+                        new CppPointerType(new CppQualifiedType(CppTypeQualifier.Const, CppPrimitiveType.Float))
                     };
 
                     var canonicalTypes = compilation.Typedefs.Select(x => x.GetCanonicalType()).Concat(compilation.Fields.Select(x => x.Type.GetCanonicalType())).ToList();
                     Assert.AreEqual(types, canonicalTypes);
+                    Assert.AreEqual(types.Select(x => x.SizeOf), canonicalTypes.Select(x => x.SizeOf));
                 }
             );
         }

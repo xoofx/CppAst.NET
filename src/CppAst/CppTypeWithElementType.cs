@@ -23,6 +23,8 @@ namespace CppAst
             return base.Equals(other) && ElementType.Equals(other.ElementType);
         }
 
+        public override int SizeOf { get; set; }
+
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj)) return false;

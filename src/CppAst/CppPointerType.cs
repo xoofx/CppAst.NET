@@ -17,6 +17,7 @@ namespace CppAst
         /// <param name="elementType">The element type pointed to.</param>
         public CppPointerType(CppType elementType) : base(CppTypeKind.Pointer, elementType)
         {
+            SizeOf = IntPtr.Size;
         }
 
         public override string ToString()

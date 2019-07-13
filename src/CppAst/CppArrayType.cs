@@ -26,6 +26,11 @@ namespace CppAst
         /// </summary>
         public int Size { get; }
 
+        public override int SizeOf
+        {
+            get => Size * ElementType.SizeOf;
+            set => throw new InvalidOperationException("Cannot set the SizeOf an array type. The SizeOf is calculated by the SizeOf its ElementType and the number of elements in the fixed array"); }
+
         public bool Equals(CppArrayType other)
         {
             if (ReferenceEquals(null, other)) return false;

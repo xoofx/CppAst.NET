@@ -19,6 +19,12 @@ namespace CppAst
         {
         }
 
+        public override int SizeOf
+        {
+            get => ElementType.SizeOf;
+            set => throw new InvalidOperationException("Cannot override the SizeOf of a Reference type");
+        }
+
         public override string ToString()
         {
             return $"{ElementType.GetDisplayName()}&";

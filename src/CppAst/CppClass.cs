@@ -85,6 +85,8 @@ namespace CppAst
             return base.Equals(other) && Equals(Parent, other.Parent) && Name.Equals(other.Name);
         }
 
+        public override int SizeOf { get; set; }
+
         public override bool Equals(object obj)
         {
             return ReferenceEquals(this, obj) || obj is CppClass other && Equals(other);

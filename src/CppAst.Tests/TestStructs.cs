@@ -39,6 +39,7 @@ public:
                         var cppStruct = compilation.Classes[0];
                         Assert.AreEqual("Struct0", cppStruct.Name);
                         Assert.AreEqual(0, cppStruct.Fields.Count);
+                        Assert.AreEqual(sizeof(byte), cppStruct.SizeOf);
                     }
 
                     {
@@ -48,6 +49,7 @@ public:
                         Assert.AreEqual(1, cppStruct.BaseTypes.Count);
                         Assert.True(cppStruct.BaseTypes[0].Type is CppClass);
                         Assert.True(ReferenceEquals(compilation.Classes[0], cppStruct.BaseTypes[0].Type));
+                        Assert.AreEqual(sizeof(byte), cppStruct.SizeOf);
                     }
 
                     {
@@ -57,6 +59,7 @@ public:
                         Assert.AreEqual("field0", cppStruct.Fields[0].Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppStruct.Fields[0].Type.TypeKind);
                         Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType) cppStruct.Fields[0].Type).Kind);
+                        Assert.AreEqual(sizeof(int), cppStruct.SizeOf);
                     }
 
                     {
@@ -71,6 +74,7 @@ public:
                         Assert.AreEqual(CppTypeKind.Primitive, cppStruct.Fields[1].Type.TypeKind);
                         Assert.AreEqual(CppPrimitiveKind.Float, ((CppPrimitiveType) cppStruct.Fields[1].Type).Kind);
                         Assert.AreEqual(CppVisibility.Public, cppStruct.Fields[1].Visibility);
+                        Assert.AreEqual(sizeof(int) + sizeof(float), cppStruct.SizeOf);
                     }
                 }
             );

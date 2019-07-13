@@ -39,6 +39,12 @@ namespace CppAst
             return base.Equals(other) && string.Equals(Name, other.Name);
         }
 
+        public override int SizeOf
+        {
+            get => ElementType.SizeOf;
+            set => throw new InvalidOperationException("Cannot set the SizeOf a TypeDef. The SizeOf is determined by the underlying ElementType");
+        }
+
         public override bool Equals(object obj)
         {
             return ReferenceEquals(this, obj) || obj is CppTypedef other && Equals(other);

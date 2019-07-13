@@ -19,6 +19,7 @@ namespace CppAst
         public CppQualifiedType(CppTypeQualifier qualifier, CppType elementType) : base(CppTypeKind.Qualified, elementType)
         {
             Qualifier = qualifier;
+            SizeOf = elementType.SizeOf;
         }
 
         /// <summary>

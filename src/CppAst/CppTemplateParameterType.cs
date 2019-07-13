@@ -30,6 +30,13 @@ namespace CppAst
             return base.Equals(other) && Name.Equals(other.Name);
         }
 
+        public override int SizeOf
+        {
+            get => 0;
+            
+            set => throw new InvalidOperationException("This type does not support SizeOf"); 
+        }
+
         public override bool Equals(object obj)
         {
             return ReferenceEquals(this, obj) || obj is CppTemplateParameterType other && Equals(other);
