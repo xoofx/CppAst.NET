@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.8 (16 July 2019)
+- Add SizeOf
+
 ## 0.5.7 (18 Jun 2019)
 - Fix the type of fields with function pointers
 
