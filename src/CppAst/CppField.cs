@@ -39,6 +39,11 @@ namespace CppAst
 
         /// <inheritdoc />
         public string Name { get; set; }
+        
+        /// <summary>
+        /// Gets or sets a boolean indicating if this field was created from an anonymous type
+        /// </summary>
+        public bool IsAnonymous { get; set; }
 
         /// <summary>
         /// Gets the associated init value (either an integer or a string...)

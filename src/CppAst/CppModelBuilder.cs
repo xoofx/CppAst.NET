@@ -213,6 +213,15 @@ namespace CppAst
                 case CXCursorKind.CXCursor_StructDecl:
                 case CXCursorKind.CXCursor_UnionDecl:
                     element = VisitClassDecl(cursor, parent, data);
+
+                    if (cursor.IsAnonymous && element is CppType cppFieldType)
+                    {
+                        var containerContext = GetOrCreateDeclarationContainer(parent, data);
+                        if (containerContext.DeclarationContainer is CppClass)
+                        {
+                            AddAnonymousTypeWithField(containerContext, cursor, cppFieldType);
+                        }
+                    }
                     break;
 
                 case CXCursorKind.CXCursor_EnumDecl:
@@ -650,6 +659,19 @@ namespace CppAst
             }
 
             return cppField;
+        }
+
+        private void AddAnonymousTypeWithField(CppContainerContext containerContext, CXCursor cursor, CppType fieldType)
+        {
+            var fieldName = "__anonymous__" + containerContext.DeclarationContainer.Fields.Count;
+            var cppField = new CppField(fieldType, fieldName)
+            {
+                Visibility = containerContext.CurrentVisibility,
+                StorageQualifier = GetStorageQualifier(cursor),
+                IsAnonymous = true,
+            };
+            containerContext.DeclarationContainer.Fields.Add(cppField);
+            cppField.Attributes = ParseAttributes(cursor);
         }
 
         private void VisitInitValue(CXCursor cursor, CXClientData data, out CppExpression expression, out CppValue value)
