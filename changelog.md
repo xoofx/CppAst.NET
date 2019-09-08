@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.9 (18 Jun 2019)
+## 0.5.9 (08 Sep 2019)
 - Add CppField.IsAnonymous
 - Add bitfield information to CppField
 - Fix enum canonical type to return the integer type
