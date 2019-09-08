@@ -645,10 +645,11 @@ namespace CppAst
             var cppField = new CppField(type, fieldName)
             {
                 Visibility = containerContext.CurrentVisibility,
-                StorageQualifier = GetStorageQualifier(cursor)
+                StorageQualifier = GetStorageQualifier(cursor),
+                IsBitField =  cursor.IsBitField,
+                BitFieldWidth =  cursor.FieldDeclBitWidth,
             };
             containerContext.DeclarationContainer.Fields.Add(cppField);
-
             cppField.Attributes = ParseAttributes(cursor);
 
             if (cursor.Kind == CXCursorKind.CXCursor_VarDecl)
