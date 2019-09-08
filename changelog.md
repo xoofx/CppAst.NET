@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.9 (18 Jun 2019)
+- Add CppField.IsAnonymous
+- Add bitfield information to CppField
+- Fix enum canonical type to return the integer type
+- Add more flags to CppFunctionFlags to detect a C++ method/inline/constructor/destructor 
+
 ## 0.5.8 (16 July 2019)
 - Add SizeOf
 
