@@ -1013,6 +1013,26 @@ namespace CppAst
                 container.Functions.Add(cppFunction);
             }
 
+            if (cursor.Kind == CXCursorKind.CXCursor_CXXMethod)
+            {
+                cppFunction.Flags |= CppFunctionFlags.Method;
+            }
+            
+            if (cursor.Kind == CXCursorKind.CXCursor_Constructor)
+            {
+                cppFunction.Flags |= CppFunctionFlags.Constructor;
+            }
+
+            if (cursor.Kind == CXCursorKind.CXCursor_Destructor)
+            {
+                cppFunction.Flags |= CppFunctionFlags.Destructor;
+            }
+
+            if (cursor.IsFunctionInlined)
+            {
+                cppFunction.Flags |= CppFunctionFlags.Inline;
+            }
+
             if (cursor.CXXMethod_IsConst)
             {
                 cppFunction.Flags |= CppFunctionFlags.Const;
@@ -1020,6 +1040,10 @@ namespace CppAst
             if (cursor.CXXMethod_IsDefaulted)
             {
                 cppFunction.Flags |= CppFunctionFlags.Defaulted;
+            }
+            if (cursor.CXXMethod_IsVirtual)
+            {
+                cppFunction.Flags |= CppFunctionFlags.Virtual;
             }
             if (cursor.CXXMethod_IsPureVirtual)
             {
