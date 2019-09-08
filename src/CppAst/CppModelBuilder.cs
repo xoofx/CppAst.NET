@@ -81,7 +81,10 @@ namespace CppAst
 
                 case CXCursorKind.CXCursor_EnumDecl:
                     Debug.Assert(parent != null);
-                    var cppEnum = new CppEnum(GetCursorSpelling(cursor));
+                    var cppEnum = new CppEnum(GetCursorSpelling(cursor))
+                    {
+                        IsAnonymous = cursor.IsAnonymous
+                    };
                     parentDeclarationContainer.Enums.Add(cppEnum);
                     symbol = cppEnum;
                     break;

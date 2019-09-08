@@ -44,6 +44,8 @@ namespace CppAst
         /// Gets the definition of the enum items.
         /// </summary>
         public CppContainerList<CppEnumItem> Items { get; }
+        
+        public bool IsAnonymous { get; set; }
 
         private bool Equals(CppEnum other)
         {
