@@ -74,7 +74,7 @@ namespace CppAst
 
         public override CppType GetCanonicalType()
         {
-            return this;
+            return IntegerType;
         }
 
         public override IEnumerable<ICppDeclaration> Children()
