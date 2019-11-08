@@ -13,12 +13,13 @@ namespace CppAst.Tests
 #define MACRO2(x)
 #define MACRO3(x) x + 1
 #define MACRO4 (x)
+#define MACRO5 1 /* with a comment */
 ",
                 compilation =>
                 {
                     Assert.False(compilation.HasErrors);
 
-                    Assert.AreEqual(5, compilation.Macros.Count);
+                    Assert.AreEqual(6, compilation.Macros.Count);
 
                     {
                         var macro = compilation.Macros[0];
@@ -77,6 +78,19 @@ namespace CppAst.Tests
                         Assert.AreEqual(CppTokenKind.Punctuation, macro.Tokens[0].Kind);
                         Assert.AreEqual(CppTokenKind.Identifier, macro.Tokens[1].Kind);
                         Assert.AreEqual(CppTokenKind.Punctuation, macro.Tokens[2].Kind);
+                    }
+
+                    {
+                        var macro = compilation.Macros[5];
+                        Assert.AreEqual("MACRO5", macro.Name);
+                        Assert.AreEqual("1", macro.Value);
+                        Assert.Null(macro.Parameters);
+
+                        Assert.AreEqual(2, macro.Tokens.Count);
+                        Assert.AreEqual("1", macro.Tokens[0].Text);
+                        Assert.AreEqual("/* with a comment */", macro.Tokens[1].Text);
+                        Assert.AreEqual(CppTokenKind.Literal, macro.Tokens[0].Kind);
+                        Assert.AreEqual(CppTokenKind.Comment, macro.Tokens[1].Kind);
                     }
                 }
                 , new CppParserOptions().EnableMacros()

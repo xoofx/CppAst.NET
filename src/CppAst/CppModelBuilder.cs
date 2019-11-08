@@ -518,11 +518,22 @@ namespace CppAst
             // TODO: reuse internal class Tokenizer
 
             // As we don't have an API to check macros, we are 
-            var range = cursor.Extent;
-            CXToken[] tokens = null;
-
+            var originalRange = cursor.Extent;
             var tu = cursor.TranslationUnit;
 
+            // Try to extend the parsing of the macro to the end of line in order to recover comments
+            originalRange.End.GetFileLocation(out var startFile, out var endLine, out var endColumn, out var startOffset);
+            var range = originalRange;
+            if (startFile.Pointer != IntPtr.Zero)
+            {
+                var nextLineLocation = clang.getLocation(tu, startFile, endLine + 1, 1);
+                if (!nextLineLocation.Equals(CXSourceLocation.Null))
+                {
+                    range = clang.getRange(originalRange.Start, nextLineLocation);
+                }
+            }
+
+            CXToken[] tokens = null;
             tu.Tokenize(range, out tokens);
 
             var name = GetCursorSpelling(cursor);
@@ -540,6 +551,10 @@ namespace CppAst
                 var token = tokens[i];
                 var tokenRange = token.GetExtent(tu);
                 tokenRange.Start.GetFileLocation(out var file, out var line,  out var column, out var offset);
+                if (line >= endLine + 1)
+                {
+                    break;
+                }
                 var tokenStr = token.GetSpelling(tu).CString;
 
                 // If we are parsing the token right after the MACRO name token
