@@ -97,6 +97,7 @@ namespace CppAst
                     var cppClass = new CppClass(GetCursorSpelling(cursor));
                     parentDeclarationContainer.Classes.Add(cppClass);
                     symbol = cppClass;
+                    cppClass.IsAnonymous = cursor.IsAnonymous;
                     switch (cursor.Kind)
                     {
                         case CXCursorKind.CXCursor_ClassDecl:
@@ -213,15 +214,6 @@ namespace CppAst
                 case CXCursorKind.CXCursor_StructDecl:
                 case CXCursorKind.CXCursor_UnionDecl:
                     element = VisitClassDecl(cursor, parent, data);
-
-                    if (cursor.IsAnonymous && element is CppType cppFieldType)
-                    {
-                        var containerContext = GetOrCreateDeclarationContainer(parent, data);
-                        if (containerContext.DeclarationContainer is CppClass)
-                        {
-                            AddAnonymousTypeWithField(containerContext, cursor, cppFieldType);
-                        }
-                    }
                     break;
 
                 case CXCursorKind.CXCursor_EnumDecl:

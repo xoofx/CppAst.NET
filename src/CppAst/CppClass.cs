@@ -51,7 +51,11 @@ namespace CppAst
         /// </summary>
         public bool IsDefinition { get; set; }
 
-
+        /// <summary>
+        /// Gets or sets a boolean indicating if this declaration is anonymous.
+        /// </summary>
+        public bool IsAnonymous { get; set; }
+        
         /// <summary>
         /// Get the base types of this type.
         /// </summary>
