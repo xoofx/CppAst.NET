@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0 (08 Sep 2019)
+- Add CppClass.IsAnonymous
+- Add comments to CppMacro
+
 ## 0.5.9 (08 Sep 2019)
 - Add CppField.IsAnonymous
 - Add bitfield information to CppField
