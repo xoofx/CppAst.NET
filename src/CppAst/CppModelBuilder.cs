@@ -20,7 +20,6 @@ namespace CppAst
         private readonly CppContainerContext _rootContainerContext;
         private readonly Dictionary<string, CppContainerContext> _containers;
         private readonly Dictionary<string, CppType> _typedefs;
-        private bool _isEntryVisitSystem;
 
         public CppModelBuilder()
         {
@@ -47,7 +46,6 @@ namespace CppAst
             {
                 if (!ParseSystemIncludes) return CXChildVisitResult.CXChildVisit_Continue;
 
-                _isEntryVisitSystem = true;
                 _rootContainerContext.Container = _rootCompilation.System;
             }
             return VisitMember(cursor, parent, data);
