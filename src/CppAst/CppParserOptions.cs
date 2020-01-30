@@ -29,6 +29,7 @@ namespace CppAst
             AutoSquashTypedef = true;
             ParseMacros = false;
             ParseComments = true;
+            ParseSystemIncludes = true;
 
             // Default triple targets
             TargetCpu = IntPtr.Size == 8 ? CppTargetCpu.X86_64 : CppTargetCpu.X86;
@@ -77,7 +78,12 @@ namespace CppAst
         /// Gets or sets a boolean indicating whether un-named enum/struct referenced by a typedef will be renamed directly to the typedef name. Default is <c>true</c>
         /// </summary>
         public bool AutoSquashTypedef { get; set; }
-        
+
+        /// <summary>
+        /// Gets or sets a boolean indicating whether to parse System Include headers. Default is <c>true</c>
+        /// </summary>
+        public bool ParseSystemIncludes { get; set; }
+
         /// <summary>
         /// Sets <see cref="ParseMacros"/> to <c>true</c> and return this instance.
         /// </summary>

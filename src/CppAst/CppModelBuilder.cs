@@ -32,6 +32,8 @@ namespace CppAst
 
         public bool AutoSquashTypedef { get; set; }
 
+        public bool ParseSystemIncludes { get; set; }
+
         public CppCompilation RootCompilation => _rootCompilation;
 
         public CXChildVisitResult VisitTranslationUnit(CXCursor cursor, CXCursor parent, CXClientData data)
@@ -40,9 +42,12 @@ namespace CppAst
 
             _rootContainerContext.Container = _rootCompilation;
 
-            _isEntryVisitSystem = cursor.Location.IsInSystemHeader;
+            
             if (cursor.Location.IsInSystemHeader)
             {
+                if (!ParseSystemIncludes) return CXChildVisitResult.CXChildVisit_Continue;
+
+                _isEntryVisitSystem = cursor.Location.IsInSystemHeader;
                 _rootContainerContext.Container = _rootCompilation.System;
             }
             return VisitMember(cursor, parent, data);
