@@ -47,7 +47,7 @@ namespace CppAst
             {
                 if (!ParseSystemIncludes) return CXChildVisitResult.CXChildVisit_Continue;
 
-                _isEntryVisitSystem = cursor.Location.IsInSystemHeader;
+                _isEntryVisitSystem = true;
                 _rootContainerContext.Container = _rootCompilation.System;
             }
             return VisitMember(cursor, parent, data);
