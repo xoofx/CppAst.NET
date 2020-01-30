@@ -119,7 +119,7 @@ namespace CppAst
 
             using (var createIndex = CXIndex.Create())
             {
-                var builder = new CppModelBuilder { AutoSquashTypedef = options.AutoSquashTypedef };
+                var builder = new CppModelBuilder { AutoSquashTypedef = options.AutoSquashTypedef, ParseSystemIncludes = options.ParseSystemIncludes };
                 var compilation = builder.RootCompilation;
 
                 string rootFileName = CppAstRootFileName;

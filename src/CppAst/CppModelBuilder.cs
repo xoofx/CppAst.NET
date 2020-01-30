@@ -20,7 +20,6 @@ namespace CppAst
         private readonly CppContainerContext _rootContainerContext;
         private readonly Dictionary<string, CppContainerContext> _containers;
         private readonly Dictionary<string, CppType> _typedefs;
-        private bool _isEntryVisitSystem;
 
         public CppModelBuilder()
         {
@@ -32,6 +31,8 @@ namespace CppAst
 
         public bool AutoSquashTypedef { get; set; }
 
+        public bool ParseSystemIncludes { get; set; }
+
         public CppCompilation RootCompilation => _rootCompilation;
 
         public CXChildVisitResult VisitTranslationUnit(CXCursor cursor, CXCursor parent, CXClientData data)
@@ -40,9 +41,11 @@ namespace CppAst
 
             _rootContainerContext.Container = _rootCompilation;
 
-            _isEntryVisitSystem = cursor.Location.IsInSystemHeader;
+            
             if (cursor.Location.IsInSystemHeader)
             {
+                if (!ParseSystemIncludes) return CXChildVisitResult.CXChildVisit_Continue;
+
                 _rootContainerContext.Container = _rootCompilation.System;
             }
             return VisitMember(cursor, parent, data);
