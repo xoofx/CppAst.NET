@@ -224,6 +224,8 @@ namespace CppAst
                     break;
 
                 case CXCursorKind.CXCursor_TypedefDecl:
+                case CXCursorKind.CXCursor_TypeAliasDecl:
+                case CXCursorKind.CXCursor_TypeAliasTemplateDecl:
                     element = VisitTypeDefDecl(cursor, parent, data);
                     break;
 
