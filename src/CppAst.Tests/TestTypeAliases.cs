@@ -136,5 +136,33 @@ using MyStructInt = MyStruct<int>;
                 }
             );
         }
+
+        [Test]
+        public void TestTemplateComplex()
+        {
+            var text = @"
+// Test using Template
+template <typename T>
+struct MyStruct;
+
+template<typename T1> using MyStructT = MyStruct<T1>;
+";
+
+            ParseAssert(text,
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+                    Assert.AreEqual(1, compilation.Classes.Count);
+                    Assert.AreEqual("MyStruct", compilation.Classes[0].Name);
+
+                    var cppStruct = compilation.FindByName<CppClass>("MyStruct");
+                    Assert.AreEqual(compilation.Classes[0], cppStruct);
+
+                    Assert.AreEqual(1, compilation.Typedefs.Count);
+                    Assert.AreEqual("MyStructT", compilation.Typedefs[0].Name);
+
+                }
+            );
+        }
     }
 }
