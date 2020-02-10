@@ -21,6 +21,7 @@ namespace CppAst
         {
             Name = name;
             Items = new CppContainerList<CppEnumItem>(this);
+            Attributes = new CppContainerList<CppAttribute>(this);
         }
 
         /// <inheritdoc />
@@ -46,6 +47,11 @@ namespace CppAst
         public CppContainerList<CppEnumItem> Items { get; }
         
         public bool IsAnonymous { get; set; }
+
+        /// <summary>
+        /// Gets the list of attached attributes.
+        /// </summary>
+        public CppContainerList<CppAttribute> Attributes { get; }
 
         private bool Equals(CppEnum other)
         {

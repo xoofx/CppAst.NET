@@ -29,6 +29,7 @@ namespace CppAst
             Classes = new CppContainerList<CppClass>(this);
             Typedefs = new CppContainerList<CppTypedef>(this);
             Namespaces = new CppContainerList<CppNamespace>(this);
+            Attributes = new CppContainerList<CppAttribute>(this);
         }
 
         /// <summary>
@@ -56,6 +57,9 @@ namespace CppAst
 
         /// <inheritdoc />
         public CppContainerList<CppNamespace> Namespaces { get; }
+
+        /// <inheritdoc />
+        public CppContainerList<CppAttribute> Attributes { get; set; }
 
         public virtual IEnumerable<ICppDeclaration> Children()
         {

@@ -51,6 +51,17 @@ namespace CppAst
             _elements.Add(item);
         }
 
+        public void AddRange(IEnumerable<TElement> collection)
+        {
+            if (collection != null)
+            {
+                foreach (var element in collection)
+                {
+                    Add(element);
+                }
+            }            
+        }
+
         public void Clear()
         {
             foreach (var element in _elements)

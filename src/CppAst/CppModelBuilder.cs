@@ -160,6 +160,7 @@ namespace CppAst
         {
             // Create the container if not already created
             var ns = GetOrCreateDeclarationContainer<CppNamespace>(cursor, data, out var context);
+            ns.Attributes.AddRange(ParseAttributes(cursor));
             cursor.VisitChildren(VisitMember, data);
             return ns;
         }
@@ -169,7 +170,7 @@ namespace CppAst
             var cppStruct = GetOrCreateDeclarationContainer<CppClass>(cursor, data, out var context);
             if (cursor.IsDefinition && !cppStruct.IsDefinition)
             {
-                cppStruct.Attributes =  ParseAttributes(cursor);
+                cppStruct.Attributes.AddRange(ParseAttributes(cursor));
                 cppStruct.IsDefinition = true;
                 cppStruct.SizeOf = (int)cursor.Type.SizeOf;
                 context.IsChildrenVisited = true;
@@ -996,7 +997,7 @@ namespace CppAst
                 var integralType = cursor.EnumDecl_IntegerType;
                 cppEnum.IntegerType = GetCppType(integralType.Declaration, integralType, cursor, data);
                 cppEnum.IsScoped = cursor.EnumDecl_IsScoped;
-
+                cppEnum.Attributes.AddRange(ParseAttributes(cursor));
                 context.IsChildrenVisited = true;
                 cursor.VisitChildren(VisitMember, data);
             }
@@ -1089,7 +1090,7 @@ namespace CppAst
             var returnType = GetCppType(cursor.ResultType.Declaration, cursor.ResultType, cursor, data);
             cppFunction.ReturnType = returnType;
 
-            cppFunction.Attributes = ParseFunctionAttributes(cursor, cppFunction.Name);
+            cppFunction.Attributes.AddRange(ParseFunctionAttributes(cursor, cppFunction.Name));
             cppFunction.CallingConvention = GetCallingConvention(cursor.Type);
 
             int i = 0;
@@ -1196,10 +1197,35 @@ namespace CppAst
             }
         }
 
+        private void SkipTemplates(TokenIterator iter)
+        {
+            if (iter.CanPeek)
+            {
+                if (iter.Skip("template"))
+                {
+                    iter.Next(); // skip the first >
+                    int parentCount = 1;
+                    while (parentCount > 0 && iter.CanPeek)
+                    {
+                        var text = iter.PeekText();
+                        if (text == ">")
+                        {
+                            parentCount--;
+                        }
+                        iter.Next();
+                    }
+                }
+            }
+        }
+
         private List<CppAttribute> ParseAttributes(CXCursor cursor)
         {
-            var tokenizer = new Tokenizer(cursor);
+            var tokenizer = new AttributeTokenizer(cursor);
             var tokenIt = new TokenIterator(tokenizer);
+
+            // if this is a template then we need to skip that ? 
+            if (tokenIt.CanPeek && tokenIt.PeekText() == "template")
+                SkipTemplates(tokenIt);
 
             List<CppAttribute> attributes = null;
             while (tokenIt.CanPeek)
@@ -1227,8 +1253,12 @@ namespace CppAst
             // we assume to find the function name immediately followed by a `(`
             // but some return type parameter could actually interfere with that
             // Ideally we would need to parse more properly return type and skip parenthesis for example
-            var tokenizer = new Tokenizer(cursor);
+            var tokenizer = new AttributeTokenizer(cursor);
             var tokenIt = new TokenIterator(tokenizer);
+
+            // if this is a template then we need to skip that ? 
+            if (tokenIt.CanPeek && tokenIt.PeekText() == "template")
+                SkipTemplates(tokenIt);
 
             // Parse leading attributes
             List<CppAttribute> attributes = null;
@@ -1353,7 +1383,7 @@ namespace CppAst
 
         private bool ParseDirectAttribute(CXCursor cursor, ref List<CppAttribute> attributes)
         {
-            var tokenizer = new Tokenizer(cursor);
+            var tokenizer = new AttributeTokenizer(cursor);
             var tokenIt = new TokenIterator(tokenizer);
             if (ParseAttribute(tokenIt, out var attribute))
             {
@@ -1839,15 +1869,26 @@ namespace CppAst
         {
             private readonly CXToken[] _tokens;
             private CppToken[] _cppTokens;
-            private readonly CXTranslationUnit _tu;
+            protected readonly CXTranslationUnit _tu;
 
             public Tokenizer(CXCursor cursor)
             {
-                var range = cursor.Extent;
+                _tu = cursor.TranslationUnit;
                 _tokens = null;
-                var tu = cursor.TranslationUnit;
-                tu.Tokenize(range, out _tokens);
+                var range = GetRange(cursor);
+                _tu.Tokenize(range, out _tokens);
+            }
+
+            public Tokenizer(CXTranslationUnit tu, CXSourceRange range)
+            {
+                _tokens = null;
                 _tu = tu;
+                _tu.Tokenize(range, out _tokens);
+            }
+
+            public virtual CXSourceRange GetRange(CXCursor cursor)
+            {
+                return cursor.Extent;
             }
 
             public int Count => _tokens?.Length ?? 0;
@@ -1892,6 +1933,7 @@ namespace CppAst
                     }
 
                     var tokenStr = token.GetSpelling(_tu).CString;
+                    var tokenLocation = token.GetLocation(_tu);
 
                     var tokenRange = token.GetExtent(_tu);
                     cppToken = new CppToken(cppTokenKind, tokenStr)
@@ -1906,6 +1948,282 @@ namespace CppAst
             {
                 var token = _tokens[i];
                 return token.GetSpelling(_tu).CString;
+            }
+
+            public string GetStringForLength(int length)
+            {
+                StringBuilder result = new StringBuilder(length);
+                for (var cur = 0; cur < Count; ++cur)
+                {                    
+                    result.Append(GetString(cur));
+                    if (result.Length >= length)
+                        return result.ToString();
+                }
+                return result.ToString();
+            }
+        }
+
+        private class AttributeTokenizer : Tokenizer
+        {
+            public AttributeTokenizer(CXCursor cursor) : base(cursor)
+            {
+            }
+
+            public AttributeTokenizer(CXTranslationUnit tu, CXSourceRange range) : base (tu, range)
+            {
+                
+            }
+
+            private Tuple<CXSourceRange, CXSourceRange> GetExtent(CXTranslationUnit tu, CXFile file, CXCursor cur)
+            {
+                var cursorExtend = cur.Extent;
+                var begin = cursorExtend.Start;
+                var end = cursorExtend.End;
+
+                bool CursorIsFunction(CXCursorKind inKind)
+                {
+                    return inKind == CXCursorKind.CXCursor_FunctionDecl || inKind == CXCursorKind.CXCursor_CXXMethod
+                           || inKind == CXCursorKind.CXCursor_Constructor || inKind == CXCursorKind.CXCursor_Destructor
+                           || inKind == CXCursorKind.CXCursor_ConversionFunction;
+                }
+
+                bool CursorIsVar(CXCursorKind inKind)
+                {
+                    return inKind == CXCursorKind.CXCursor_VarDecl || inKind == CXCursorKind.CXCursor_FieldDecl;
+                }
+
+                bool IsinRange(CXSourceLocation loc, CXSourceRange range)
+                {
+                    var xbegin = range.Start;
+                    var xend = range.End;
+
+                    CXFile fileLocation, fileBegin, fileEnd;
+                    uint lineLocation, lineBegin, lineEnd;
+                    uint u1, u2;
+                    loc.GetSpellingLocation(out fileLocation, out lineLocation, out u1, out u2);
+                    xbegin.GetSpellingLocation(out fileBegin, out lineBegin, out u1, out u2);
+                    xend.GetSpellingLocation(out fileEnd, out lineEnd, out u1, out u2);
+
+                    return lineLocation >= lineBegin && lineLocation < lineEnd && (fileLocation.Equals(fileBegin));
+                }
+
+                bool HasInlineTypeDefinition(CXCursor var_decl)
+                {
+                    var typeDecl = var_decl.Type.Declaration;
+                    if (typeDecl.IsNull)
+                        return false;
+
+                    var typeLocation = typeDecl.Location;
+                    var varRange = typeDecl.Extent;
+                    return IsinRange(typeLocation, varRange);
+                }
+
+                CXSourceLocation GetNextLocation(CXSourceLocation loc, int inc = 1)
+                {
+                    uint offset, u, z, d;
+                    CXFile f;
+                    loc.GetSpellingLocation(out f, out u, out z, out offset);
+                    if (inc >= 0)
+                        offset += (uint)inc;
+                    else
+                        offset -= (uint)-inc;
+
+                    return tu.GetLocationForOffset(f, offset);
+                }
+
+                CXSourceLocation GetCurrentLocation(CXSourceLocation loc, int inOffset)
+                {
+                    uint offset, u, z, d;
+                    CXFile f;
+                    loc.GetSpellingLocation(out f, out u, out z, out offset);
+                    return tu.GetLocationForOffset(f, (uint)inOffset);
+                }
+
+                CXSourceLocation GetPrevLocation(CXSourceLocation loc, int tokenLength)
+                {
+                    var inc = 1;
+                    while (true)
+                    {
+                        var locBefore = GetNextLocation(loc, -inc);
+
+                        var tokenizer = new Tokenizer(tu, clang.getRange(locBefore, loc));
+                        if (tokenizer.Count == 0)
+                            return CXSourceLocation.Null;
+
+                        var tokenLocation = GetCurrentLocation(locBefore, tokenizer[0].Span.Start.Offset);
+                        if (locBefore.Equals(tokenLocation))
+                        {
+                            return GetNextLocation(loc, -1 * (inc + tokenLength - 1));
+                        }
+                        else
+                            ++inc;
+                    }
+                }
+
+                bool TokenIsBefore(CXSourceLocation loc, string tokenString)
+                {
+                    var length = tokenString.Length;
+                    var locBefore = GetPrevLocation(loc, length);
+                
+                    var tokenizer = new Tokenizer(tu, clang.getRange(locBefore, loc));
+                    if (tokenizer.Count == 0) return false;
+
+                    return tokenizer.GetStringForLength(length) == tokenString;
+                }
+
+                bool TokenAtIs(CXSourceLocation loc, string tokenString)
+                {
+                    var length = tokenString.Length;
+
+                    var locAfter = GetNextLocation(loc, length);
+
+                    var tokenizer = new Tokenizer(tu, clang.getRange(locAfter, loc));
+                    return tokenizer.GetStringForLength(length) == tokenString;
+                }
+
+                bool ConsumeIfTokenAtIs(ref CXSourceLocation loc, string tokenString)
+                {
+                    var length = tokenString.Length;
+
+                    var locAfter = GetNextLocation(loc, length);
+                    var tokenizer = new Tokenizer(tu, clang.getRange(locAfter, loc));
+                    if (tokenizer.Count == 0)
+                        return false;
+
+                    if (tokenizer.GetStringForLength(length) == tokenString)
+                    {
+                        loc = locAfter;
+                        return true;
+                    }
+                    else
+                        return false;
+                }
+
+                bool ConsumeIfTokenBeforeIs(ref CXSourceLocation loc, string token_str)
+                {
+                    var length = token_str.Length;
+
+                    var locBefore = GetPrevLocation(loc, length);
+
+                    var tokenizer = new Tokenizer(tu, clang.getRange(locBefore, loc));
+                    if (tokenizer.GetStringForLength(length) == token_str)
+                    {
+                        loc = locBefore;
+                        return true;
+                    }
+                    else
+                        return false;
+                }
+
+                var kind = cur.Kind;
+                if (CursorIsFunction(kind) || CursorIsFunction(cur.TemplateCursorKind)
+                || kind == CXCursorKind.CXCursor_VarDecl || kind == CXCursorKind.CXCursor_FieldDecl || kind == CXCursorKind.CXCursor_ParmDecl
+                || kind == CXCursorKind.CXCursor_NonTypeTemplateParameter)
+                {
+                    while (TokenIsBefore(begin, "]]") || TokenIsBefore(begin, ")"))
+                    {
+                        var saveBegin = begin;
+                        if (ConsumeIfTokenBeforeIs(ref begin, "]]"))
+                        {
+                            while (!ConsumeIfTokenBeforeIs(ref begin, "[["))
+                                begin = GetPrevLocation(begin, 1);
+                        }
+                        else if (ConsumeIfTokenBeforeIs(ref begin, ")"))
+                        {
+                            var parenCount = 1;
+                            for (var lastBegin = begin; parenCount != 0; lastBegin = begin)
+                            {
+                                if (TokenIsBefore(begin, "("))
+                                    --parenCount;
+                                else if (TokenIsBefore(begin, ")"))
+                                    ++parenCount;
+
+                                begin = GetPrevLocation(begin, 1);
+                            }
+
+                            if (!ConsumeIfTokenBeforeIs(ref begin, "alignas"))
+                            {
+                                begin = saveBegin;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (CursorIsVar(kind) || CursorIsVar(cur.TemplateCursorKind))
+                    {
+                        if (HasInlineTypeDefinition(cur))
+                        {
+                            var typeCursor = clang.getTypeDeclaration(clang.getCursorType(cur));
+                            var typeExtent = clang.getCursorExtent(typeCursor);
+
+                            var typeBegin = clang.getRangeStart(typeExtent);
+                            var typeEnd = clang.getRangeEnd(typeExtent);
+
+                            return new Tuple<CXSourceRange, CXSourceRange>(clang.getRange(begin, typeBegin), clang.getRange(typeEnd, end));
+                        }
+                    }
+                    else if (kind == CXCursorKind.CXCursor_TemplateTypeParameter && TokenAtIs(end, "("))
+                    {
+                        var next = GetNextLocation(end, 1);
+                        var prev = end;
+                        for (var parenCount = 1; parenCount != 0; next = GetNextLocation(next, 1))
+                        {
+                            if (TokenAtIs(next, "("))
+                                ++parenCount;
+                            else if (TokenAtIs(next, ")"))
+                                --parenCount;
+                            prev = next;
+                        }
+                        end = next;
+                    }
+                    else if (kind == CXCursorKind.CXCursor_TemplateTemplateParameter && TokenAtIs(end, "<"))
+                    {
+                        var next = GetNextLocation(end, 1);
+                        for (var angleCount = 1; angleCount != 0; next = GetNextLocation(next, 1))
+                        {
+                            if (TokenAtIs(next, ">"))
+                                --angleCount;
+                            else if (TokenAtIs(next, ">>"))
+                                angleCount -= 2;
+                            else if (TokenAtIs(next, "<"))
+                                ++angleCount;
+                        }
+
+                        while (!TokenAtIs(next, ">") && !TokenAtIs(next, ","))
+                            next = GetNextLocation(next, 1);
+                        
+                        end = GetPrevLocation(next, 1);
+                    }
+                    else if ((kind == CXCursorKind.CXCursor_TemplateTypeParameter || kind == CXCursorKind.CXCursor_NonTypeTemplateParameter
+                        || kind == CXCursorKind.CXCursor_TemplateTemplateParameter))
+                    {
+                        ConsumeIfTokenAtIs(ref end, "...");
+                    }
+                    else if (kind == CXCursorKind.CXCursor_EnumConstantDecl && !TokenAtIs(end, ","))
+                    {
+                        var parent = clang.getCursorLexicalParent(cur);
+                        end = clang.getRangeEnd(clang.getCursorExtent(parent));
+                    }
+                }
+
+                return new Tuple<CXSourceRange, CXSourceRange>(clang.getRange(begin, end), clang.getNullRange());
+            }
+
+            public override CXSourceRange GetRange(CXCursor cursor)
+            {
+                /*  This process is complicated when parsing attributes that use
+                    C++11 syntax, essentially even if libClang understands them
+                    it doesn't always return them back as parse of the token range.
+
+                    This is kind of frustrating when you want to be able to do something
+                    with custom or even compiler attributes in your parsing. Thus we have
+                    to do things a little manually in order to make this work. 
+
+                    This code supports stepping back when its valid to parse attributes, it 
+                    doesn't currently support all cases but it supports most valid cases.
+                */ 
+                var range = GetExtent(_tu, cursor.IncludedFile, cursor);
+                return range.Item1;
             }
         }
 

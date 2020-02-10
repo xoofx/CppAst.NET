@@ -34,5 +34,10 @@ namespace CppAst
         /// Gets the typedefs.
         /// </summary>
         CppContainerList<CppTypedef> Typedefs { get; }
+
+        /// <summary>
+        /// Gets the attributes.
+        /// </summary>
+        CppContainerList<CppAttribute> Attributes { get; }
     }
 }
