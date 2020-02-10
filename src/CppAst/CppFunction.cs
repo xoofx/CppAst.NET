@@ -35,7 +35,7 @@ namespace CppAst
         /// <summary>
         /// Gets the attached attributes.
         /// </summary>
-        public CppContainerList<CppAttribute> Attributes { get; set; }
+        public CppContainerList<CppAttribute> Attributes { get; }
 
         /// <summary>
         /// Gets or sets the storage qualifier.

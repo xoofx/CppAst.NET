@@ -43,7 +43,7 @@ namespace CppAst
         public CppVisibility Visibility { get; set; }
 
         /// <inheritdoc />
-        public CppContainerList<CppAttribute> Attributes { get; set; }
+        public CppContainerList<CppAttribute> Attributes { get; }
 
         /// <summary>
         /// Gets or sets a boolean indicating if this type is a definition. If <c>false</c> the type was only declared but is not defined.

@@ -59,7 +59,7 @@ namespace CppAst
         public CppContainerList<CppNamespace> Namespaces { get; }
 
         /// <inheritdoc />
-        public CppContainerList<CppAttribute> Attributes { get; set; }
+        public CppContainerList<CppAttribute> Attributes { get; }
 
         public virtual IEnumerable<ICppDeclaration> Children()
         {
