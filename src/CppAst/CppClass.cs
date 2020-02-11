@@ -28,6 +28,7 @@ namespace CppAst
             Classes = new CppContainerList<CppClass>(this);
             Typedefs = new CppContainerList<CppTypedef>(this);
             TemplateParameters = new List<CppTemplateParameterType>();
+            Attributes = new CppContainerList<CppAttribute>(this);
         }
         
         /// <summary>
@@ -41,10 +42,8 @@ namespace CppAst
         /// <inheritdoc />
         public CppVisibility Visibility { get; set; }
 
-        /// <summary>
-        /// Gets the list of attached attributes. Might be null.
-        /// </summary>
-        public List<CppAttribute> Attributes { get; set; }
+        /// <inheritdoc />
+        public CppContainerList<CppAttribute> Attributes { get; }
 
         /// <summary>
         /// Gets or sets a boolean indicating if this type is a definition. If <c>false</c> the type was only declared but is not defined.

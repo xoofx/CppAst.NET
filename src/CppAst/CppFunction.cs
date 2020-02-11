@@ -21,6 +21,7 @@ namespace CppAst
             Name = name;
             Parameters = new CppContainerList<CppParameter>(this);
             TemplateParameters = new List<CppTemplateParameterType>();
+            Attributes = new CppContainerList<CppAttribute>(this);
         }
 
         /// <inheritdoc />
@@ -32,9 +33,9 @@ namespace CppAst
         public CppCallingConvention CallingConvention { get; set; }
 
         /// <summary>
-        /// Gets the attached attributes. Might be null.
+        /// Gets the attached attributes.
         /// </summary>
-        public List<CppAttribute> Attributes { get; set; }
+        public CppContainerList<CppAttribute> Attributes { get; }
 
         /// <summary>
         /// Gets or sets the storage qualifier.

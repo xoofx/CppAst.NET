@@ -187,7 +187,7 @@ int function1();
                     }
                     {
                         var cppFunction = compilation.Functions[1];
-                        Assert.Null(cppFunction.Attributes);
+                        Assert.AreEqual(0, cppFunction.Attributes.Count);
                         Assert.True(cppFunction.IsPublicExport());
                     }
                 }
@@ -207,7 +207,7 @@ int function1();
                     }
                     {
                         var cppFunction = compilation.Functions[1];
-                        Assert.Null(cppFunction.Attributes);
+                        Assert.AreEqual(0, cppFunction.Attributes.Count);
                         Assert.True(cppFunction.IsPublicExport());
                     }
                 }, new CppParserOptions().ConfigureForWindowsMsvc()
