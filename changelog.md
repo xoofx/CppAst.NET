@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.0 (12 Feb 2020)
+- Add support TypeAliases as Typedefs
+- Add the support for skipping the parsing of SystemInclude Headers
+- Improve Attribute parsing
+
 ## 0.6.0 (08 Sep 2019)
 - Add CppClass.IsAnonymous
 - Add comments to CppMacro
