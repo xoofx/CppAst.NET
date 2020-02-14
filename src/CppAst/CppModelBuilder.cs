@@ -1378,6 +1378,25 @@ namespace CppAst
                 return tokenIt.Skip(")");
             }
 
+            // Parse C++11 alignas attribute
+            // alignas(expression)
+            if (tokenIt.PeekText() == "alignas")
+            {
+                CppAttribute attribute;
+                while (ParseAttribute(tokenIt, out attribute))
+                {
+                    if (attributes == null)
+                    {
+                        attributes = new List<CppAttribute>();
+                    }
+                    attributes.Add(attribute);
+
+                    break;
+                }
+
+                return tokenIt.Skip(")"); ;
+            }
+
             return false;
         }
 
@@ -2064,7 +2083,7 @@ namespace CppAst
                 {
                     var length = tokenString.Length;
                     var locBefore = GetPrevLocation(loc, length);
-                
+
                     var tokenizer = new Tokenizer(tu, clang.getRange(locBefore, loc));
                     if (tokenizer.Count == 0) return false;
 
@@ -2139,6 +2158,13 @@ namespace CppAst
                                     ++parenCount;
 
                                 begin = GetPrevLocation(begin, 1);
+
+                                // We have reached the end of the source of trying to deal
+                                // with the potential of alignas, so we just break, which
+                                // will cause ConsumeIfTokenBeforeIs(ref begin, "alignas") to be false
+                                // and thus fall back to saveBegin which is the correct behavior
+                                if (begin.Equals(CXSourceLocation.Null))
+                                    break;
                             }
 
                             if (!ConsumeIfTokenBeforeIs(ref begin, "alignas"))

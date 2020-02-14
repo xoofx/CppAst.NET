@@ -116,5 +116,26 @@ And another line with @a x and @a y in italics
                 Assert.AreEqual(expectedText, resultText);
             });
         }
+
+        [Test]
+        public void TestParen()
+        {
+            ParseAssert(@"
+// [infinite loop)
+int function1(int a, int b);
+", compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+
+                var expectedText = @"[infinite loop)";
+
+                Assert.AreEqual(1, compilation.Functions.Count);
+                var resultText = compilation.Functions[0].Comment?.ToString();
+
+                expectedText = expectedText.Replace("\r\n", "\n");
+                resultText = resultText?.Replace("\r\n", "\n");
+                Assert.AreEqual(expectedText, resultText);
+            });
+        }
     }
 }

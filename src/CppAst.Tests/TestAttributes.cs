@@ -98,6 +98,71 @@ struct __declspec(uuid(""1841e5c8-16b0-489b-bcc8-44cfb0d5deae"")) __declspec(nov
         }
 
         [Test]
+        public void TestCpp11VarAlignas()
+        {
+            ParseAssert(@"
+alignas(128) char cacheline[128];", compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+
+                Assert.AreEqual(1, compilation.Fields.Count);
+                Assert.AreEqual(1, compilation.Fields[0].Attributes.Count);
+                {
+                    var attr = compilation.Fields[0].Attributes[0];
+                    Assert.AreEqual("alignas", attr.Name);
+                }
+            },
+            // we are using a C++14 attribute because it can be used everywhere
+            new CppParserOptions() { AdditionalArguments = { "-std=c++14" } }
+          );
+        }
+
+        [Test]
+        public void TestCpp11StructAlignas()
+        {
+            ParseAssert(@"
+struct alignas(8) S {};", compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+
+                Assert.AreEqual(1, compilation.Classes.Count);
+                Assert.AreEqual(1, compilation.Classes[0].Attributes.Count);
+                {
+                    var attr = compilation.Classes[0].Attributes[0];
+                    Assert.AreEqual("alignas", attr.Name);
+                }
+            },
+            // we are using a C++14 attribute because it can be used everywhere
+            new CppParserOptions() { AdditionalArguments = { "-std=c++14" } }
+          );
+        }
+
+        [Test]
+        public void TestCpp11StructAlignasWithAttribute()
+        {
+            ParseAssert(@"
+struct [[deprecated]] alignas(8) S {};", compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+
+                Assert.AreEqual(1, compilation.Classes.Count);
+                Assert.AreEqual(2, compilation.Classes[0].Attributes.Count);
+                {
+                    var attr = compilation.Classes[0].Attributes[0];
+                    Assert.AreEqual("deprecated", attr.Name);
+                }
+
+                {
+                    var attr = compilation.Classes[0].Attributes[1];
+                    Assert.AreEqual("alignas", attr.Name);
+                }
+            },
+            // we are using a C++14 attribute because it can be used everywhere
+            new CppParserOptions() { AdditionalArguments = { "-std=c++14" } }
+          );
+        }
+
+        [Test]
         public void TestCpp11StructAttributes()
         {
             ParseAssert(@"
@@ -282,6 +347,52 @@ struct [[cppast(""old"")]] TestMessage{
             // parse this.
             new CppParserOptions() { AdditionalArguments = { "-std=c++17" } }
           );
+        }
+
+        [Test]
+        public void TestCommentParen()
+        {
+            ParseAssert(@"
+// [infinite loop)
+int function1(int a, int b);
+", compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+
+                var expectedText = @"[infinite loop)";
+
+                Assert.AreEqual(1, compilation.Functions.Count);
+                var resultText = compilation.Functions[0].Comment?.ToString();
+
+                expectedText = expectedText.Replace("\r\n", "\n");
+                resultText = resultText?.Replace("\r\n", "\n");
+                Assert.AreEqual(expectedText, resultText);
+
+                Assert.AreEqual(0, compilation.Functions[0].Attributes.Count);
+            });
+        }
+
+        [Test]
+        public void TestCommentParenWithAttribute()
+        {
+            ParseAssert(@"
+// [infinite loop)
+[[noreturn]] int function1(int a, int b);
+", compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+
+                var expectedText = @"[infinite loop)";
+
+                Assert.AreEqual(1, compilation.Functions.Count);
+                var resultText = compilation.Functions[0].Comment?.ToString();
+
+                expectedText = expectedText.Replace("\r\n", "\n");
+                resultText = resultText?.Replace("\r\n", "\n");
+                Assert.AreEqual(expectedText, resultText);
+
+                Assert.AreEqual(1, compilation.Functions[0].Attributes.Count);
+            });
         }
     }
 }
