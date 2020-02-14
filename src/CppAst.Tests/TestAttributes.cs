@@ -394,5 +394,31 @@ int function1(int a, int b);
                 Assert.AreEqual(1, compilation.Functions[0].Attributes.Count);
             });
         }
+
+        [Test]
+        public void TestCommentWithAttributeCharacters()
+        {
+            ParseAssert(@"
+// (infinite loop)
+// [[infinite loop]]
+// bug(infinite loop)
+int function1(int a, int b);", compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+
+                var expectedText = @"(infinite loop)
+[[infinite loop]]
+bug(infinite loop)";
+
+                Assert.AreEqual(1, compilation.Functions.Count);
+                var resultText = compilation.Functions[0].Comment?.ToString();
+
+                expectedText = expectedText.Replace("\r\n", "\n");
+                resultText = resultText?.Replace("\r\n", "\n");
+                Assert.AreEqual(expectedText, resultText);
+
+                Assert.AreEqual(0, compilation.Functions[0].Attributes.Count);
+            });
+        }
     }
 }
