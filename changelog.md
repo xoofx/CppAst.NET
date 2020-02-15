@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.1 (15 Feb 2020)
+- Fix infinite loop issue caused by attribute parsing.
+
 ## 0.7.0 (12 Feb 2020)
 - Add support TypeAliases as Typedefs
 - Add the support for skipping the parsing of SystemInclude Headers
