@@ -1378,6 +1378,25 @@ namespace CppAst
                 return tokenIt.Skip(")");
             }
 
+            // Parse C++11 alignas attribute
+            // alignas(expression)
+            if (tokenIt.PeekText() == "alignas")
+            {
+                CppAttribute attribute;
+                while (ParseAttribute(tokenIt, out attribute))
+                {
+                    if (attributes == null)
+                    {
+                        attributes = new List<CppAttribute>();
+                    }
+                    attributes.Add(attribute);
+
+                    break;
+                }
+
+                return tokenIt.Skip(")"); ;
+            }
+
             return false;
         }
 
@@ -2064,7 +2083,7 @@ namespace CppAst
                 {
                     var length = tokenString.Length;
                     var locBefore = GetPrevLocation(loc, length);
-                
+
                     var tokenizer = new Tokenizer(tu, clang.getRange(locBefore, loc));
                     if (tokenizer.Count == 0) return false;
 
@@ -2099,20 +2118,32 @@ namespace CppAst
                         return false;
                 }
 
-                bool ConsumeIfTokenBeforeIs(ref CXSourceLocation loc, string token_str)
+                bool ConsumeIfTokenBeforeIs(ref CXSourceLocation loc, string tokenString)
                 {
-                    var length = token_str.Length;
+                    var length = tokenString.Length;
 
                     var locBefore = GetPrevLocation(loc, length);
 
                     var tokenizer = new Tokenizer(tu, clang.getRange(locBefore, loc));
-                    if (tokenizer.GetStringForLength(length) == token_str)
+                    if (tokenizer.GetStringForLength(length) == tokenString)
                     {
                         loc = locBefore;
                         return true;
                     }
                     else
                         return false;
+                }
+
+                bool CheckIfValidOrReset(ref CXSourceLocation checkedLocation, CXSourceLocation resetLocation)
+                {
+                    bool isValid = true;
+                    if (checkedLocation.Equals(CXSourceLocation.Null))
+                    {
+                        checkedLocation = resetLocation;
+                        isValid = false;
+                    }
+
+                    return isValid;
                 }
 
                 var kind = cur.Kind;
@@ -2125,8 +2156,17 @@ namespace CppAst
                         var saveBegin = begin;
                         if (ConsumeIfTokenBeforeIs(ref begin, "]]"))
                         {
-                            while (!ConsumeIfTokenBeforeIs(ref begin, "[["))
+                            bool isValid = true;
+                            while (!ConsumeIfTokenBeforeIs(ref begin, "[[") && isValid)
+                            {
                                 begin = GetPrevLocation(begin, 1);
+                                isValid = CheckIfValidOrReset(ref begin, saveBegin);
+                            }
+
+                            if (!isValid)
+                            {
+                                break;
+                            }
                         }
                         else if (ConsumeIfTokenBeforeIs(ref begin, ")"))
                         {
@@ -2139,6 +2179,13 @@ namespace CppAst
                                     ++parenCount;
 
                                 begin = GetPrevLocation(begin, 1);
+
+                                // We have reached the end of the source of trying to deal
+                                // with the potential of alignas, so we just break, which
+                                // will cause ConsumeIfTokenBeforeIs(ref begin, "alignas") to be false
+                                // and thus fall back to saveBegin which is the correct behavior
+                                if (!CheckIfValidOrReset(ref begin, saveBegin))
+                                    break;
                             }
 
                             if (!ConsumeIfTokenBeforeIs(ref begin, "alignas"))
