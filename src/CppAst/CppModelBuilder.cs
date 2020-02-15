@@ -2134,12 +2134,12 @@ namespace CppAst
                         return false;
                 }
 
-                bool CheckValidOrReplace(ref CXSourceLocation checkedLocation, CXSourceLocation replacedWithLocation)
+                bool CheckIfValidOrReset(ref CXSourceLocation checkedLocation, CXSourceLocation resetLocation)
                 {
                     bool isValid = true;
                     if (checkedLocation.Equals(CXSourceLocation.Null))
                     {
-                        checkedLocation = replacedWithLocation;
+                        checkedLocation = resetLocation;
                         isValid = false;
                     }
 
@@ -2160,7 +2160,7 @@ namespace CppAst
                             while (!ConsumeIfTokenBeforeIs(ref begin, "[[") && isValid)
                             {
                                 begin = GetPrevLocation(begin, 1);
-                                isValid = CheckValidOrReplace(ref begin, saveBegin);
+                                isValid = CheckIfValidOrReset(ref begin, saveBegin);
                             }
 
                             if (!isValid)
@@ -2184,7 +2184,7 @@ namespace CppAst
                                 // with the potential of alignas, so we just break, which
                                 // will cause ConsumeIfTokenBeforeIs(ref begin, "alignas") to be false
                                 // and thus fall back to saveBegin which is the correct behavior
-                                if (!CheckValidOrReplace(ref begin, saveBegin))
+                                if (!CheckIfValidOrReset(ref begin, saveBegin))
                                     break;
                             }
 
