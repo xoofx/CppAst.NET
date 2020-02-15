@@ -420,5 +420,29 @@ bug(infinite loop)";
                 Assert.AreEqual(0, compilation.Functions[0].Attributes.Count);
             });
         }
+
+        [Test]
+        public void TestAttributeInvalidBracketEnd()
+        {
+            ParseAssert(@"
+// noreturn]]
+int function1(int a, int b);", compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+                Assert.AreEqual(0, compilation.Functions[0].Attributes.Count);
+            });
+        }
+
+        [Test]
+        public void TestAttributeInvalidParenEnd()
+        {
+            ParseAssert(@"
+// noreturn)
+int function1(int a, int b);", compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+                Assert.AreEqual(0, compilation.Functions[0].Attributes.Count);
+            });
+        }
     }
 }

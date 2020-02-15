@@ -2118,20 +2118,32 @@ namespace CppAst
                         return false;
                 }
 
-                bool ConsumeIfTokenBeforeIs(ref CXSourceLocation loc, string token_str)
+                bool ConsumeIfTokenBeforeIs(ref CXSourceLocation loc, string tokenString)
                 {
-                    var length = token_str.Length;
+                    var length = tokenString.Length;
 
                     var locBefore = GetPrevLocation(loc, length);
 
                     var tokenizer = new Tokenizer(tu, clang.getRange(locBefore, loc));
-                    if (tokenizer.GetStringForLength(length) == token_str)
+                    if (tokenizer.GetStringForLength(length) == tokenString)
                     {
                         loc = locBefore;
                         return true;
                     }
                     else
                         return false;
+                }
+
+                bool CheckValidOrReplace(ref CXSourceLocation checkedLocation, CXSourceLocation replacedWithLocation)
+                {
+                    bool isValid = true;
+                    if (checkedLocation.Equals(CXSourceLocation.Null))
+                    {
+                        checkedLocation = replacedWithLocation;
+                        isValid = false;
+                    }
+
+                    return isValid;
                 }
 
                 var kind = cur.Kind;
@@ -2144,8 +2156,17 @@ namespace CppAst
                         var saveBegin = begin;
                         if (ConsumeIfTokenBeforeIs(ref begin, "]]"))
                         {
-                            while (!ConsumeIfTokenBeforeIs(ref begin, "[["))
+                            bool isValid = true;
+                            while (!ConsumeIfTokenBeforeIs(ref begin, "[[") && isValid)
+                            {
                                 begin = GetPrevLocation(begin, 1);
+                                isValid = CheckValidOrReplace(ref begin, saveBegin);
+                            }
+
+                            if (!isValid)
+                            {
+                                break;
+                            }
                         }
                         else if (ConsumeIfTokenBeforeIs(ref begin, ")"))
                         {
@@ -2163,7 +2184,7 @@ namespace CppAst
                                 // with the potential of alignas, so we just break, which
                                 // will cause ConsumeIfTokenBeforeIs(ref begin, "alignas") to be false
                                 // and thus fall back to saveBegin which is the correct behavior
-                                if (begin.Equals(CXSourceLocation.Null))
+                                if (!CheckValidOrReplace(ref begin, saveBegin))
                                     break;
                             }
 
