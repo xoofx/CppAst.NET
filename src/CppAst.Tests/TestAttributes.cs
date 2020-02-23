@@ -444,5 +444,59 @@ int function1(int a, int b);", compilation =>
                 Assert.AreEqual(0, compilation.Functions[0].Attributes.Count);
             });
         }
+
+        [Test]
+        public void TestCpp17VarTemplateAttribute()
+        {
+            ParseAssert(@"
+template<typename T>
+struct TestT {
+};
+
+struct Test{
+    [[cppast]] TestT<int> channels;
+};", compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+
+                Assert.AreEqual(2, compilation.Classes.Count);
+                Assert.AreEqual(1, compilation.Classes[1].Fields.Count);
+                Assert.AreEqual(1, compilation.Classes[1].Fields[0].Attributes.Count);
+                {
+                    var attr = compilation.Classes[1].Fields[0].Attributes[0];
+                    Assert.AreEqual("cppast", attr.Name);
+                }
+            },
+            // C++17 says if the compile encounters a attribute it doesn't understand
+            // it will ignore that attribute and not throw an error, we still want to
+            // parse this.
+            new CppParserOptions() { AdditionalArguments = { "-std=c++17" } }
+          );
+        }
+
+        [Test]
+        public void TestCpp17FunctionTemplateAttribute()
+        {
+            ParseAssert(@"
+struct Test{
+    template<typename W> [[cppast]] W GetFoo();
+};", compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+
+                Assert.AreEqual(1, compilation.Classes.Count);
+                Assert.AreEqual(1, compilation.Classes[0].Functions.Count);
+                Assert.AreEqual(1, compilation.Classes[0].Functions[0].Attributes.Count);
+                {
+                    var attr = compilation.Classes[0].Functions[0].Attributes[0];
+                    Assert.AreEqual("cppast", attr.Name);
+                }
+            },
+            // C++17 says if the compile encounters a attribute it doesn't understand
+            // it will ignore that attribute and not throw an error, we still want to
+            // parse this.
+            new CppParserOptions() { AdditionalArguments = { "-std=c++17" } }
+          );
+        }
     }
 }

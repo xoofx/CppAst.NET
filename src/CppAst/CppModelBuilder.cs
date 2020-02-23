@@ -2270,7 +2270,13 @@ namespace CppAst
                     doesn't currently support all cases but it supports most valid cases.
                 */ 
                 var range = GetExtent(_tu, cursor.IncludedFile, cursor);
-                return range.Item1;
+
+                var beg = range.Item1.Start;
+                var end = range.Item1.End;
+                if (!range.Item2.Equals(CXSourceRange.Null))
+                    end = range.Item2.End;
+
+                return clang.getRange(beg, end);
             }
         }
 
