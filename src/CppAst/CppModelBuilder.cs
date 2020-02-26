@@ -33,6 +33,8 @@ namespace CppAst
 
         public bool ParseSystemIncludes { get; set; }
 
+        public bool ParseAttributeEnabled { get; set; }
+
         public CppCompilation RootCompilation => _rootCompilation;
 
         public CXChildVisitResult VisitTranslationUnit(CXCursor cursor, CXCursor parent, CXClientData data)
@@ -1220,6 +1222,8 @@ namespace CppAst
 
         private List<CppAttribute> ParseAttributes(CXCursor cursor)
         {
+            if (!ParseAttributeEnabled) return null;
+
             var tokenizer = new AttributeTokenizer(cursor);
             var tokenIt = new TokenIterator(tokenizer);
 
@@ -1249,6 +1253,8 @@ namespace CppAst
 
         private List<CppAttribute> ParseFunctionAttributes(CXCursor cursor, string functionName)
         {
+            if (!ParseAttributeEnabled) return null;
+
             // TODO: This function is not 100% correct when parsing tokens up to the function name
             // we assume to find the function name immediately followed by a `(`
             // but some return type parameter could actually interfere with that

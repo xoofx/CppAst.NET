@@ -30,6 +30,7 @@ namespace CppAst
             ParseMacros = false;
             ParseComments = true;
             ParseSystemIncludes = true;
+            ParseAttributes = true;
 
             // Default triple targets
             TargetCpu = IntPtr.Size == 8 ? CppTargetCpu.X86_64 : CppTargetCpu.X86;
@@ -83,6 +84,11 @@ namespace CppAst
         /// Gets or sets a boolean indicating whether to parse System Include headers. Default is <c>true</c>
         /// </summary>
         public bool ParseSystemIncludes { get; set; }
+
+        /// <summary>
+        /// Gets or sets a boolean indicating whether to parse Attributes. Default is <c>true</c>
+        /// </summary>
+        public bool ParseAttributes { get; set; }
 
         /// <summary>
         /// Sets <see cref="ParseMacros"/> to <c>true</c> and return this instance.
