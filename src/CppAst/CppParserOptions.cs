@@ -30,7 +30,7 @@ namespace CppAst
             ParseMacros = false;
             ParseComments = true;
             ParseSystemIncludes = true;
-            ParseAttributes = true;
+            ParseAttributes = false;
 
             // Default triple targets
             TargetCpu = IntPtr.Size == 8 ? CppTargetCpu.X86_64 : CppTargetCpu.X86;

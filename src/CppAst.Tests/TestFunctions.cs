@@ -190,7 +190,8 @@ int function1();
                         Assert.AreEqual(0, cppFunction.Attributes.Count);
                         Assert.True(cppFunction.IsPublicExport());
                     }
-                }
+                },
+                new CppParserOptions() { ParseAttributes = true }
             );
 
             ParseAssert(text,
@@ -210,7 +211,7 @@ int function1();
                         Assert.AreEqual(0, cppFunction.Attributes.Count);
                         Assert.True(cppFunction.IsPublicExport());
                     }
-                }, new CppParserOptions().ConfigureForWindowsMsvc()
+                }, new CppParserOptions() { ParseAttributes = true }.ConfigureForWindowsMsvc()
             );
         }
 
