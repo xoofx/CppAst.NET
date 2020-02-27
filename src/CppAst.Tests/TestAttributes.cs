@@ -498,5 +498,21 @@ struct Test{
             new CppParserOptions() { AdditionalArguments = { "-std=c++17" } }
           );
         }
+
+        [Test]
+        public void TestCppNoParseOptionsAttributes()
+        {
+            ParseAssert(@"
+[[noreturn]] void x() {};", compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+
+                Assert.AreEqual(1, compilation.Functions.Count);
+                Assert.AreEqual(0, compilation.Functions[0].Attributes.Count);
+            },
+            // we are using a C++14 attribute because it can be used everywhere
+            new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseAttributes = false }
+          );
+        }
     }
 }
