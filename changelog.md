@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.2 (27 Feb 2020)
+- Make attribute parsing optional by default.
+
 ## 0.7.1 (15 Feb 2020)
 - Fix infinite loop issue caused by attribute parsing.
 
