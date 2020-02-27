@@ -86,7 +86,7 @@ namespace CppAst
         public bool ParseSystemIncludes { get; set; }
 
         /// <summary>
-        /// Gets or sets a boolean indicating whether to parse Attributes. Default is <c>true</c>
+        /// Gets or sets a boolean indicating whether to parse Attributes. Default is <c>false</c>
         /// </summary>
         public bool ParseAttributes { get; set; }
 
