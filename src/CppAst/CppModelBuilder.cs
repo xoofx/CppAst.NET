@@ -1998,18 +1998,8 @@ namespace CppAst
                 if (inc >= 0)
                     offset += (uint)inc;
                 else
-                    offset -= (uint)-inc; return offset;
-            }
-
-            private struct LocationOffsetKey
-            {
-                public CXSourceLocation loc;
-                public uint offset;
-
-                public override int GetHashCode()
-                {
-                    return loc.GetHashCode() ^ offset.GetHashCode();
-                }
+                    offset -= (uint)-inc; 
+                return offset;
             }
 
             private Tuple<CXSourceRange, CXSourceRange> GetExtent(CXTranslationUnit tu, CXFile file, CXCursor cur)
@@ -2017,9 +2007,6 @@ namespace CppAst
                 var cursorExtend = cur.Extent;
                 var begin = cursorExtend.Start;
                 var end = cursorExtend.End;
-
-                var locOffsetCache = new Dictionary<CXSourceLocation, uint >();
-                var OffsetToLocationCache = new Dictionary<LocationOffsetKey, CXSourceLocation>();
 
                 bool CursorIsFunction(CXCursorKind inKind)
                 {
@@ -2033,7 +2020,7 @@ namespace CppAst
                     return inKind == CXCursorKind.CXCursor_VarDecl || inKind == CXCursorKind.CXCursor_FieldDecl;
                 }
 
-                bool IsinRange(CXSourceLocation loc, CXSourceRange range)
+                bool IsInRange(CXSourceLocation loc, CXSourceRange range)
                 {
                     var xbegin = range.Start;
                     var xend = range.End;
@@ -2048,37 +2035,35 @@ namespace CppAst
                     return lineLocation >= lineBegin && lineLocation < lineEnd && (fileLocation.Equals(fileBegin));
                 }
 
-                bool HasInlineTypeDefinition(CXCursor var_decl)
+                bool HasInlineTypeDefinition(CXCursor varDecl)
                 {
-                    var typeDecl = var_decl.Type.Declaration;
+                    var typeDecl = varDecl.Type.Declaration;
                     if (typeDecl.IsNull)
                         return false;
 
                     var typeLocation = typeDecl.Location;
                     var varRange = typeDecl.Extent;
-                    return IsinRange(typeLocation, varRange);
+                    return IsInRange(typeLocation, varRange);
                 }
-
+                
                 CXSourceLocation GetNextLocation(CXSourceLocation loc, int inc = 1)
                 {
-                    uint offset, u, z, d;
-                    CXFile f;
                     CXSourceLocation value;
-                    if (locOffsetCache.TryGetValue(loc, out offset)
-                        && OffsetToLocationCache.TryGetValue(new LocationOffsetKey { loc = loc, offset = IncOffset(inc, offset) }, out value))
+                    uint originalOffset, u, z;
+                    CXFile f;
+                    loc.GetSpellingLocation(out f, out u, out z, out originalOffset);
+                    var offset = IncOffset(inc, z);
+                    var shouldUseLine = (z != 0 && (offset != 0 || offset != uint.MaxValue));
+                    if (shouldUseLine)
                     {
-                        return value;
+                        value = tu.GetLocation(f, u, offset);
                     }
-
-                    loc.GetSpellingLocation(out f, out u, out z, out offset);
-                    locOffsetCache[loc] = offset;
-
-                    offset = IncOffset(inc, offset);
-                    value = tu.GetLocationForOffset(f, offset);
-
-                    var key = new LocationOffsetKey { loc = loc, offset = offset };
-                    OffsetToLocationCache[key] = value;                    
-
+                    else
+                    {
+                        offset = IncOffset(inc, originalOffset);
+                        value = tu.GetLocationForOffset(f, offset);
+                    }
+                    
                     return value;
                 }
 
@@ -2088,14 +2073,13 @@ namespace CppAst
                     while (true)
                     {
                         var locBefore = GetNextLocation(loc, -inc);
-
-                        CXToken[] _tokens;
+                        CXToken[] tokens;
                         uint size;
-                        clang.tokenize(tu, clang.getRange(locBefore, loc), out _tokens, out size);
+                        clang.tokenize(tu, clang.getRange(locBefore, loc), out tokens, out size);
                         if (size == 0)
                             return CXSourceLocation.Null;
 
-                        var tokenLocation = _tokens[0].GetLocation(tu);
+                        var tokenLocation = tokens[0].GetLocation(tu);
                         if (locBefore.Equals(tokenLocation))
                         {
                             return GetNextLocation(loc, -1 * (inc + tokenLength - 1));
@@ -2121,8 +2105,8 @@ namespace CppAst
                     var length = tokenString.Length;
 
                     var locAfter = GetNextLocation(loc, length);
-
                     var tokenizer = new Tokenizer(tu, clang.getRange(locAfter, loc));
+
                     return tokenizer.GetStringForLength(length) == tokenString;
                 }
 
