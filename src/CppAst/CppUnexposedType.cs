@@ -3,6 +3,7 @@
 // See license.txt file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 
 namespace CppAst
 {
@@ -12,7 +13,7 @@ namespace CppAst
     /// <remarks>
     /// Template parameter type instance are actually exposed with this type.
     /// </remarks>
-    public sealed class CppUnexposedType : CppType
+    public sealed class CppUnexposedType : CppType, ICppTemplateOwner
     {
         /// <summary>
         /// Creates an instance of this type.
@@ -21,6 +22,7 @@ namespace CppAst
         public CppUnexposedType(string name) : base(CppTypeKind.Unexposed)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
+            TemplateParameters = new List<CppType>();
         }
 
         /// <summary>
@@ -34,6 +36,9 @@ namespace CppAst
         }
 
         public override int SizeOf { get; set; }
+
+        /// <inheritdoc />
+        public List<CppType> TemplateParameters { get; }
 
         public override bool Equals(object obj)
         {

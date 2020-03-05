@@ -14,6 +14,6 @@ namespace CppAst
         /// <summary>
         /// List of template parameters.
         /// </summary>
-        List<CppTemplateParameterType> TemplateParameters { get; }
+        List<CppType> TemplateParameters { get; }
     }
 }
