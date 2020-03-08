@@ -1,4 +1,4 @@
-# CppAst [![Build status](https://ci.appveyor.com/api/projects/status/75a6tolv5evpv5j4?svg=true)](https://ci.appveyor.com/project/xoofx/cppast)   [![NuGet](https://img.shields.io/nuget/v/CppAst.svg)](https://www.nuget.org/packages/CppAst/)
+# CppAst [![Build Status](https://github.com/xoofx/CppAst/workflows/ci/badge.svg?branch=master)](https://github.com/xoofx/CppAst/actions)   [![NuGet](https://img.shields.io/nuget/v/CppAst.svg)](https://www.nuget.org/packages/CppAst/)
 
 <img align="right" width="160px" height="160px" src="img/cppast.png">
 
