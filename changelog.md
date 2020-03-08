@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.3 (8 Mar 2020)
+- Optimize attribute parsing.
+
 ## 0.7.2 (27 Feb 2020)
 - Make attribute parsing optional by default.
 
