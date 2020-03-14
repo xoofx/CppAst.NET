@@ -54,5 +54,44 @@ t1* f4;
                 }
             );
         }
+
+        [Test]
+        public void TestTemplateParameters()
+        {
+            ParseAssert(@"
+template <typename T, typename U>
+struct TemplateStruct
+{
+    T field0;
+    U field1;
+};
+
+struct Struct2
+{
+};
+
+::TemplateStruct<int, Struct2> exposed;
+TemplateStruct<int, Struct2> unexposed;
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(2, compilation.Fields.Count);
+
+                    var exposed = compilation.Fields[0].Type as CppClass;
+                    Assert.AreEqual("TemplateStruct", exposed.Name);
+                    Assert.AreEqual(2, exposed.TemplateParameters.Count);
+                    Assert.AreEqual(CppPrimitiveKind.Int, (exposed.TemplateParameters[0] as CppPrimitiveType).Kind);
+                    Assert.AreEqual("Struct2", (exposed.TemplateParameters[1] as CppClass).Name);
+
+                    var unexposed = compilation.Fields[1].Type as CppUnexposedType;
+                    Assert.AreEqual("TemplateStruct<int, Struct2>", unexposed.Name);
+                    Assert.AreEqual(2, unexposed.TemplateParameters.Count);
+                    Assert.AreEqual(CppPrimitiveKind.Int, (unexposed.TemplateParameters[0] as CppPrimitiveType).Kind);
+                    Assert.AreEqual("Struct2", (unexposed.TemplateParameters[1] as CppClass).Name);
+                }
+            );
+        }
     }
 }

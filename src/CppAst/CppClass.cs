@@ -27,7 +27,7 @@ namespace CppAst
             Enums = new CppContainerList<CppEnum>(this);
             Classes = new CppContainerList<CppClass>(this);
             Typedefs = new CppContainerList<CppTypedef>(this);
-            TemplateParameters = new List<CppTemplateParameterType>();
+            TemplateParameters = new List<CppType>();
             Attributes = new CppContainerList<CppAttribute>(this);
         }
         
@@ -81,7 +81,7 @@ namespace CppAst
         public CppContainerList<CppTypedef> Typedefs { get; }
 
         /// <inheritdoc />
-        public List<CppTemplateParameterType> TemplateParameters { get; }
+        public List<CppType> TemplateParameters { get; }
 
         private bool Equals(CppClass other)
         {

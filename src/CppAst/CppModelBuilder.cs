@@ -131,6 +131,14 @@ namespace CppAst
                             return CXChildVisitResult.CXChildVisit_Continue;
                         }, data);
                     }
+                    else
+                    {
+                        var templateParameters = ParseTemplateParameters(cursor, cursor.Type, data);
+                        if (templateParameters != null)
+                        {
+                            cppClass.TemplateParameters.AddRange(templateParameters);
+                        }
+                    }
 
                     defaultContainerVisibility = cursor.Kind == CXCursorKind.CXCursor_ClassDecl ? CppVisibility.Private :  CppVisibility.Public;
                     break;
@@ -144,7 +152,11 @@ namespace CppAst
 
             containerContext = new CppContainerContext(symbol) {CurrentVisibility = defaultContainerVisibility};
 
-            _containers.Add(fullName, containerContext);
+            // The type could have been added separately as part of the GetCppType above TemplateParameters
+            if (!_containers.ContainsKey(fullName))
+            {
+                _containers.Add(fullName, containerContext);
+            }
             return containerContext;
         }
 
@@ -1684,7 +1696,13 @@ namespace CppAst
 
                 case CXTypeKind.CXType_Unexposed:
                 {
-                    return new CppUnexposedType(type.ToString())  { SizeOf = (int)type.SizeOf };
+                    var cppUnexposedType = new CppUnexposedType(type.ToString())  { SizeOf = (int)type.SizeOf };
+                    var templateParameters = ParseTemplateParameters(cursor, type, data);
+                    if (templateParameters != null)
+                    {
+                        cppUnexposedType.TemplateParameters.AddRange(templateParameters);
+                    }
+                    return cppUnexposedType;
                 }
 
                 case CXTypeKind.CXType_Attributed:
@@ -1759,6 +1777,22 @@ namespace CppAst
                 cppLocation = GetSourceLocation(parent.Location);
             }
             _rootCompilation.Diagnostics.Warning($"Unhandled declaration: {cursor} in {parent}.", cppLocation);
+        }
+
+        private List<CppType> ParseTemplateParameters(CXCursor cursor, CXType type, CXClientData data)
+        {
+            var numTemplateArguments = type.NumTemplateArguments;
+            if (numTemplateArguments < 0) return null;
+
+            var templateCppTypes = new List<CppType>();
+            for (var templateIndex = 0; templateIndex < numTemplateArguments; ++templateIndex)
+            {
+                var templateArg = type.GetTemplateArgumentAsType((uint)templateIndex);
+                var templateCppType = GetCppType(templateArg.Declaration, templateArg, cursor, data);
+                templateCppTypes.Add(templateCppType);
+            }
+
+            return templateCppTypes;
         }
         
         /// <summary>

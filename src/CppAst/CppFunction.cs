@@ -20,7 +20,7 @@ namespace CppAst
         {
             Name = name;
             Parameters = new CppContainerList<CppParameter>(this);
-            TemplateParameters = new List<CppTemplateParameterType>();
+            TemplateParameters = new List<CppType>();
             Attributes = new CppContainerList<CppAttribute>(this);
         }
 
@@ -71,7 +71,7 @@ namespace CppAst
         public CppFunctionFlags Flags { get; set; }
 
         /// <inheritdoc />
-        public List<CppTemplateParameterType> TemplateParameters { get; }
+        public List<CppType> TemplateParameters { get; }
 
         public override string ToString()
         {
