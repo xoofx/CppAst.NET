@@ -41,7 +41,7 @@ namespace CppAst
         /// Gets or sets the default value as an expression.
         /// </summary>
         public CppExpression InitExpression { get; set; }
-        
+
         private bool Equals(CppParameter other)
         {
             return Equals(Type, other.Type) && Equals(Name, other.Name);

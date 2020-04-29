@@ -27,7 +27,7 @@ namespace CppAst
             Namespaces = new CppContainerList<CppNamespace>(this);
             Attributes = new CppContainerList<CppAttribute>(this);
         }
-        
+
         /// <summary>
         /// Name of the namespace.
         /// </summary>
@@ -44,7 +44,7 @@ namespace CppAst
 
         /// <inheritdoc />
         public CppContainerList<CppClass> Classes { get; }
-        
+
         /// <inheritdoc />
         public CppContainerList<CppTypedef> Typedefs { get; }
 

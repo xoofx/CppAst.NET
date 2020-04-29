@@ -33,7 +33,7 @@ namespace CppAst
         /// C++ `short`
         /// </summary>
         Short,
-        
+
         /// <summary>
         /// C++ `int`
         /// </summary>

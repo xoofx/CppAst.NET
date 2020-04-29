@@ -28,10 +28,10 @@ namespace CppAst
         public static CppCompilation Parse(string cppText, CppParserOptions options = null, string cppFilename = "content")
         {
             if (cppText == null) throw new ArgumentNullException(nameof(cppText));
-            var cppFiles = new List<CppFileOrString> {new CppFileOrString() {Filename = cppFilename, Content = cppText,}};
+            var cppFiles = new List<CppFileOrString> { new CppFileOrString() { Filename = cppFilename, Content = cppText, } };
             return ParseInternal(cppFiles, options);
         }
-        
+
         /// <summary>
         /// Parse the specified single file.
         /// </summary>
@@ -41,7 +41,7 @@ namespace CppAst
         public static CppCompilation ParseFile(string cppFilename, CppParserOptions options = null)
         {
             if (cppFilename == null) throw new ArgumentNullException(nameof(cppFilename));
-            var files = new List<string>() {cppFilename};
+            var files = new List<string>() { cppFilename };
             return ParseFiles(files, options);
         }
 
@@ -129,7 +129,7 @@ namespace CppAst
 
                 string rootFileName = CppAstRootFileName;
                 string rootFileContent = null;
-                
+
                 // Build the root input source file
                 var tempBuilder = new StringBuilder();
                 if (options.PreHeaderText != null)

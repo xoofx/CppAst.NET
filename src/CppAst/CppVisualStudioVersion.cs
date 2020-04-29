@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
+
 namespace CppAst
 {
     /// <summary>
@@ -14,7 +15,7 @@ namespace CppAst
         /// <summary>
         /// Visual Studio 6.0
         /// </summary>
-        VS6 =	1200,
+        VS6 = 1200,
 
         /// <summary>
         /// Visual Studio .NET 2002 (7.0)

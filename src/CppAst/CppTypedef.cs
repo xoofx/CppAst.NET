@@ -22,7 +22,7 @@ namespace CppAst
             ElementType = type;
         }
 
-        public CppType ElementType { get;  }
+        public CppType ElementType { get; }
 
         /// <summary>
         /// Visibility of this element.

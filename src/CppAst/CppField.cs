@@ -39,7 +39,7 @@ namespace CppAst
 
         /// <inheritdoc />
         public string Name { get; set; }
-        
+
         /// <summary>
         /// Gets or sets a boolean indicating if this field was created from an anonymous type
         /// </summary>
@@ -54,13 +54,13 @@ namespace CppAst
         /// Gets the associated init value as an expression.
         /// </summary>
         public CppExpression InitExpression { get; set; }
-        
-        
+
+
         /// <summary>
         /// Gets or sets a boolean indicating that this field is a bit field. See <see cref="BitFieldWidth"/> to get the width of this field if <see cref="IsBitField"/> is <c>true</c>
         /// </summary>
         public bool IsBitField { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the number of bits for this bit field. Only valid if <see cref="IsBitField"/> is <c>true</c>.
         /// </summary>

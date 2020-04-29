@@ -33,8 +33,8 @@ namespace CppAst
         public override int SizeOf
         {
             get => 0;
-            
-            set => throw new InvalidOperationException("This type does not support SizeOf"); 
+
+            set => throw new InvalidOperationException("This type does not support SizeOf");
         }
 
         public override bool Equals(object obj)

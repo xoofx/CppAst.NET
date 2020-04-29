@@ -18,7 +18,7 @@ namespace CppAst
         /// A keyword token (e.g `for`)
         /// </summary>
         Keyword,
-        
+
         /// <summary>
         /// An identifier token (e.g `my_variable`)
         /// </summary>

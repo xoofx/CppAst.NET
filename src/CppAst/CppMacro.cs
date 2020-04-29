@@ -52,7 +52,7 @@ namespace CppAst
         {
             Value = CppToken.TokensToString(Tokens);
         }
-        
+
         public override string ToString()
         {
             var builder = new StringBuilder();

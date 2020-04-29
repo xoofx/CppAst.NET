@@ -2,8 +2,6 @@
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
-using System;
-
 namespace CppAst
 {
     /// <summary>
@@ -41,7 +39,7 @@ namespace CppAst
         {
             unchecked
             {
-                return (base.GetHashCode() * 397) ^ (int) Qualifier;
+                return (base.GetHashCode() * 397) ^ (int)Qualifier;
             }
         }
 

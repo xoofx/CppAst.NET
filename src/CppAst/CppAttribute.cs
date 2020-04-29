@@ -26,7 +26,7 @@ namespace CppAst
         /// Gets the attribute name.
         /// </summary>
         public string Name { get; set; }
-        
+
         /// <summary>
         /// Gets the attribute arguments
         /// </summary>

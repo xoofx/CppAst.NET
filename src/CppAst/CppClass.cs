@@ -30,7 +30,7 @@ namespace CppAst
             TemplateParameters = new List<CppType>();
             Attributes = new CppContainerList<CppAttribute>(this);
         }
-        
+
         /// <summary>
         /// Kind of the instance (`class` `struct` or `union`)
         /// </summary>
@@ -54,7 +54,7 @@ namespace CppAst
         /// Gets or sets a boolean indicating if this declaration is anonymous.
         /// </summary>
         public bool IsAnonymous { get; set; }
-        
+
         /// <summary>
         /// Get the base types of this type.
         /// </summary>
