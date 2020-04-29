@@ -3,7 +3,6 @@
 // See license.txt file in the project root for full license information.
 
 using System;
-using System.Linq;
 using NUnit.Framework;
 
 namespace CppAst.Tests
@@ -158,7 +157,7 @@ struct [[deprecated]] alignas(8) S {};", compilation =>
                 }
             },
             // we are using a C++14 attribute because it can be used everywhere
-            new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseAttributes = true  }
+            new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseAttributes = true }
           );
         }
 
@@ -193,7 +192,7 @@ struct [[deprecated(""old"")]] TestMessage{
                 }
             },
             // we are using a C++14 attribute because it can be used everywhere
-            new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseAttributes = true  } 
+            new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseAttributes = true }
           );
         }
 
@@ -226,7 +225,7 @@ struct Test{
                 }
             },
             // we are using a C++14 attribute because it can be used everywhere
-            new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseAttributes = true  }
+            new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseAttributes = true }
           );
         }
 
@@ -246,7 +245,7 @@ struct Test{
                 }
             },
             // we are using a C++14 attribute because it can be used everywhere
-            new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseAttributes = true  }
+            new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseAttributes = true }
           );
         }
 
@@ -266,7 +265,7 @@ namespace [[deprecated]] cppast {};", compilation =>
                 }
             },
             // we are using a C++14 attribute because it can be used everywhere
-            new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseAttributes = true  }
+            new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseAttributes = true }
           );
         }
 
@@ -301,7 +300,7 @@ template<> struct [[deprecated]] X<int> {};", compilation =>
 
                 Assert.AreEqual(2, compilation.Classes.Count);
                 Assert.AreEqual(0, compilation.Classes[0].Attributes.Count);
-                Assert.AreEqual(1, compilation.Classes[1].Attributes.Count);                
+                Assert.AreEqual(1, compilation.Classes[1].Attributes.Count);
                 {
                     var attr = compilation.Classes[1].Attributes[0];
                     Assert.AreEqual("deprecated", attr.Name);

@@ -18,7 +18,7 @@ namespace CppAst
 
             System = new CppGlobalDeclarationContainer();
         }
-        
+
         /// <summary>
         /// Gets the attached diagnostic messages.
         /// </summary>

@@ -21,7 +21,7 @@ namespace CppAst
         /// <summary>
         /// Gets the kind of this expression.
         /// </summary>
-        public CppExpressionKind  Kind { get; }
+        public CppExpressionKind Kind { get; }
 
         /// <summary>
         /// Gets the arguments of this expression. Might be null.

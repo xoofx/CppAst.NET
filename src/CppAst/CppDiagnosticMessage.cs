@@ -3,7 +3,6 @@
 // See license.txt file in the project root for full license information.
 
 using System;
-using CppAst;
 
 namespace CppAst
 {

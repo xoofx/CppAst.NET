@@ -26,7 +26,7 @@ namespace CppAst
         /// The method is defaulted.
         /// </summary>
         Defaulted = 1 << 1,
-        
+
         /// <summary>
         /// The method is pure (`= 0`)
         /// </summary>
@@ -36,22 +36,22 @@ namespace CppAst
         /// The method is declared `virtual`.
         /// </summary>
         Virtual = 1 << 3,
-        
+
         /// <summary>
         /// This is a C++ method
         /// </summary>
         Method = 1 << 4,
-        
+
         /// <summary>
         /// This is a C++ function or method with inline attribute
         /// </summary>
         Inline = 1 << 5,
-        
+
         /// <summary>
         /// This is a C++ constructor
         /// </summary>
         Constructor = 1 << 6,
-        
+
         /// <summary>
         /// This is a C++ destructor
         /// </summary>

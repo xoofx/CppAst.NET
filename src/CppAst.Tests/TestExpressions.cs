@@ -2,7 +2,6 @@
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
-using System;
 using NUnit.Framework;
 
 namespace CppAst.Tests
@@ -90,7 +89,7 @@ const int x = 12|1;
                 var cppField = compilation.Fields[0];
 
                 Assert.NotNull(cppField.InitValue?.Value);
-                var result = 12|1;
+                var result = 12 | 1;
                 Assert.AreEqual(result, cppField.InitValue.Value);
 
                 Assert.NotNull(cppField.InitExpression);

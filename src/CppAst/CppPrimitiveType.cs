@@ -10,7 +10,7 @@ namespace CppAst
     /// A C++ primitive type (e.g `int`, `void`, `bool`...)
     /// </summary>
     public sealed class CppPrimitiveType : CppType
-    { 
+    {
         /// <summary>
         /// Singleton instance of the `void` type.
         /// </summary>
@@ -194,7 +194,7 @@ namespace CppAst
         public override int SizeOf
         {
             get => _sizeOf;
-            
+
             set => throw new InvalidOperationException("Cannot set the SizeOf of a primitive type");
         }
 
@@ -207,7 +207,7 @@ namespace CppAst
         {
             unchecked
             {
-                return (base.GetHashCode() * 397) ^ (int) Kind;
+                return (base.GetHashCode() * 397) ^ (int)Kind;
             }
         }
 
