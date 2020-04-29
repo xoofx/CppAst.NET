@@ -27,23 +27,24 @@ namespace CppAst
         /// <summary>
         /// Gets or sets the file associated with this location.
         /// </summary>
-        public string File;
+        public readonly string File;
 
         /// <summary>
         /// Gets or sets the char offset from the beginning of the file.
         /// </summary>
-        public int Offset;
+        public readonly int Offset;
 
         /// <summary>
         /// Gets or sets the line (start from 1) of this location.
         /// </summary>
-        public int Line;
+        public readonly int Line;
 
         /// <summary>
         /// Gets or sets the column (start from 1) of this location.
         /// </summary>
-        public int Column;
+        public readonly int Column;
 
+        /// <inheritdoc />
         public override string ToString()
         {
             return $"{File}({Line}, {Column})";

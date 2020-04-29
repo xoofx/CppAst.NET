@@ -30,18 +30,20 @@ namespace CppAst
             return base.Equals(other) && Name.Equals(other.Name);
         }
 
+        /// <inheritdoc />
         public override int SizeOf
         {
             get => 0;
-
             set => throw new InvalidOperationException("This type does not support SizeOf");
         }
 
+        /// <inheritdoc />
         public override bool Equals(object obj)
         {
             return ReferenceEquals(this, obj) || obj is CppTemplateParameterType other && Equals(other);
         }
 
+        /// <inheritdoc />
         public override int GetHashCode()
         {
             unchecked
@@ -50,14 +52,10 @@ namespace CppAst
             }
         }
 
-        public override CppType GetCanonicalType()
-        {
-            return this;
-        }
+        /// <inheritdoc />
+        public override CppType GetCanonicalType() => this;
 
-        public override string ToString()
-        {
-            return Name;
-        }
+        /// <inheritdoc />
+        public override string ToString() => Name;
     }
 }

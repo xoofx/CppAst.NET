@@ -30,11 +30,13 @@ namespace CppAst
             return base.Equals(other) && Qualifier == other.Qualifier;
         }
 
+        /// <inheritdoc />
         public override bool Equals(object obj)
         {
             return ReferenceEquals(this, obj) || obj is CppQualifiedType other && Equals(other);
         }
 
+        /// <inheritdoc />
         public override int GetHashCode()
         {
             unchecked
@@ -43,12 +45,14 @@ namespace CppAst
             }
         }
 
+        /// <inheritdoc />
         public override CppType GetCanonicalType()
         {
             var elementTypeCanonical = ElementType.GetCanonicalType();
             return ReferenceEquals(elementTypeCanonical, ElementType) ? this : new CppQualifiedType(Qualifier, elementTypeCanonical);
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             return $"{Qualifier.ToString().ToLowerInvariant()} {ElementType.GetDisplayName()}";

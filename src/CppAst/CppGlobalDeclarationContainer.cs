@@ -61,12 +61,10 @@ namespace CppAst
         /// <inheritdoc />
         public CppContainerList<CppAttribute> Attributes { get; }
 
+        /// <inheritdoc />
         public virtual IEnumerable<ICppDeclaration> Children()
         {
-            foreach (var item in CppContainerHelper.Children(this))
-            {
-                yield return item;
-            }
+            return CppContainerHelper.Children(this);
         }
 
         /// <summary>
@@ -217,11 +215,13 @@ namespace CppAst
         {
         }
 
+        /// <inheritdoc />
         public bool Equals(T x, T y)
         {
             return ReferenceEquals(x, y);
         }
 
+        /// <inheritdoc />
         public int GetHashCode(T obj)
         {
             return RuntimeHelpers.GetHashCode(obj);

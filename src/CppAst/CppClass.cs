@@ -88,13 +88,16 @@ namespace CppAst
             return base.Equals(other) && Equals(Parent, other.Parent) && Name.Equals(other.Name);
         }
 
+        /// <inheritdoc />
         public override int SizeOf { get; set; }
 
+        /// <inheritdoc />
         public override bool Equals(object obj)
         {
             return ReferenceEquals(this, obj) || obj is CppClass other && Equals(other);
         }
 
+        /// <inheritdoc />
         public override int GetHashCode()
         {
             unchecked
@@ -106,11 +109,13 @@ namespace CppAst
             }
         }
 
+        /// <inheritdoc />
         public override CppType GetCanonicalType()
         {
             return this;
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var builder = new StringBuilder();

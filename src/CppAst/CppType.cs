@@ -37,6 +37,7 @@ namespace CppAst
             return obj is CppType type && Equals(type);
         }
 
+        /// <inheritdoc />
         public override int GetHashCode()
         {
             return (int)TypeKind;

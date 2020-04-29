@@ -66,6 +66,7 @@ namespace CppAst
         /// </summary>
         public int BitFieldWidth { get; set; }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var builder = new StringBuilder();

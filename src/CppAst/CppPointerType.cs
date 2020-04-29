@@ -20,11 +20,13 @@ namespace CppAst
             SizeOf = IntPtr.Size;
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             return $"{ElementType.GetDisplayName()}*";
         }
 
+        /// <inheritdoc />
         public override CppType GetCanonicalType()
         {
             var elementTypeCanonical = ElementType.GetCanonicalType();

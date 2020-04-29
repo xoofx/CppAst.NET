@@ -27,7 +27,6 @@ namespace CppAst
 
         public bool HasErrors { get; private set; }
 
-
         public void Info(string message, CppSourceLocation? location = null)
         {
             LogMessage(CppLogMessageType.Info, message, location);
@@ -70,12 +69,14 @@ namespace CppAst
             Log(new CppDiagnosticMessage(type, message, locationResolved));
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
-            StringBuilder diagnostics = new StringBuilder();
-            foreach (var messsage in Messages)
+            var diagnostics = new StringBuilder();
+
+            foreach (var message in Messages)
             {
-                diagnostics.AppendLine(messsage.ToString());
+                diagnostics.AppendLine(message.ToString());
             }
 
             return diagnostics.ToString();
