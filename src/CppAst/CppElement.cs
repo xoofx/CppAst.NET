@@ -18,5 +18,11 @@ namespace CppAst
         /// Gets or sets the parent container of this element. Might be null.
         /// </summary>
         public ICppContainer Parent { get; internal set; }
+
+        /// <summary>
+        /// Gets the source file of this element.
+        /// </summary>
+        public string SourceFile => string.IsNullOrWhiteSpace(Span.Start.File) ? (Parent as CppElement)?.SourceFile : Span.Start.File;
+
     }
 }
