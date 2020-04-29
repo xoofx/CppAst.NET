@@ -30,6 +30,7 @@ namespace CppAst
         /// </summary>
         public CppSourceLocation End;
 
+        /// <inheritdoc />
         public override string ToString()
         {
             return $"{Start}";

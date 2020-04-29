@@ -36,6 +36,7 @@ namespace CppAst
         /// </summary>
         public CppType Type { get; }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var builder = new StringBuilder();

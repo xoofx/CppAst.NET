@@ -11,7 +11,7 @@ namespace CppAst
     /// <summary>
     /// A C++ standard or scoped enum.
     /// </summary>
-    public sealed class CppEnum : CppTypeDeclaration, ICppMemberWithVisibility, ICppContainer
+    public sealed class CppEnum : CppTypeDeclaration, ICppMemberWithVisibility
     {
         /// <summary>
         /// Creates a new instance of this enum.
@@ -58,17 +58,20 @@ namespace CppAst
             return base.Equals(other) && Equals(Parent, other.Parent) && Equals(Name, other.Name);
         }
 
+        /// <inheritdoc />
         public override int SizeOf
         {
             get => IntegerType?.SizeOf ?? 0;
             set => throw new InvalidOperationException("Cannot set the SizeOf an enum as it is determined only by the SizeOf of its underlying IntegerType");
         }
 
+        /// <inheritdoc />
         public override bool Equals(object obj)
         {
             return ReferenceEquals(this, obj) || obj is CppEnum other && Equals(other);
         }
 
+        /// <inheritdoc />
         public override int GetHashCode()
         {
             unchecked
@@ -80,19 +83,13 @@ namespace CppAst
             }
         }
 
-        public override CppType GetCanonicalType()
-        {
-            return IntegerType;
-        }
+        /// <inheritdoc />
+        public override CppType GetCanonicalType() => IntegerType;
 
-        public override IEnumerable<ICppDeclaration> Children()
-        {
-            foreach (var item in Items)
-            {
-                yield return item;
-            }
-        }
+        /// <inheritdoc />
+        public override IEnumerable<ICppDeclaration> Children() => Items;
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var builder = new StringBuilder();

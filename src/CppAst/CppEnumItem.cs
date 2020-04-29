@@ -36,6 +36,7 @@ namespace CppAst
         public CppExpression ValueExpression { get; set; }
 
 
+        /// <inheritdoc />
         public override string ToString()
         {
             return $"{Name} = {ValueExpression}";

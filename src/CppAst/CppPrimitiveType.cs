@@ -149,6 +149,7 @@ namespace CppAst
             }
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             switch (Kind)
@@ -191,18 +192,20 @@ namespace CppAst
             return base.Equals(other) && Kind == other.Kind;
         }
 
+        /// <inheritdoc />
         public override int SizeOf
         {
             get => _sizeOf;
-
             set => throw new InvalidOperationException("Cannot set the SizeOf of a primitive type");
         }
 
+        /// <inheritdoc />
         public override bool Equals(object obj)
         {
             return ReferenceEquals(this, obj) || obj is CppPrimitiveType other && Equals(other);
         }
 
+        /// <inheritdoc />
         public override int GetHashCode()
         {
             unchecked
@@ -211,6 +214,7 @@ namespace CppAst
             }
         }
 
+        /// <inheritdoc />
         public override CppType GetCanonicalType()
         {
             return this;

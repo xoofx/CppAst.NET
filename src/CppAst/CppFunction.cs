@@ -73,6 +73,7 @@ namespace CppAst
         /// <inheritdoc />
         public List<CppType> TemplateParameters { get; }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var builder = new StringBuilder();
@@ -130,9 +131,7 @@ namespace CppAst
             return builder.ToString();
         }
 
-        public IEnumerable<ICppDeclaration> Children()
-        {
-            return Parameters;
-        }
+        /// <inheritdoc />
+        public IEnumerable<ICppDeclaration> Children() => Parameters;
     }
 }

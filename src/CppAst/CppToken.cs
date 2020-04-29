@@ -33,10 +33,8 @@ namespace CppAst
         /// </summary>
         public string Text { get; set; }
 
-        public override string ToString()
-        {
-            return Text;
-        }
+        /// <inheritdoc />
+        public override string ToString() => Text;
 
         public static string TokensToString(IEnumerable<CppToken> tokens)
         {

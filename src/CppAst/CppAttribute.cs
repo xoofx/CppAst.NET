@@ -37,6 +37,7 @@ namespace CppAst
         /// </summary>
         public bool IsVariadic { get; set; }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var builder = new StringBuilder();

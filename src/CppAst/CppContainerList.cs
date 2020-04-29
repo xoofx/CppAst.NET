@@ -17,20 +17,20 @@ namespace CppAst
     [DebuggerDisplay("Count = {Count}")]
     public class CppContainerList<TElement> : IList<TElement> where TElement : CppElement
     {
-        private readonly ICppContainer _container;
         private readonly List<TElement> _elements;
 
         public CppContainerList(ICppContainer container)
         {
-            _container = container ?? throw new ArgumentNullException(nameof(container));
+            Container = container ?? throw new ArgumentNullException(nameof(container));
             _elements = new List<TElement>();
         }
 
         /// <summary>
         /// Gets the container this list is attached to.
         /// </summary>
-        public ICppContainer Container => _container;
+        public ICppContainer Container { get; }
 
+        /// <inheritdoc />
         public IEnumerator<TElement> GetEnumerator()
         {
             return _elements.GetEnumerator();
@@ -41,13 +41,14 @@ namespace CppAst
             return ((IEnumerable)_elements).GetEnumerator();
         }
 
+        /// <inheritdoc />
         public void Add(TElement item)
         {
             if (item.Parent != null)
             {
                 throw new ArgumentException("The item belongs already to a container");
             }
-            item.Parent = _container;
+            item.Parent = Container;
             _elements.Add(item);
         }
 
@@ -62,6 +63,7 @@ namespace CppAst
             }
         }
 
+        /// <inheritdoc />
         public void Clear()
         {
             foreach (var element in _elements)
@@ -72,16 +74,19 @@ namespace CppAst
             _elements.Clear();
         }
 
+        /// <inheritdoc />
         public bool Contains(TElement item)
         {
             return _elements.Contains(item);
         }
 
+        /// <inheritdoc />
         public void CopyTo(TElement[] array, int arrayIndex)
         {
             _elements.CopyTo(array, arrayIndex);
         }
 
+        /// <inheritdoc />
         public bool Remove(TElement item)
         {
             if (_elements.Remove(item))
@@ -92,15 +97,19 @@ namespace CppAst
             return false;
         }
 
+        /// <inheritdoc />
         public int Count => _elements.Count;
 
+        /// <inheritdoc />
         public bool IsReadOnly => false;
 
+        /// <inheritdoc />
         public int IndexOf(TElement item)
         {
             return _elements.IndexOf(item);
         }
 
+        /// <inheritdoc />
         public void Insert(int index, TElement item)
         {
             if (item.Parent != null)
@@ -108,10 +117,11 @@ namespace CppAst
                 throw new ArgumentException("The item belongs already to a container");
             }
 
-            item.Parent = _container;
+            item.Parent = Container;
             _elements.Insert(index, item);
         }
 
+        /// <inheritdoc />
         public void RemoveAt(int index)
         {
             var element = _elements[index];
@@ -119,6 +129,7 @@ namespace CppAst
             _elements.RemoveAt(index);
         }
 
+        /// <inheritdoc />
         public TElement this[int index]
         {
             get => _elements[index];
@@ -126,7 +137,7 @@ namespace CppAst
         }
     }
 
-    class CppContainerListDebugView<T>
+    internal class CppContainerListDebugView<T>
     {
         private readonly ICollection<T> _collection;
 
@@ -140,8 +151,8 @@ namespace CppAst
         {
             get
             {
-                T[] array = new T[this._collection.Count];
-                this._collection.CopyTo(array, 0);
+                T[] array = new T[_collection.Count];
+                _collection.CopyTo(array, 0);
                 return array;
             }
         }

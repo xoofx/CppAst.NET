@@ -21,6 +21,7 @@ namespace CppAst
             ChildrenToString(builder);
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             return base.ToString().TrimEnd();
@@ -60,6 +61,7 @@ namespace CppAst
             }
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var builder = new StringBuilder();
@@ -144,6 +146,7 @@ namespace CppAst
         public CppCommentBlockCommand() : base(CppCommentKind.BlockCommand)
         {
         }
+
         protected internal override void ToString(StringBuilder builder)
         {
             base.ToString(builder);
