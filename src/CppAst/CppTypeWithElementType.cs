@@ -17,7 +17,7 @@ namespace CppAst
         }
 
         public CppType ElementType { get; }
-        
+
         protected bool Equals(CppTypeWithElementType other)
         {
             return base.Equals(other) && ElementType.Equals(other.ElementType);
@@ -30,7 +30,7 @@ namespace CppAst
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
-            return Equals((CppTypeWithElementType) obj);
+            return Equals((CppTypeWithElementType)obj);
         }
 
         public override int GetHashCode()

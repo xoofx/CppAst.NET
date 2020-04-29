@@ -41,7 +41,7 @@ namespace CppAst
         /// Gets or sets the storage qualifier.
         /// </summary>
         public CppStorageQualifier StorageQualifier { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the linkage kind
         /// </summary>

@@ -3,7 +3,6 @@
 // See license.txt file in the project root for full license information.
 
 using System.Collections.Generic;
-using System.Linq;
 using NUnit.Framework;
 
 namespace CppAst.Tests
@@ -35,7 +34,7 @@ namespace A::B::C
                 {
                     Assert.False(compilation.HasErrors);
 
-                    var namespaces = new List<string>() {"A", "B", "C"};
+                    var namespaces = new List<string>() { "A", "B", "C" };
 
                     ICppGlobalDeclarationContainer container = compilation;
 

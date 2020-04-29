@@ -17,12 +17,12 @@ namespace CppAst
         {
             TypeKind = typeKind;
         }
-        
+
         /// <summary>
         /// Gets the <see cref="CppTypeKind"/> of this instance.
         /// </summary>
         public CppTypeKind TypeKind { get; }
-        
+
         public abstract int SizeOf { get; set; }
 
         protected bool Equals(CppType other)
@@ -39,7 +39,7 @@ namespace CppAst
 
         public override int GetHashCode()
         {
-            return (int) TypeKind;
+            return (int)TypeKind;
         }
 
         /// <summary>

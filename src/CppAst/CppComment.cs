@@ -41,7 +41,7 @@ namespace CppAst
         /// The kind of comments.
         /// </summary>
         public CppCommentKind Kind { get; }
-        
+
         /// <summary>
         /// Gets a list of children. Might be null.
         /// </summary>
@@ -71,7 +71,7 @@ namespace CppAst
         {
             var builder = new StringBuilder();
             ChildrenToString(builder);
-            return builder.ToString();            
+            return builder.ToString();
         }
     }
 
@@ -88,7 +88,7 @@ namespace CppAst
         public string CommandName { get; set; }
 
         public List<string> Arguments { get; }
-        
+
         protected internal override void ToString(StringBuilder builder)
         {
             builder.Append($"@{CommandName}");
@@ -123,8 +123,8 @@ namespace CppAst
                     // between the two
                     if (children.Kind == CppCommentKind.Text && i + 1 < Children.Count && Children[i + 1].Kind == CppCommentKind.Text)
                     {
-                        var text = ((CppCommentText) children).Text;
-                        var nextText = ((CppCommentText) children).Text;
+                        var text = ((CppCommentText)children).Text;
+                        var nextText = ((CppCommentText)children).Text;
                         if (!string.IsNullOrEmpty(text) || !string.IsNullOrEmpty(nextText))
                         {
                             builder.AppendLine();
@@ -203,7 +203,7 @@ namespace CppAst
         /// Gets or sets the index of this parameter in the function parameters.
         /// </summary>
         public int ParamIndex { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the direction of this parameter (in, out, inout).
         /// </summary>

@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 namespace CppAst
 {
@@ -39,7 +38,7 @@ namespace CppAst
             TargetSystem = "windows";
             TargetAbi = "";
         }
-        
+
         /// <summary>
         /// List of the include folders.
         /// </summary>
@@ -151,7 +150,7 @@ namespace CppAst
 
             return newOptions;
         }
-        
+
         /// <summary>
         /// Configure this instance with Windows and MSVC.
         /// </summary>
@@ -159,8 +158,8 @@ namespace CppAst
         public CppParserOptions ConfigureForWindowsMsvc(CppTargetCpu targetCpu = CppTargetCpu.X86, CppVisualStudioVersion vsVersion = CppVisualStudioVersion.VS2019)
         {
             // 1920
-            var highVersion = ((int) vsVersion) / 100;  // => 19
-            var lowVersion = ((int) vsVersion) % 100;   // => 20
+            var highVersion = ((int)vsVersion) / 100;  // => 19
+            var lowVersion = ((int)vsVersion) % 100;   // => 20
 
             var versionAsString = $"{highVersion}.{lowVersion}";
 
@@ -195,7 +194,7 @@ namespace CppAst
                 default:
                     throw new ArgumentOutOfRangeException(nameof(targetCpu), targetCpu, null);
             }
-            
+
             AdditionalArguments.Add("-fms-extensions");
             AdditionalArguments.Add("-fms-compatibility");
             AdditionalArguments.Add($"-fms-compatibility-version={versionAsString}");

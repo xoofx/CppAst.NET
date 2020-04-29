@@ -45,7 +45,7 @@ namespace CppAst
         /// Gets the definition of the enum items.
         /// </summary>
         public CppContainerList<CppEnumItem> Items { get; }
-        
+
         public bool IsAnonymous { get; set; }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace CppAst
 
         public override int SizeOf
         {
-            get => IntegerType?.SizeOf ?? 0; 
+            get => IntegerType?.SizeOf ?? 0;
             set => throw new InvalidOperationException("Cannot set the SizeOf an enum as it is determined only by the SizeOf of its underlying IntegerType");
         }
 

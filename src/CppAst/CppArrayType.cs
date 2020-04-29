@@ -17,7 +17,7 @@ namespace CppAst
         /// <param name="elementType">The element type (e.g `int`)</param>
         /// <param name="size">The size of the array. 0 means an unbound array</param>
         public CppArrayType(CppType elementType, int size) : base(CppTypeKind.Array, elementType)
-        { 
+        {
             Size = size;
         }
 
@@ -29,7 +29,8 @@ namespace CppAst
         public override int SizeOf
         {
             get => Size * ElementType.SizeOf;
-            set => throw new InvalidOperationException("Cannot set the SizeOf an array type. The SizeOf is calculated by the SizeOf its ElementType and the number of elements in the fixed array"); }
+            set => throw new InvalidOperationException("Cannot set the SizeOf an array type. The SizeOf is calculated by the SizeOf its ElementType and the number of elements in the fixed array");
+        }
 
         public bool Equals(CppArrayType other)
         {
@@ -50,7 +51,7 @@ namespace CppAst
                 return (base.GetHashCode() * 397) ^ Size;
             }
         }
-        
+
         public override CppType GetCanonicalType()
         {
             var elementTypeCanonical = ElementType.GetCanonicalType();

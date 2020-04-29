@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace CppAst
@@ -33,7 +32,7 @@ namespace CppAst
         /// Gets or sets the return type of this function type.
         /// </summary>
         public CppType ReturnType { get; set; }
-        
+
         /// <summary>
         /// Gets a list of the parameters.
         /// </summary>
@@ -67,7 +66,7 @@ namespace CppAst
         public override int SizeOf
         {
             get => 0;
-            
+
             set => throw new InvalidOperationException("This type does not support SizeOf");
         }
 
