@@ -30,7 +30,7 @@ jobs:
 
     - name: Build & test (Release)
       run: |
-        dotnet test src -c Release --runtime win-x64
+        dotnet test src -c Release
 
     - name: Pack
       run: dotnet pack src -c Release
