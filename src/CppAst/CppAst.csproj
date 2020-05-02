@@ -2,8 +2,8 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <VersionPrefix>0.8.0</VersionPrefix>
-    <!--<VersionSuffix>alpha</VersionSuffix>
-    <BuildNumber>001</BuildNumber>-->
+    <VersionSuffix>alpha</VersionSuffix>
+    <BuildNumber>001</BuildNumber>
     <PackageId>CppAst</PackageId>
     <Description>CppAst is a .NET library providing a C/C++ parser for header files with access to the full AST, comments and macros</Description>
     <Copyright>Alexandre Mutel</Copyright>

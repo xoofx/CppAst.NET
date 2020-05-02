@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.8.0 (2 May 2020)
+## 0.8.0-alpha-001 (2 May 2020)
 - Use CLangSharp - libclang 10.0
 
 ## 0.7.3 (8 Mar 2020)
