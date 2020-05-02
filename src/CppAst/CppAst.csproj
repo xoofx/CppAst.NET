@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net46;netstandard2.0</TargetFrameworks>
-    <RuntimeIdentifiers>win7-x86;win7-x64;osx;linux-x64</RuntimeIdentifiers>
-    <VersionPrefix>0.7.3</VersionPrefix>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <VersionPrefix>0.8.0</VersionPrefix>
     <!--<VersionSuffix>alpha</VersionSuffix>
     <BuildNumber>001</BuildNumber>-->
     <PackageId>CppAst</PackageId>
@@ -29,19 +28,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="libclang.runtime" Version="8.0.0.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="../../ext/ClangSharp/ClangSharp/Generated/**/*.cs">
-      <Link>ClangSharp\Generated\%(RecursiveDir)\%(Filename)%(Extension)</Link>
-    </Compile>
-    <Compile Include="../../ext/ClangSharp/ClangSharp/Extensions/**/*.cs">
-      <Link>ClangSharp\Extensions\%(RecursiveDir)\%(Filename)%(Extension)</Link>
-    </Compile>
-    <Compile Include="../../ext/ClangSharp/ClangSharp/*.cs">
-      <Link>ClangSharp\%(Filename)%(Extension)</Link>
-    </Compile>
+    <PackageReference Include="ClangSharp" Version="10.0.0-beta" />
   </ItemGroup>
 
   <ItemGroup>

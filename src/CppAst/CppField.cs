@@ -55,7 +55,6 @@ namespace CppAst
         /// </summary>
         public CppExpression InitExpression { get; set; }
 
-
         /// <summary>
         /// Gets or sets a boolean indicating that this field is a bit field. See <see cref="BitFieldWidth"/> to get the width of this field if <see cref="IsBitField"/> is <c>true</c>
         /// </summary>
@@ -90,7 +89,20 @@ namespace CppAst
             if (InitExpression != null)
             {
                 builder.Append(" = ");
-                builder.Append(InitExpression);
+                var initExpressionStr = InitExpression.ToString();
+                if (string.IsNullOrEmpty(initExpressionStr))
+                {
+                    builder.Append(InitValue);
+                }
+                else
+                {
+                    builder.Append(initExpressionStr);
+                }
+            }
+            else if (InitValue != null)
+            {
+                builder.Append(" = ");
+                builder.Append(InitValue);
             }
 
             return builder.ToString();

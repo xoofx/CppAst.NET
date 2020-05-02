@@ -6,8 +6,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using ClangSharp;
+using ClangSharp.Interop;
 
 namespace CppAst
 {
@@ -70,7 +72,7 @@ namespace CppAst
         /// <param name="cppFiles">A list of path to C/C++ header files on the disk to parse</param>
         /// <param name="options">Options used for parsing this file (e.g include folders...)</param>
         /// <returns>The result of the compilation</returns>
-        private static CppCompilation ParseInternal(List<CppFileOrString> cppFiles, CppParserOptions options = null)
+        private static unsafe CppCompilation ParseInternal(List<CppFileOrString> cppFiles, CppParserOptions options = null)
         {
             if (cppFiles == null) throw new ArgumentNullException(nameof(cppFiles));
 
@@ -89,6 +91,9 @@ namespace CppAst
             arguments.AddRange(normalizedIncludePaths.Select(x => $"-I{x}"));
             arguments.AddRange(normalizedSystemIncludePaths.Select(x => $"-isystem{x}"));
             arguments.AddRange(options.Defines.Select(x => $"-D{x}"));
+
+            arguments.Add("-dM");
+            arguments.Add("-E");
 
             if (options.ParseAsCpp && !arguments.Contains("-xc++"))
             {
@@ -114,6 +119,7 @@ namespace CppAst
             {
                 translationFlags |= CXTranslationUnit_Flags.CXTranslationUnit_DetailedPreprocessingRecord;
             }
+            translationFlags |= CXTranslationUnit_Flags.CXTranslationUnit_DetailedPreprocessingRecord;
 
             var argumentsArray = arguments.ToArray();
 
@@ -158,28 +164,29 @@ namespace CppAst
                 // TODO: Add debug
                 rootFileContent = tempBuilder.ToString();
 
+                var rootFileContentUTF8 = Encoding.UTF8.GetBytes(rootFileContent);
                 compilation.InputText = rootFileContent;
 
+                fixed (void* rootFileContentUTF8Ptr = rootFileContentUTF8)
                 {
                     CXTranslationUnit translationUnit;
-                    CXErrorCode translationUnitError;
 
-                    translationUnitError = CXTranslationUnit.Parse(createIndex, rootFileName, argumentsArray, new CXUnsavedFile[] { new CXUnsavedFile()
+                    var rootFileNameUTF8 = Marshal.StringToHGlobalAnsi(rootFileName);
+
+                    translationUnit = CXTranslationUnit.Parse(createIndex, rootFileName, argumentsArray,new CXUnsavedFile[]
                     {
-                        Contents = rootFileContent,
-                        Filename = rootFileName,
-                        Length = (uint)Encoding.UTF8.GetByteCount(rootFileContent)
+                        new CXUnsavedFile()
+                        {
+                            Contents = (sbyte*) rootFileContentUTF8Ptr,
+                            Filename = (sbyte*) rootFileNameUTF8,
+                            Length = new UIntPtr((uint)rootFileContentUTF8.Length)
 
-                    }}, translationFlags, out translationUnit);
+                        }
+                    }, translationFlags);
 
                     bool skipProcessing = false;
 
-                    if (translationUnitError != CXErrorCode.CXError_Success)
-                    {
-                        compilation.Diagnostics.Error($"Parsing failed due to '{translationUnitError}'", new CppSourceLocation(rootFileName, 0, 1, 1));
-                        skipProcessing = true;
-                    }
-                    else if (translationUnit.NumDiagnostics != 0)
+                    if (translationUnit.NumDiagnostics != 0)
                     {
                         for (uint i = 0; i < translationUnit.NumDiagnostics; ++i)
                         {

@@ -7,13 +7,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using ClangSharp;
+using ClangSharp.Interop;
 
 namespace CppAst
 {
     /// <summary>
     /// Internal class used to build the entire C++ model from the libclang representation.
     /// </summary>
-    internal class CppModelBuilder
+    internal unsafe class CppModelBuilder
     {
         private readonly CppCompilation _rootCompilation;
         private readonly CppContainerContext _rootContainerContext;
@@ -36,10 +37,8 @@ namespace CppAst
 
         public CppCompilation RootCompilation => _rootCompilation;
 
-        public CXChildVisitResult VisitTranslationUnit(CXCursor cursor, CXCursor parent, CXClientData data)
+        public CXChildVisitResult VisitTranslationUnit(CXCursor cursor, CXCursor parent, void* data)
         {
-            Debug.Assert(parent.Kind == CXCursorKind.CXCursor_TranslationUnit || parent.Kind == CXCursorKind.CXCursor_UnexposedDecl);
-
             _rootContainerContext.Container = _rootCompilation;
 
 
@@ -52,10 +51,11 @@ namespace CppAst
             return VisitMember(cursor, parent, data);
         }
 
-        private CppContainerContext GetOrCreateDeclarationContainer(CXCursor cursor, CXClientData data)
+        private CppContainerContext GetOrCreateDeclarationContainer(CXCursor cursor, void* data)
         {
             CppContainerContext containerContext;
-            var fullName = cursor.UnifiedSymbolResolution.CString;
+            
+            var fullName = clang.getCursorUSR(cursor).CString;
             if (_containers.TryGetValue(fullName, out containerContext))
             {
                 return containerContext;
@@ -128,11 +128,11 @@ namespace CppAst
                             }
 
                             return CXChildVisitResult.CXChildVisit_Continue;
-                        }, data);
+                        }, new CXClientData((IntPtr)data));
                     }
                     else
                     {
-                        var templateParameters = ParseTemplateParameters(cursor, cursor.Type, data);
+                        var templateParameters = ParseTemplateParameters(cursor, cursor.Type, new CXClientData((IntPtr)data));
                         if (templateParameters != null)
                         {
                             cppClass.TemplateParameters.AddRange(templateParameters);
@@ -159,7 +159,7 @@ namespace CppAst
             return containerContext;
         }
 
-        private TCppElement GetOrCreateDeclarationContainer<TCppElement>(CXCursor cursor, CXClientData data, out CppContainerContext context) where TCppElement : CppElement, ICppContainer
+        private TCppElement GetOrCreateDeclarationContainer<TCppElement>(CXCursor cursor, void* data, out CppContainerContext context) where TCppElement : CppElement, ICppContainer
         {
             context = GetOrCreateDeclarationContainer(cursor, data);
             if (context.Container is TCppElement typedCppElement)
@@ -169,16 +169,16 @@ namespace CppAst
             throw new InvalidOperationException($"The element `{context.Container}` doesn't match the expected type `{typeof(TCppElement)}");
         }
 
-        private CppNamespace VisitNamespace(CXCursor cursor, CXCursor parent, CXClientData data)
+        private CppNamespace VisitNamespace(CXCursor cursor, CXCursor parent, void* data)
         {
             // Create the container if not already created
             var ns = GetOrCreateDeclarationContainer<CppNamespace>(cursor, data, out var context);
             ns.Attributes.AddRange(ParseAttributes(cursor));
-            cursor.VisitChildren(VisitMember, data);
+            cursor.VisitChildren(VisitMember, new CXClientData((IntPtr)data));
             return ns;
         }
 
-        private CppClass VisitClassDecl(CXCursor cursor, CXCursor parent, CXClientData data)
+        private CppClass VisitClassDecl(CXCursor cursor, CXCursor parent, void* data)
         {
             var cppStruct = GetOrCreateDeclarationContainer<CppClass>(cursor, data, out var context);
             if (cursor.IsDefinition && !cppStruct.IsDefinition)
@@ -187,12 +187,12 @@ namespace CppAst
                 cppStruct.IsDefinition = true;
                 cppStruct.SizeOf = (int)cursor.Type.SizeOf;
                 context.IsChildrenVisited = true;
-                cursor.VisitChildren(VisitMember, data);
+                cursor.VisitChildren(VisitMember, new CXClientData((IntPtr)data));
             }
             return cppStruct;
         }
 
-        private CXChildVisitResult VisitMember(CXCursor cursor, CXCursor parent, CXClientData data)
+        private CXChildVisitResult VisitMember(CXCursor cursor, CXCursor parent, void* data)
         {
             CppElement element = null;
 
@@ -535,7 +535,7 @@ namespace CppAst
             // Try to extend the parsing of the macro to the end of line in order to recover comments
             originalRange.End.GetFileLocation(out var startFile, out var endLine, out var endColumn, out var startOffset);
             var range = originalRange;
-            if (startFile.Pointer != IntPtr.Zero)
+            if (startFile.Handle != IntPtr.Zero)
             {
                 var nextLineLocation = clang.getLocation(tu, startFile, endLine + 1, 1);
                 if (!nextLineLocation.Equals(CXSourceLocation.Null))
@@ -544,8 +544,7 @@ namespace CppAst
                 }
             }
 
-            CXToken[] tokens = null;
-            tu.Tokenize(range, out tokens);
+            var tokens = tu.Tokenize(range);
 
             var name = GetCursorSpelling(cursor);
             var cppMacro = new CppMacro(name);
@@ -663,7 +662,7 @@ namespace CppAst
             return new CppSourceLocation(file.Name.CString, (int)offset, (int)line, (int)column);
         }
 
-        private CppField VisitFieldOrVariable(CppContainerContext containerContext, CXCursor cursor, CXCursor parent, CXClientData data)
+        private CppField VisitFieldOrVariable(CppContainerContext containerContext, CXCursor cursor, CXCursor parent, void* data)
         {
             var fieldName = GetCursorSpelling(cursor);
             var type = GetCppType(cursor.Type.Declaration, cursor.Type, cursor, data);
@@ -701,7 +700,7 @@ namespace CppAst
             cppField.Attributes = ParseAttributes(cursor);
         }
 
-        private void VisitInitValue(CXCursor cursor, CXClientData data, out CppExpression expression, out CppValue value)
+        private void VisitInitValue(CXCursor cursor, void* data, out CppExpression expression, out CppValue value)
         {
             CppExpression localExpression = null;
             CppValue localValue = null;
@@ -714,10 +713,11 @@ namespace CppAst
                     return CXChildVisitResult.CXChildVisit_Break;
                 }
                 return CXChildVisitResult.CXChildVisit_Continue;
-            }, data);
+            }, new CXClientData((IntPtr)data));
 
             // Still tries to extract the compiled value
-            var resultEval = clang.Cursor_Evaluate(cursor);
+            var resultEval = new CXEvalResult((IntPtr)clang.Cursor_Evaluate(cursor));
+            
             switch (resultEval.Kind)
             {
                 case CXEvalResultKind.CXEval_Int:
@@ -753,7 +753,7 @@ namespace CppAst
             return cursor.Kind >= CXCursorKind.CXCursor_FirstExpr && cursor.Kind <= CXCursorKind.CXCursor_LastExpr;
         }
 
-        private CppExpression VisitExpression(CXCursor cursor, CXCursor parent, CXClientData data)
+        private CppExpression VisitExpression(CXCursor cursor, CXCursor parent, void* data)
         {
             CppExpression expr = null;
             bool visitChildren = false;
@@ -974,7 +974,7 @@ namespace CppAst
                     }
 
                     return CXChildVisitResult.CXChildVisit_Continue;
-                }, data);
+                }, new CXClientData((IntPtr)data));
             }
 
             switch (cursor.Kind)
@@ -1002,7 +1002,7 @@ namespace CppAst
             }
         }
 
-        private CppEnum VisitEnumDecl(CXCursor cursor, CXCursor parent, CXClientData data)
+        private CppEnum VisitEnumDecl(CXCursor cursor, CXCursor parent, void* data)
         {
             var cppEnum = GetOrCreateDeclarationContainer<CppEnum>(cursor, data, out var context);
             if (cursor.IsDefinition && !context.IsChildrenVisited)
@@ -1012,7 +1012,7 @@ namespace CppAst
                 cppEnum.IsScoped = cursor.EnumDecl_IsScoped;
                 cppEnum.Attributes.AddRange(ParseAttributes(cursor));
                 context.IsChildrenVisited = true;
-                cursor.VisitChildren(VisitMember, data);
+                cursor.VisitChildren(VisitMember, new CXClientData((IntPtr)data));
             }
             return cppEnum;
         }
@@ -1032,7 +1032,7 @@ namespace CppAst
         }
 
 
-        private CppFunction VisitFunctionDecl(CXCursor cursor, CXCursor parent, CXClientData data)
+        private CppFunction VisitFunctionDecl(CXCursor cursor, CXCursor parent, void* data)
         {
             var contextContainer = GetOrCreateDeclarationContainer(cursor.SemanticParent, data);
             var container = contextContainer.DeclarationContainer;
@@ -1138,7 +1138,7 @@ namespace CppAst
 
                 return CXChildVisitResult.CXChildVisit_Continue;
 
-            }, data);
+            }, new CXClientData((IntPtr)data));
 
             return cppFunction;
         }
@@ -1502,9 +1502,9 @@ namespace CppAst
             return true;
         }
 
-        private CppType VisitTypeDefDecl(CXCursor cursor, CXCursor parent, CXClientData data)
+        private CppType VisitTypeDefDecl(CXCursor cursor, CXCursor parent, void* data)
         {
-            var fulltypeDefName = cursor.UnifiedSymbolResolution.CString;
+            var fulltypeDefName = clang.getCursorUSR(cursor).CString;
             CppType type;
             if (_typedefs.TryGetValue(fulltypeDefName, out type))
             {
@@ -1584,7 +1584,7 @@ namespace CppAst
             return name;
         }
 
-        private CppType GetCppType(CXCursor cursor, CXType type, CXCursor parent, CXClientData data)
+        private CppType GetCppType(CXCursor cursor, CXType type, CXCursor parent, void* data)
         {
             var cppType = GetCppTypeInternal(cursor, type, parent, data);
 
@@ -1600,7 +1600,7 @@ namespace CppAst
             return cppType;
         }
 
-        private CppType GetCppTypeInternal(CXCursor cursor, CXType type, CXCursor parent, CXClientData data)
+        private CppType GetCppTypeInternal(CXCursor cursor, CXType type, CXCursor parent, void* data)
         {
             switch (type.kind)
             {
@@ -1696,7 +1696,7 @@ namespace CppAst
                 case CXTypeKind.CXType_Unexposed:
                     {
                         var cppUnexposedType = new CppUnexposedType(type.ToString()) { SizeOf = (int)type.SizeOf };
-                        var templateParameters = ParseTemplateParameters(cursor, type, data);
+                        var templateParameters = ParseTemplateParameters(cursor, type, new CXClientData((IntPtr)data));
                         if (templateParameters != null)
                         {
                             cppUnexposedType.TemplateParameters.AddRange(templateParameters);
@@ -1705,7 +1705,7 @@ namespace CppAst
                     }
 
                 case CXTypeKind.CXType_Attributed:
-                    return GetCppType(type.ModifierType.Declaration, type.ModifierType, parent, data);
+                    return GetCppType(type.ModifiedType.Declaration, type.ModifiedType, parent, data);
 
                 default:
                     {
@@ -1715,7 +1715,7 @@ namespace CppAst
             }
         }
 
-        private CppFunctionType VisitFunctionType(CXCursor cursor, CXType type, CXCursor parent, CXClientData data)
+        private CppFunctionType VisitFunctionType(CXCursor cursor, CXType type, CXCursor parent, void* data)
         {
             // Gets the return type
             var returnType = GetCppType(type.ResultType.Declaration, type.ResultType, cursor, data);
@@ -1746,7 +1746,7 @@ namespace CppAst
                     isParsingParameter = true;
                 }
                 return isParsingParameter ? CXChildVisitResult.CXChildVisit_Continue : CXChildVisitResult.CXChildVisit_Recurse;
-            }, data);
+            }, new CXClientData((IntPtr)data));
 
 
             return cppFunction;
@@ -1932,16 +1932,14 @@ namespace CppAst
             public Tokenizer(CXCursor cursor)
             {
                 _tu = cursor.TranslationUnit;
-                _tokens = null;
                 var range = GetRange(cursor);
-                _tu.Tokenize(range, out _tokens);
+                _tokens = _tu.Tokenize(range).ToArray();
             }
 
             public Tokenizer(CXTranslationUnit tu, CXSourceRange range)
             {
-                _tokens = null;
                 _tu = tu;
-                _tu.Tokenize(range, out _tokens);
+                _tokens = _tu.Tokenize(range).ToArray();
             }
 
             public virtual CXSourceRange GetRange(CXCursor cursor)
@@ -2112,9 +2110,9 @@ namespace CppAst
                     while (true)
                     {
                         var locBefore = GetNextLocation(loc, -inc);
-                        CXToken[] tokens;
+                        CXToken* tokens;
                         uint size;
-                        clang.tokenize(tu, clang.getRange(locBefore, loc), out tokens, out size);
+                        clang.tokenize(tu, clang.getRange(locBefore, loc), &tokens, &size);
                         if (size == 0)
                             return CXSourceLocation.Null;
 
