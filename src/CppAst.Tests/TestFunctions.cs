@@ -23,7 +23,7 @@ float function2(int);
                         Assert.AreEqual("function0", cppFunction.Name);
                         Assert.AreEqual(0, cppFunction.Parameters.Count);
                         Assert.AreEqual("void", cppFunction.ReturnType.ToString());
-                        
+
                         var cppFunction1 = compilation.FindByName<CppFunction>("function0");
                         Assert.AreEqual(cppFunction, cppFunction1);
                     }
@@ -34,10 +34,10 @@ float function2(int);
                         Assert.AreEqual(2, cppFunction.Parameters.Count);
                         Assert.AreEqual("a", cppFunction.Parameters[0].Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppFunction.Parameters[0].Type.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType) cppFunction.Parameters[0].Type).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType)cppFunction.Parameters[0].Type).Kind);
                         Assert.AreEqual("b", cppFunction.Parameters[1].Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppFunction.Parameters[1].Type.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.Float, ((CppPrimitiveType) cppFunction.Parameters[1].Type).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Float, ((CppPrimitiveType)cppFunction.Parameters[1].Type).Kind);
                         Assert.AreEqual("int", cppFunction.ReturnType.ToString());
 
                         var cppFunction1 = compilation.FindByName<CppFunction>("function1");
@@ -60,8 +60,8 @@ float function2(int);
                 }
             );
         }
-        
-        
+
+
         [Test]
         public void TestFunctionPrototype()
         {
@@ -78,29 +78,29 @@ typedef void (*function1)(int, float);
                     {
                         var cppType = compilation.Typedefs[0].ElementType;
                         Assert.AreEqual(CppTypeKind.Pointer, cppType.TypeKind);
-                        var cppPointerType = (CppPointerType) cppType;
+                        var cppPointerType = (CppPointerType)cppType;
                         Assert.AreEqual(CppTypeKind.Function, cppPointerType.ElementType.TypeKind);
-                        var cppFunctionType = (CppFunctionType) cppPointerType.ElementType;
+                        var cppFunctionType = (CppFunctionType)cppPointerType.ElementType;
                         Assert.AreEqual(2, cppFunctionType.Parameters.Count);
-                        
+
                         Assert.AreEqual("a", cppFunctionType.Parameters[0].Name);
                         Assert.AreEqual(CppPrimitiveType.Int, cppFunctionType.Parameters[0].Type);
-                        
+
                         Assert.AreEqual("b", cppFunctionType.Parameters[1].Name);
                         Assert.AreEqual(CppPrimitiveType.Float, cppFunctionType.Parameters[1].Type);
                     }
-                    
+
                     {
                         var cppType = compilation.Typedefs[1].ElementType;
                         Assert.AreEqual(CppTypeKind.Pointer, cppType.TypeKind);
-                        var cppPointerType = (CppPointerType) cppType;
+                        var cppPointerType = (CppPointerType)cppType;
                         Assert.AreEqual(CppTypeKind.Function, cppPointerType.ElementType.TypeKind);
-                        var cppFunctionType = (CppFunctionType) cppPointerType.ElementType;
+                        var cppFunctionType = (CppFunctionType)cppPointerType.ElementType;
                         Assert.AreEqual(2, cppFunctionType.Parameters.Count);
-                        
+
                         Assert.AreEqual(string.Empty, cppFunctionType.Parameters[0].Name);
                         Assert.AreEqual(CppPrimitiveType.Int, cppFunctionType.Parameters[0].Type);
-                        
+
                         Assert.AreEqual(string.Empty, cppFunctionType.Parameters[1].Name);
                         Assert.AreEqual(CppPrimitiveType.Float, cppFunctionType.Parameters[1].Type);
                     }
@@ -128,29 +128,29 @@ typedef struct struct0 {
                     {
                         var cppType = cls.Fields[0].Type;
                         Assert.AreEqual(CppTypeKind.Pointer, cppType.TypeKind);
-                        var cppPointerType = (CppPointerType) cppType;
+                        var cppPointerType = (CppPointerType)cppType;
                         Assert.AreEqual(CppTypeKind.Function, cppPointerType.ElementType.TypeKind);
-                        var cppFunctionType = (CppFunctionType) cppPointerType.ElementType;
+                        var cppFunctionType = (CppFunctionType)cppPointerType.ElementType;
                         Assert.AreEqual(2, cppFunctionType.Parameters.Count);
-                        
+
                         Assert.AreEqual("a", cppFunctionType.Parameters[0].Name);
                         Assert.AreEqual(CppPrimitiveType.Int, cppFunctionType.Parameters[0].Type);
-                        
+
                         Assert.AreEqual("b", cppFunctionType.Parameters[1].Name);
                         Assert.AreEqual(CppPrimitiveType.Float, cppFunctionType.Parameters[1].Type);
                     }
-                    
+
                     {
                         var cppType = cls.Fields[1].Type;
                         Assert.AreEqual(CppTypeKind.Pointer, cppType.TypeKind);
-                        var cppPointerType = (CppPointerType) cppType;
+                        var cppPointerType = (CppPointerType)cppType;
                         Assert.AreEqual(CppTypeKind.Function, cppPointerType.ElementType.TypeKind);
-                        var cppFunctionType = (CppFunctionType) cppPointerType.ElementType;
+                        var cppFunctionType = (CppFunctionType)cppPointerType.ElementType;
                         Assert.AreEqual(2, cppFunctionType.Parameters.Count);
-                        
+
                         Assert.AreEqual(string.Empty, cppFunctionType.Parameters[0].Name);
                         Assert.AreEqual(CppPrimitiveType.Char, cppFunctionType.Parameters[0].Type);
-                        
+
                         Assert.AreEqual(string.Empty, cppFunctionType.Parameters[1].Name);
                         Assert.AreEqual(CppPrimitiveType.Int, cppFunctionType.Parameters[1].Type);
                     }
@@ -172,7 +172,7 @@ typedef struct struct0 {
 EXPORT_API int function0();
 int function1();
 ";
-                
+
             ParseAssert(text,
                 compilation =>
                 {
@@ -182,7 +182,7 @@ int function1();
 
                     {
                         var cppFunction = compilation.Functions[0];
-                        Assert.AreEqual(1, cppFunction.Attributes.Count); 
+                        Assert.AreEqual(1, cppFunction.Attributes.Count);
                         Assert.True(cppFunction.IsPublicExport());
                     }
                     {

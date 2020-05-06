@@ -14,7 +14,7 @@ namespace CppAst
     public sealed class CppClass : CppTypeDeclaration, ICppMemberWithVisibility, ICppDeclarationContainer, ICppTemplateOwner
     {
         /// <summary>
-        /// Creates a new instance. 
+        /// Creates a new instance.
         /// </summary>
         /// <param name="name">Name of this type.</param>
         public CppClass(string name) : base(CppTypeKind.StructOrClass)

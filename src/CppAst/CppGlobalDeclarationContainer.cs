@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 namespace CppAst
 {
     /// <summary>
-    /// A base Cpp container for macros, classes, fields, functions, enums, typesdefs. 
+    /// A base Cpp container for macros, classes, fields, functions, enums, typesdefs.
     /// </summary>
     public class CppGlobalDeclarationContainer : CppElement, ICppGlobalDeclarationContainer
     {
