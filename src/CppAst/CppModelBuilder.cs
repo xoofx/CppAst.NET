@@ -1540,22 +1540,7 @@ namespace CppAst
             return type;
         }
 
-        private string GetCursorAsText(CXCursor cursor)
-        {
-            var tokenizer = new Tokenizer(cursor);
-            var builder = new StringBuilder();
-            var previousTokenKind = CppTokenKind.Punctuation;
-            for (int i = 0; i < tokenizer.Count; i++)
-            {
-                var token = tokenizer[i];
-                if (previousTokenKind.IsIdentifierOrKeyword() && token.Kind.IsIdentifierOrKeyword())
-                {
-                    builder.Append(" ");
-                }
-                builder.Append(token.Text);
-            }
-            return builder.ToString();
-        }
+        private static string GetCursorAsText(CXCursor cursor) => new Tokenizer(cursor).TokensToString();
 
         private string GetCursorAsTextBetweenOffset(CXCursor cursor, int startOffset, int endOffset)
         {
@@ -2004,6 +1989,23 @@ namespace CppAst
             {
                 var token = _tokens[i];
                 return token.GetSpelling(_tu).CString;
+            }
+
+            public string TokensToString()
+            {
+                if (_tokens == null)
+                {
+                    return null;
+                }
+
+                var tokens = new List<CppToken>(_tokens.Length);
+
+                for (int i = 0; i < _tokens.Length; i++)
+                {
+                    tokens.Add(this[i]);
+                }
+
+                return CppToken.TokensToString(tokens);
             }
 
             public string GetStringForLength(int length)
