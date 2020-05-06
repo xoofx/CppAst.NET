@@ -129,7 +129,7 @@ using MyStructInt = MyStruct<int>;
 
                     var cppStruct = compilation.FindByName<CppClass>("MyStruct");
                     Assert.AreEqual(compilation.Classes[0], cppStruct);
-                    
+
                     Assert.AreEqual(1, compilation.Typedefs.Count);
                     Assert.AreEqual("MyStructInt", compilation.Typedefs[0].Name);
 

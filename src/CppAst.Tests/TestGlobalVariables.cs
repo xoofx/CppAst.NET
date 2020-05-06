@@ -24,7 +24,7 @@ const unsigned int var4 = (unsigned int) 125;
                         var cppField = compilation.Fields[0];
                         Assert.AreEqual("var0", cppField.Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppField.Type.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType) cppField.Type).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType)cppField.Type).Kind);
                         Assert.AreEqual(CppVisibility.Default, cppField.Visibility);
                         Assert.AreEqual(CppStorageQualifier.None, cppField.StorageQualifier);
                     }
@@ -34,7 +34,7 @@ const unsigned int var4 = (unsigned int) 125;
                         Assert.AreEqual("var1", cppField.Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppField.Type.TypeKind);
                         Assert.AreEqual(CppVisibility.Default, cppField.Visibility);
-                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType) cppField.Type).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType)cppField.Type).Kind);
                         Assert.AreEqual(CppStorageQualifier.None, cppField.StorageQualifier);
                     }
 
@@ -43,7 +43,7 @@ const unsigned int var4 = (unsigned int) 125;
                         Assert.AreEqual("var2", cppField.Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppField.Type.TypeKind);
                         Assert.AreEqual(CppVisibility.Default, cppField.Visibility);
-                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType) cppField.Type).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType)cppField.Type).Kind);
                         Assert.AreEqual(CppStorageQualifier.Extern, cppField.StorageQualifier);
                     }
 
@@ -51,21 +51,21 @@ const unsigned int var4 = (unsigned int) 125;
                         var cppField = compilation.Fields[3];
                         Assert.AreEqual("var3", cppField.Name);
                         Assert.AreEqual(CppTypeKind.Qualified, cppField.Type.TypeKind);
-                        Assert.AreEqual(CppTypeQualifier.Const, ((CppQualifiedType) cppField.Type).Qualifier);
+                        Assert.AreEqual(CppTypeQualifier.Const, ((CppQualifiedType)cppField.Type).Qualifier);
                         Assert.NotNull(cppField.InitExpression);
                         Assert.AreEqual("123", cppField.InitExpression.ToString());
                     }
-                    
+
                     {
                         var cppField = compilation.Fields[4];
                         Assert.AreEqual("var4", cppField.Name);
                         Assert.AreEqual(CppTypeKind.Qualified, cppField.Type.TypeKind);
-                        Assert.AreEqual(CppTypeQualifier.Const, ((CppQualifiedType) cppField.Type).Qualifier);
+                        Assert.AreEqual(CppTypeQualifier.Const, ((CppQualifiedType)cppField.Type).Qualifier);
                         Assert.NotNull(cppField.InitExpression);
                         Assert.AreEqual("(unsigned int)125", cppField.InitExpression.ToString());
                     }
                 }
             );
         }
-   }
+    }
 }

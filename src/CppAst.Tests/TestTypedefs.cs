@@ -88,7 +88,7 @@ typedef struct {
 
                     Assert.AreEqual(1, compilation.Classes.Count);
                     Assert.AreEqual("MyStruct", compilation.Classes[0].Name);
-                    
+
                     var cppStruct = compilation.FindByName<CppClass>("MyStruct");
                     Assert.AreEqual(compilation.Classes[0], cppStruct);
                 }

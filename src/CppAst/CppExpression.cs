@@ -70,7 +70,7 @@ namespace CppAst
         public List<CppToken> Tokens { get; }
 
         /// <summary>
-        /// Gets or sets a textual representation from the tokens. 
+        /// Gets or sets a textual representation from the tokens.
         /// </summary>
         public string Text { get; set; }
 

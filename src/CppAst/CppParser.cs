@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using ClangSharp;
 using ClangSharp.Interop;
 
 namespace CppAst
@@ -192,9 +191,7 @@ namespace CppAst
                         {
                             using (var diagnostic = translationUnit.GetDiagnostic(i))
                             {
-
-                                CppSourceLocation location;
-                                var message = GetMessageAndLocation(rootFileContent, diagnostic, out location);
+                                var message = GetMessageAndLocation(rootFileContent, diagnostic, out var location);
 
                                 switch (diagnostic.Severity)
                                 {
