@@ -12,6 +12,7 @@ namespace CppAst
     /// </summary>
     public class CppCommentFull : CppComment
     {
+        /// <inheritdoc />
         public CppCommentFull() : base(CppCommentKind.Full)
         {
         }
@@ -109,6 +110,7 @@ namespace CppAst
     /// </summary>
     public class CppCommentParagraph : CppComment
     {
+        /// <inheritdoc />
         public CppCommentParagraph() : base(CppCommentKind.Paragraph)
         {
         }
@@ -143,6 +145,7 @@ namespace CppAst
     /// </summary>
     public class CppCommentBlockCommand : CppCommentCommand
     {
+        /// <inheritdoc />
         public CppCommentBlockCommand() : base(CppCommentKind.BlockCommand)
         {
         }
@@ -159,6 +162,7 @@ namespace CppAst
     /// </summary>
     public class CppCommentInlineCommand : CppCommentCommand
     {
+        /// <inheritdoc />
         public CppCommentInlineCommand() : base(CppCommentKind.InlineCommand)
         {
         }
@@ -188,6 +192,7 @@ namespace CppAst
     /// </summary>
     public class CppCommentParamCommand : CppCommentCommand
     {
+        /// <inheritdoc />
         public CppCommentParamCommand() : base(CppCommentKind.ParamCommand)
         {
         }
@@ -232,6 +237,7 @@ namespace CppAst
     /// </summary>
     public class CppCommentTemplateParamCommand : CppCommentCommand
     {
+        /// <inheritdoc />
         public CppCommentTemplateParamCommand() : base(CppCommentKind.TemplateParamCommand)
         {
         }
@@ -300,6 +306,7 @@ namespace CppAst
     /// </summary>
     public class CppCommentVerbatimBlockCommand : CppCommentCommand
     {
+        /// <inheritdoc />
         public CppCommentVerbatimBlockCommand() : base(CppCommentKind.VerbatimBlockCommand)
         {
         }
@@ -317,6 +324,7 @@ namespace CppAst
     /// </summary>
     public class CppCommentVerbatimBlockLine : CppCommentTextBase
     {
+        /// <inheritdoc />
         public CppCommentVerbatimBlockLine() : base(CppCommentKind.VerbatimBlockLine)
         {
         }
@@ -351,6 +359,7 @@ namespace CppAst
     /// </summary>
     public class CppCommentText : CppCommentTextBase
     {
+        /// <inheritdoc />
         public CppCommentText() : base(CppCommentKind.Text)
         {
         }
@@ -361,6 +370,7 @@ namespace CppAst
     /// </summary>
     public class CppCommentVerbatimLine : CppCommentTextBase
     {
+        /// <inheritdoc />
         public CppCommentVerbatimLine() : base(CppCommentKind.VerbatimLine)
         {
         }
@@ -391,6 +401,7 @@ namespace CppAst
     /// </summary>
     public class CppCommentHtmlStartTag : CppCommentHtmlTag
     {
+        /// <inheritdoc />
         public CppCommentHtmlStartTag() : base(CppCommentKind.HtmlStartTag)
         {
             Attributes = new List<KeyValuePair<string, string>>();
@@ -433,6 +444,7 @@ namespace CppAst
     /// </summary>
     public class CppCommentHtmlEndTag : CppCommentHtmlTag
     {
+        /// <inheritdoc />
         public CppCommentHtmlEndTag() : base(CppCommentKind.HtmlEndTag)
         {
         }

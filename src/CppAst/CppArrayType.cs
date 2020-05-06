@@ -26,24 +26,28 @@ namespace CppAst
         /// </summary>
         public int Size { get; }
 
+        /// <inheritdoc />
         public override int SizeOf
         {
             get => Size * ElementType.SizeOf;
             set => throw new InvalidOperationException("Cannot set the SizeOf an array type. The SizeOf is calculated by the SizeOf its ElementType and the number of elements in the fixed array");
         }
 
+        /// <inheritdoc />
         public bool Equals(CppArrayType other)
         {
-            if (ReferenceEquals(null, other)) return false;
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return base.Equals(other) && Size == other.Size;
         }
 
+        /// <inheritdoc />
         public override bool Equals(object obj)
         {
             return ReferenceEquals(this, obj) || obj is CppArrayType other && Equals(other);
         }
 
+        /// <inheritdoc />
         public override int GetHashCode()
         {
             unchecked
@@ -52,6 +56,7 @@ namespace CppAst
             }
         }
 
+        /// <inheritdoc />
         public override CppType GetCanonicalType()
         {
             var elementTypeCanonical = ElementType.GetCanonicalType();
@@ -59,6 +64,7 @@ namespace CppAst
             return new CppArrayType(elementTypeCanonical, Size);
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             return $"{ElementType.GetDisplayName()}[{Size}]";

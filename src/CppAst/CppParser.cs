@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using ClangSharp;
 using ClangSharp.Interop;
 
 namespace CppAst
