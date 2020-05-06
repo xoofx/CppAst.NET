@@ -1110,7 +1110,7 @@ namespace CppAst
 
                         break;
 
-                    // Don't generate a warning for unsupported cursor
+                        // Don't generate a warning for unsupported cursor
                 }
 
                 return CXChildVisitResult.CXChildVisit_Continue;
