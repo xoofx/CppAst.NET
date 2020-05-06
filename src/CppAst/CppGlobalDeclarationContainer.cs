@@ -62,20 +62,14 @@ namespace CppAst
         public CppContainerList<CppAttribute> Attributes { get; }
 
         /// <inheritdoc />
-        public virtual IEnumerable<ICppDeclaration> Children()
-        {
-            return CppContainerHelper.Children(this);
-        }
+        public virtual IEnumerable<ICppDeclaration> Children() => CppContainerHelper.Children(this);
 
         /// <summary>
         /// Find a <see cref="CppElement"/> by name declared directly by this container.
         /// </summary>
         /// <param name="name">Name of the element to find</param>
         /// <returns>The CppElement found or null if not found</returns>
-        public CppElement FindByName(string name)
-        {
-            return FindByName(this, name);
-        }
+        public CppElement FindByName(string name) => FindByName(this, name);
 
         /// <summary>
         /// Find a <see cref="CppElement"/> by name declared within the specified container.
@@ -105,8 +99,7 @@ namespace CppAst
             if (container == null) throw new ArgumentNullException(nameof(container));
             if (name == null) throw new ArgumentNullException(nameof(name));
 
-            var cacheByName = FindByNameInternal(container, name);
-            return cacheByName;
+            return FindByNameInternal(container, name);
         }
 
         /// <summary>
@@ -153,9 +146,11 @@ namespace CppAst
                 foreach (var element in container.Children())
                 {
                     var cppElement = (CppElement)element;
+
                     if (element is ICppMember member && !string.IsNullOrEmpty(member.Name))
                     {
                         var elementName = member.Name;
+
                         if (!cacheByNames.TryGetValue(elementName, out var cacheByName))
                         {
                             cacheByName = new CacheByName();
@@ -171,13 +166,13 @@ namespace CppAst
                             {
                                 cacheByName.List = new List<CppElement>();
                             }
+
                             cacheByName.List.Add(cppElement);
                         }
 
                         cacheByNames[elementName] = cacheByName;
                     }
                 }
-
             }
 
             return cacheByNames.TryGetValue(name, out var cacheByNameFound) ? cacheByNameFound : new CacheByName();
@@ -188,9 +183,12 @@ namespace CppAst
             public CppElement Element;
 
             public List<CppElement> List;
+
+            /// <inheritdoc />
             public IEnumerator<CppElement> GetEnumerator()
             {
-                if (Element != null) yield return Element;
+                if (Element != null) { yield return Element; }
+
                 if (List != null)
                 {
                     foreach (var cppElement in List)
@@ -200,10 +198,8 @@ namespace CppAst
                 }
             }
 
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
+            /// <inheritdoc />
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
     }
 

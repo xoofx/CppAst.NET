@@ -29,7 +29,7 @@ namespace CppAst
         public static CppCompilation Parse(string cppText, CppParserOptions options = null, string cppFilename = "content")
         {
             if (cppText == null) throw new ArgumentNullException(nameof(cppText));
-            var cppFiles = new List<CppFileOrString> { new CppFileOrString() { Filename = cppFilename, Content = cppText, } };
+            var cppFiles = new List<CppFileOrString> { new CppFileOrString { Filename = cppFilename, Content = cppText, } };
             return ParseInternal(cppFiles, options);
         }
 
@@ -42,7 +42,7 @@ namespace CppAst
         public static CppCompilation ParseFile(string cppFilename, CppParserOptions options = null)
         {
             if (cppFilename == null) throw new ArgumentNullException(nameof(cppFilename));
-            var files = new List<string>() { cppFilename };
+            var files = new List<string> { cppFilename };
             return ParseFiles(files, options);
         }
 
@@ -60,7 +60,7 @@ namespace CppAst
             foreach (var cppFilepath in cppFilenameList)
             {
                 if (string.IsNullOrEmpty(cppFilepath)) throw new InvalidOperationException("A null or empty filename is invalid in the list");
-                cppFiles.Add(new CppFileOrString() { Filename = cppFilepath });
+                cppFiles.Add(new CppFileOrString { Filename = cppFilepath });
             }
             return ParseInternal(cppFiles, options);
         }
@@ -172,9 +172,9 @@ namespace CppAst
 
                     var rootFileNameUTF8 = Marshal.StringToHGlobalAnsi(rootFileName);
 
-                    translationUnit = CXTranslationUnit.Parse(createIndex, rootFileName, argumentsArray,new CXUnsavedFile[]
+                    translationUnit = CXTranslationUnit.Parse(createIndex, rootFileName, argumentsArray, new[]
                     {
-                        new CXUnsavedFile()
+                        new CXUnsavedFile
                         {
                             Contents = (sbyte*) rootFileContentUTF8Ptr,
                             Filename = (sbyte*) rootFileNameUTF8,
@@ -191,9 +191,7 @@ namespace CppAst
                         {
                             using (var diagnostic = translationUnit.GetDiagnostic(i))
                             {
-
-                                CppSourceLocation location;
-                                var message = GetMessageAndLocation(rootFileContent, diagnostic, out location);
+                                var message = GetMessageAndLocation(rootFileContent, diagnostic, out var location);
 
                                 switch (diagnostic.Severity)
                                 {
@@ -216,7 +214,7 @@ namespace CppAst
 
                     if (skipProcessing)
                     {
-                        compilation.Diagnostics.Warning($"Compilation aborted due to one or more errors listed above.", new CppSourceLocation(rootFileName, 0, 1, 1));
+                        compilation.Diagnostics.Warning("Compilation aborted due to one or more errors listed above.", new CppSourceLocation(rootFileName, 0, 1, 1));
                     }
                     else
                     {

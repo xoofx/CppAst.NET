@@ -2,6 +2,8 @@
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
+using System.Linq;
+
 namespace CppAst
 {
     /// <summary>
@@ -16,7 +18,8 @@ namespace CppAst
         /// <returns><c>true</c> if the token is an identifier or keyword, <c>false</c> otherwise</returns>
         public static bool IsIdentifierOrKeyword(this CppTokenKind kind)
         {
-            return kind == CppTokenKind.Identifier || kind == CppTokenKind.Keyword;
+            return kind == CppTokenKind.Identifier ||
+                   kind == CppTokenKind.Keyword;
         }
 
         /// <summary>
@@ -27,8 +30,9 @@ namespace CppAst
         /// <returns>The display name</returns>
         public static string GetDisplayName(this CppType type)
         {
-            if (type is ICppMember member) return member.Name;
-            return type.ToString();
+            return type is ICppMember member
+                ? member.Name
+                : type.ToString();
         }
 
         /// <summary>
@@ -48,15 +52,9 @@ namespace CppAst
         /// <returns><c>true</c> if the function is a dllexport or visibility("default")</returns>
         public static bool IsPublicExport(this CppFunction function)
         {
-            if (function.Attributes != null)
-            {
-                foreach (var attr in function.Attributes)
-                {
-                    if (attr.IsPublicExport()) return true;
-                }
-            }
-
-            return function.LinkageKind == CppLinkageKind.External || function.LinkageKind == CppLinkageKind.UniqueExternal;
+            return function.Attributes != null && function.Attributes.Any(attr => attr.IsPublicExport()) ||
+                   function.LinkageKind == CppLinkageKind.External ||
+                   function.LinkageKind == CppLinkageKind.UniqueExternal;
         }
     }
 }

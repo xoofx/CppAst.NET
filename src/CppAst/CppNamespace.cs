@@ -59,14 +59,15 @@ namespace CppAst
             return Equals(Parent, other.Parent) && Name.Equals(other.Name);
         }
 
+        /// <inheritdoc />
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj)) return false;
+            if (obj is null) return false;
             if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((CppNamespace)obj);
+            return obj.GetType() == GetType() && Equals((CppNamespace)obj);
         }
 
+        /// <inheritdoc />
         public override int GetHashCode()
         {
             unchecked
@@ -75,17 +76,10 @@ namespace CppAst
             }
         }
 
-        public override string ToString()
-        {
-            return $"namespace {Name} {{...}}";
-        }
+        /// <inheritdoc />
+        public override string ToString() => $"namespace {Name} {{...}}";
 
-        public IEnumerable<ICppDeclaration> Children()
-        {
-            foreach (var item in CppContainerHelper.Children(this))
-            {
-                yield return item;
-            }
-        }
+        /// <inheritdoc />
+        public IEnumerable<ICppDeclaration> Children() => CppContainerHelper.Children(this);
     }
 }
