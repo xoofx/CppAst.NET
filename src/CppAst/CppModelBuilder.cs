@@ -132,6 +132,11 @@ namespace CppAst
                         if (templateParameters != null)
                         {
                             cppClass.TemplateParameters.AddRange(templateParameters);
+
+                            if (cursor.DeclKind == CX_DeclKind.CX_DeclKind_ClassTemplateSpecialization)
+                            {
+                                cppClass.SpecializedTemplate = (CppClass)GetOrCreateDeclarationContainer(cursor.SpecializedCursorTemplate, data).Container;
+                            }
                         }
                     }
 

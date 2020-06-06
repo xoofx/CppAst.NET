@@ -83,6 +83,11 @@ namespace CppAst
         /// <inheritdoc />
         public List<CppType> TemplateParameters { get; }
 
+        /// <summary>
+        /// Gets the specialized class template of this instance.
+        /// </summary>
+        public CppClass SpecializedTemplate { get; set; }
+
         private bool Equals(CppClass other)
         {
             return base.Equals(other) && Equals(Parent, other.Parent) && Name.Equals(other.Name);

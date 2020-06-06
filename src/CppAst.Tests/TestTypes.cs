@@ -85,6 +85,14 @@ TemplateStruct<int, Struct2> unexposed;
                     Assert.AreEqual(CppPrimitiveKind.Int, (exposed.TemplateParameters[0] as CppPrimitiveType).Kind);
                     Assert.AreEqual("Struct2", (exposed.TemplateParameters[1] as CppClass).Name);
 
+                    var specialized = exposed.SpecializedTemplate;
+                    Assert.AreEqual("TemplateStruct", specialized.Name);
+                    Assert.AreEqual(2, specialized.Fields.Count);
+                    Assert.AreEqual("field0", specialized.Fields[0].Name);
+                    Assert.AreEqual("T", specialized.Fields[0].Type.GetDisplayName());
+                    Assert.AreEqual("field1", specialized.Fields[1].Name);
+                    Assert.AreEqual("U", specialized.Fields[1].Type.GetDisplayName());
+
                     var unexposed = compilation.Fields[1].Type as CppUnexposedType;
                     Assert.AreEqual("TemplateStruct<int, Struct2>", unexposed.Name);
                     Assert.AreEqual(2, unexposed.TemplateParameters.Count);
