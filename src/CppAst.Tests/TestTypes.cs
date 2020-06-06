@@ -101,5 +101,42 @@ TemplateStruct<int, Struct2> unexposed;
                 }
             );
         }
+
+        [Test]
+        public void TestTemplateInheritance()
+        {
+            ParseAssert(@"
+template <typename T>
+class BaseTemplate
+{
+};
+
+class Derived : public ::BaseTemplate<::Derived>
+{
+};
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(3, compilation.Classes.Count);
+
+                    var baseTemplate = compilation.Classes[0];
+                    var derived = compilation.Classes[1];
+                    var baseClassSpecialized = compilation.Classes[2];
+
+                    Assert.AreEqual("BaseTemplate", baseTemplate.Name);
+                    Assert.AreEqual("Derived", derived.Name);
+                    Assert.AreEqual("BaseTemplate", baseClassSpecialized.Name);
+
+                    Assert.AreEqual(1, derived.BaseTypes.Count);
+                    Assert.AreEqual(baseClassSpecialized, derived.BaseTypes[0].Type);
+
+                    Assert.AreEqual(1, baseClassSpecialized.TemplateParameters.Count);
+                    Assert.AreEqual(derived, baseClassSpecialized.TemplateParameters[0]);
+                    Assert.AreEqual(baseTemplate, baseClassSpecialized.SpecializedTemplate);
+                }
+            );
+        }
     }
 }
