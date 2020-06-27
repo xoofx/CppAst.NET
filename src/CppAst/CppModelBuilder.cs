@@ -1554,10 +1554,22 @@ namespace CppAst
 
             if (type.IsConstQualified)
             {
+                // Skip if it is already qualified.
+                if (cppType is CppQualifiedType q && q.Qualifier == CppTypeQualifier.Const)
+                {
+                    return cppType;
+                }
+
                 return new CppQualifiedType(CppTypeQualifier.Const, cppType);
             }
             if (type.IsVolatileQualified)
             {
+                // Skip if it is already qualified.
+                if (cppType is CppQualifiedType q && q.Qualifier == CppTypeQualifier.Volatile)
+                {
+                    return cppType;
+                }
+
                 return new CppQualifiedType(CppTypeQualifier.Volatile, cppType);
             }
 

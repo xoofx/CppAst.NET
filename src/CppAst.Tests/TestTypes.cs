@@ -138,5 +138,38 @@ class Derived : public ::BaseTemplate<::Derived>
                 }
             );
         }
+
+        [Test]
+        public void TestClassPrototype()
+        {
+            ParseAssert(@"
+namespace ns1 {
+class TmpClass;
+}
+
+namespace ns2 {
+const ns1::TmpClass* tmpClass1;
+volatile ns1::TmpClass* tmpClass2;
+}
+
+namespace ns1 {
+class TmpClass {
+};
+}
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    var tmpClass1 = compilation.Namespaces[1].Fields[0];
+                    var tmpClass2 = compilation.Namespaces[1].Fields[1];
+
+                    var hoge = tmpClass1.Type.GetDisplayName();
+                    var hoge2 = tmpClass2.Type.GetDisplayName();
+                    Assert.AreEqual("const TmpClass*", tmpClass1.Type.GetDisplayName());
+                    Assert.AreEqual("volatile TmpClass*", tmpClass2.Type.GetDisplayName());
+                }
+            );
+        }
     }
 }
