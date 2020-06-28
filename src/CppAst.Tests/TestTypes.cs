@@ -98,6 +98,9 @@ TemplateStruct<int, Struct2> unexposed;
                     Assert.AreEqual(2, unexposed.TemplateParameters.Count);
                     Assert.AreEqual(CppPrimitiveKind.Int, (unexposed.TemplateParameters[0] as CppPrimitiveType).Kind);
                     Assert.AreEqual("Struct2", (unexposed.TemplateParameters[1] as CppClass).Name);
+
+                    Assert.AreNotEqual(exposed.GetHashCode(), specialized.GetHashCode());
+                    Assert.AreEqual(exposed.GetHashCode(), unexposed.GetHashCode());
                 }
             );
         }
