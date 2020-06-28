@@ -1671,6 +1671,13 @@ namespace CppAst
 
                 case CXTypeKind.CXType_Unexposed:
                     {
+                        // It may be possible to parse them even if they are unexposed.
+                        var kind = type.Declaration.Type.kind;
+                        if (kind != CXTypeKind.CXType_Unexposed && kind != CXTypeKind.CXType_Invalid)
+                        {
+                            return GetCppType(type.Declaration, type.Declaration.Type, parent, data);
+                        }
+
                         var cppUnexposedType = new CppUnexposedType(type.ToString()) { SizeOf = (int)type.SizeOf };
                         var templateParameters = ParseTemplateParameters(cursor, type, new CXClientData((IntPtr)data));
                         if (templateParameters != null)
