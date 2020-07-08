@@ -463,7 +463,7 @@ struct Test{
             {
                 Assert.False(compilation.HasErrors);
 
-                Assert.AreEqual(2, compilation.Classes.Count);
+                Assert.AreEqual(3, compilation.Classes.Count);
                 Assert.AreEqual(1, compilation.Classes[1].Fields.Count);
                 Assert.AreEqual(1, compilation.Classes[1].Fields[0].Attributes.Count);
                 {
