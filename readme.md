@@ -88,7 +88,7 @@ This software is released under the [BSD-Clause 2 license](https://opensource.or
 
 ## Related
 
-The C++ project [cppast](https://github.com/foonathan/cppast) serves similar purpose although CppAst.NET does not share any implementation details.
+The C++ project [cppast](https://github.com/foonathan/cppast) serves similar purpose although CppAst.NET does not share API or any implementation details.
 
 ## Author
 
