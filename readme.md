@@ -1,4 +1,4 @@
-# CppAst [![Build Status](https://github.com/xoofx/CppAst/workflows/ci/badge.svg?branch=master)](https://github.com/xoofx/CppAst/actions)   [![NuGet](https://img.shields.io/nuget/v/CppAst.svg)](https://www.nuget.org/packages/CppAst/)
+# CppAst.NET [![Build Status](https://github.com/xoofx/CppAst/workflows/ci/badge.svg?branch=master)](https://github.com/xoofx/CppAst/actions)   [![NuGet](https://img.shields.io/nuget/v/CppAst.svg)](https://www.nuget.org/packages/CppAst/)
 
 <img align="right" width="160px" height="160px" src="img/cppast.png">
 
@@ -85,6 +85,10 @@ This software is released under the [BSD-Clause 2 license](https://opensource.or
 ## Credits
 
 * [ClangSharp](https://github.com/microsoft/ClangSharp): .NET managed wrapper around Clang/libclang
+
+## Related
+
+The C++ project [cppast](https://github.com/foonathan/cppast) serves similar purpose although CppAst.NET does not share any implementation details.
 
 ## Author
 
