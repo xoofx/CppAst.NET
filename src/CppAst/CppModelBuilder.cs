@@ -289,6 +289,7 @@ namespace CppAst
                         if (cppClass != null)
                         {
                             CppAttribute attribute = new CppAttribute("visibility");
+                            AssignSourceSpan(cursor, attribute);
                             attribute.Arguments = cursor.DisplayName.ToString();
                             cppClass.Attributes.Add(attribute);
                         }
@@ -300,7 +301,9 @@ namespace CppAst
                         var cppClass = containerContext as CppClass;
                         if (cppClass != null)
                         {
-                            cppClass.Attributes.Add(new CppAttribute("dllimport"));
+                            CppAttribute attribute = new CppAttribute("dllimport");
+                            AssignSourceSpan(cursor, attribute);
+                            cppClass.Attributes.Add(attribute);
                         }
                     }
                     break;
@@ -310,7 +313,9 @@ namespace CppAst
                         var cppClass = containerContext as CppClass;
                         if (cppClass != null)
                         {
-                            cppClass.Attributes.Add(new CppAttribute("dllexport"));
+                            CppAttribute attribute = new CppAttribute("dllexport");
+                            AssignSourceSpan(cursor, attribute);
+                            cppClass.Attributes.Add(attribute);
                         }
                     }
                     break;
