@@ -281,6 +281,39 @@ namespace CppAst
                     break;
                 case CXCursorKind.CXCursor_MacroExpansion:
                     break;
+                    
+                case CXCursorKind.CXCursor_VisibilityAttr:
+                    {
+                        var containerContext = GetOrCreateDeclarationContainer(parent, data).Container;
+                        var cppClass = containerContext as CppClass;
+                        if (cppClass != null)
+                        {
+                            CppAttribute attribute = new CppAttribute("visibility");
+                            attribute.Arguments = cursor.DisplayName.ToString();
+                            cppClass.Attributes.Add(attribute);
+                        }
+                    }
+                    break;
+                case CXCursorKind.CXCursor_DLLImport:
+                    {
+                        var containerContext = GetOrCreateDeclarationContainer(parent, data).Container;
+                        var cppClass = containerContext as CppClass;
+                        if (cppClass != null)
+                        {
+                            cppClass.Attributes.Add(new CppAttribute("dllimport"));
+                        }
+                    }
+                    break;
+                case CXCursorKind.CXCursor_DLLExport:
+                    {
+                        var containerContext = GetOrCreateDeclarationContainer(parent, data).Container;
+                        var cppClass = containerContext as CppClass;
+                        if (cppClass != null)
+                        {
+                            cppClass.Attributes.Add(new CppAttribute("dllexport"));
+                        }
+                    }
+                    break;
 
                 default:
                     WarningUnhandled(cursor, parent);
