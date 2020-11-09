@@ -40,7 +40,24 @@ namespace CppAst
         {
             return attribute.Name == "dllexport" || (attribute.Name == "visibility" && attribute.Arguments == "\"default\"");
         }
-
+        
+        /// <summary>
+        /// Gets a boolean indicating whether the function is a dllexport or visibility("default")
+        /// </summary>
+        /// <param name="cppClass">The class to check against</param>
+        /// <returns><c>true</c> if the class is a dllexport or visibility("default")</returns>
+        public static bool IsPublicExport(this CppClass cppClass)
+        {
+            if(cppClass.Attributes != null)
+            {
+                foreach (var attr in cppClass.Attributes)
+                {
+                    if (attr.IsPublicExport()) return true;
+                }
+            }
+            return false;
+        }
+        
         /// <summary>
         /// Gets a boolean indicating whether the function is a dllexport or visibility("default")
         /// </summary>
