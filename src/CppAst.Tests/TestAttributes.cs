@@ -518,5 +518,43 @@ struct Test{
             new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseAttributes = false }
           );
         }
+        
+        [Test]
+        public void TestClassPublicExportAttribute()
+        {
+            var text = @"
+#ifdef WIN32
+#define EXPORT_API __declspec(dllexport)
+#else
+#define EXPORT_API __attribute__((visibility(""default"")))
+#endif
+class EXPORT_API TestClass
+{
+};
+";
+            ParseAssert(text,
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    var cppClass = compilation.Classes[0];
+                    Assert.AreEqual(1, cppClass.Attributes.Count);
+                    Assert.True(cppClass.IsPublicExport());
+                    
+                },
+                new CppParserOptions() { ParseAttributes = true }
+            );
+
+            ParseAssert(text,
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    var cppClass = compilation.Classes[0];
+                    Assert.AreEqual(1, cppClass.Attributes.Count);
+                    Assert.True(cppClass.IsPublicExport());
+                }, new CppParserOptions() { ParseAttributes = true }.ConfigureForWindowsMsvc()
+            );
+        }    
     }
 }
