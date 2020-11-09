@@ -290,7 +290,7 @@ namespace CppAst
                         {
                             CppAttribute attribute = new CppAttribute("visibility");
                             AssignSourceSpan(cursor, attribute);
-                            attribute.Arguments = cursor.DisplayName.ToString();
+                            attribute.Arguments = string.Format("\"{0}\"", cursor.DisplayName.ToString());
                             cppClass.Attributes.Add(attribute);
                         }
                     }
