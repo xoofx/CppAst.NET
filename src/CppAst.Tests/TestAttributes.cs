@@ -544,7 +544,6 @@ class EXPORT_API TestClass
                 },
                 new CppParserOptions() { ParseAttributes = true }
             );
-
             ParseAssert(text,
                 compilation =>
                 {
