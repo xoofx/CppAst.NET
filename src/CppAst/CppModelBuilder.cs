@@ -1561,6 +1561,16 @@ namespace CppAst
             return type;
         }
 
+        private CppType VisitElaboratedDecl(CXCursor cursor, CXType type, CXCursor parent, void* data)
+        {
+            var fulltypeDefName = clang.getCursorUSR(cursor).CString;
+            if (_typedefs.TryGetValue(fulltypeDefName, out var typeRef)) {
+                return typeRef;
+            }
+
+            return GetCppType(type.CanonicalType.Declaration, type.CanonicalType, parent, data);
+        }
+
         private static string GetCursorAsText(CXCursor cursor) => new Tokenizer(cursor).TokensToString();
 
         private string GetCursorAsTextBetweenOffset(CXCursor cursor, int startOffset, int endOffset)
@@ -1688,9 +1698,7 @@ namespace CppAst
                     return VisitTypeDefDecl(cursor, data);
 
                 case CXTypeKind.CXType_Elaborated:
-                    {
-                        return GetCppType(type.CanonicalType.Declaration, type.CanonicalType, parent, data);
-                    }
+                    return VisitElaboratedDecl(cursor, type, parent, data);
 
                 case CXTypeKind.CXType_ConstantArray:
                 case CXTypeKind.CXType_IncompleteArray:

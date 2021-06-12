@@ -52,5 +52,30 @@ namespace A::B::C
                 }
             );
         }
+
+        [Test]
+        public void TestNamespacedTypedef() {
+            ParseAssert(@"
+namespace A
+{
+    typedef int (*a)(int b);
+}
+A::a c;
+",
+                compilation => {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(1, compilation.Namespaces.Count);
+                    ICppGlobalDeclarationContainer container = compilation.Namespaces[0];
+                    Assert.AreEqual(1, container.Typedefs.Count);
+                    Assert.AreEqual(1, compilation.Fields.Count);
+
+                    CppTypedef typedef = container.Typedefs[0];
+                    CppField field = compilation.Fields[0];
+
+                    Assert.AreEqual(typedef, field.Type);
+                }
+            );
+        }
     }
 }
