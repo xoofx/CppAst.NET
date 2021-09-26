@@ -56,5 +56,10 @@ namespace CppAst
         /// This is a C++ destructor
         /// </summary>
         Destructor = 1 << 7,
+
+        /// <summary>
+        /// This is a variadic function (has `...` parameter)
+        /// </summary>
+        Variadic = 1 << 8,
     }
 }

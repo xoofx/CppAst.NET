@@ -215,6 +215,46 @@ int function1();
             );
         }
 
+        [Test]
+        public void TestFunctionVariadic()
+        {
+            ParseAssert(@"
+void function0();
+void function1(...);
+void function2(int, ...);
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(3, compilation.Functions.Count);
+
+                    {
+                        var cppFunction = compilation.Functions[0];
+                        Assert.AreEqual(0, cppFunction.Parameters.Count);
+                        Assert.AreEqual("void", cppFunction.ReturnType.ToString());
+                        Assert.AreEqual(CppFunctionFlags.None, cppFunction.Flags & CppFunctionFlags.Variadic);
+                    }
+
+                    {
+                        var cppFunction = compilation.Functions[1];
+                        Assert.AreEqual(0, cppFunction.Parameters.Count);
+                        Assert.AreEqual("void", cppFunction.ReturnType.ToString());
+                        Assert.AreEqual(CppFunctionFlags.Variadic, cppFunction.Flags & CppFunctionFlags.Variadic);
+                    }
+
+                    {
+                        var cppFunction = compilation.Functions[2];
+                        Assert.AreEqual(1, cppFunction.Parameters.Count);
+                        Assert.AreEqual(string.Empty, cppFunction.Parameters[0].Name);
+                        Assert.AreEqual(CppTypeKind.Primitive, cppFunction.Parameters[0].Type.TypeKind);
+                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType)cppFunction.Parameters[0].Type).Kind);
+                        Assert.AreEqual("void", cppFunction.ReturnType.ToString());
+                        Assert.AreEqual(CppFunctionFlags.Variadic, cppFunction.Flags & CppFunctionFlags.Variadic);
+                    }
+                }
+            );
+        }
 
     }
 }
