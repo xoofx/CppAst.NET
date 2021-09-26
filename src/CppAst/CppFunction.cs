@@ -117,6 +117,11 @@ namespace CppAst
                 builder.Append(param);
             }
 
+            if ((Flags & CppFunctionFlags.Variadic) != 0)
+            {
+                builder.Append(", ...");
+            }
+
             builder.Append(")");
 
             if ((Flags & CppFunctionFlags.Const) != 0)

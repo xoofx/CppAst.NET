@@ -1108,6 +1108,11 @@ namespace CppAst
                 cppFunction.Flags |= CppFunctionFlags.Inline;
             }
 
+            if (cursor.IsVariadic)
+            {
+                cppFunction.Flags |= CppFunctionFlags.Variadic;
+            }
+
             if (cursor.CXXMethod_IsConst)
             {
                 cppFunction.Flags |= CppFunctionFlags.Const;
