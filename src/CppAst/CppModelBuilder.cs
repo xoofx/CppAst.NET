@@ -323,6 +323,10 @@ namespace CppAst
                     // Don't emit warning for this directive
                     break;
 
+                case CXCursorKind.CXCursor_Destructor:
+                case CXCursorKind.CXCursor_TemplateTypeParameter:
+                    // Don't emit warning
+                    break;
                 default:
                     WarningUnhandled(cursor, parent);
                     break;
@@ -1791,7 +1795,7 @@ namespace CppAst
         private void Unhandled(CXCursor cursor)
         {
             var cppLocation = GetSourceLocation(cursor.Location);
-            RootCompilation.Diagnostics.Warning($"Unhandled declaration: {cursor}.", cppLocation);
+            RootCompilation.Diagnostics.Warning($"Unhandled declaration: {cursor.Kind}/{cursor}.", cppLocation);
         }
 
         private void WarningUnhandled(CXCursor cursor, CXCursor parent, CXType type)
@@ -1801,7 +1805,7 @@ namespace CppAst
             {
                 cppLocation = GetSourceLocation(parent.Location);
             }
-            RootCompilation.Diagnostics.Warning($"The type `{type}` of kind `{type.KindSpelling}` is not supported in `{parent}`", cppLocation);
+            RootCompilation.Diagnostics.Warning($"The type {cursor.Kind}/`{type}` of kind `{type.KindSpelling}` is not supported in `{parent}`", cppLocation);
         }
 
         protected void WarningUnhandled(CXCursor cursor, CXCursor parent)
