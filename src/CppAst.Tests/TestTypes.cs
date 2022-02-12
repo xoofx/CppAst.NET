@@ -82,8 +82,8 @@ TemplateStruct<int, Struct2> unexposed;
                     var exposed = compilation.Fields[0].Type as CppClass;
                     Assert.AreEqual("TemplateStruct", exposed.Name);
                     Assert.AreEqual(2, exposed.TemplateParameters.Count);
-                    Assert.AreEqual(CppPrimitiveKind.Int, (exposed.TemplateParameters[0] as CppPrimitiveType).Kind);
-                    Assert.AreEqual("Struct2", (exposed.TemplateParameters[1] as CppClass).Name);
+                    Assert.AreEqual(CppPrimitiveKind.Int, (exposed.TemplateParameters[0] as CppPrimitiveType)?.Kind);
+                    Assert.AreEqual("Struct2", (exposed.TemplateParameters[1] as CppClass)?.Name);
 
                     var specialized = exposed.SpecializedTemplate;
                     Assert.AreEqual("TemplateStruct", specialized.Name);
@@ -96,8 +96,8 @@ TemplateStruct<int, Struct2> unexposed;
                     var unexposed = compilation.Fields[1].Type as CppClass;
                     Assert.AreEqual("TemplateStruct", unexposed.Name);
                     Assert.AreEqual(2, unexposed.TemplateParameters.Count);
-                    Assert.AreEqual(CppPrimitiveKind.Int, (unexposed.TemplateParameters[0] as CppPrimitiveType).Kind);
-                    Assert.AreEqual("Struct2", (unexposed.TemplateParameters[1] as CppClass).Name);
+                    Assert.AreEqual(CppPrimitiveKind.Int, (unexposed.TemplateParameters[0] as CppPrimitiveType)?.Kind);
+                    Assert.AreEqual("Struct2", (unexposed.TemplateParameters[1] as CppClass)?.Name);
 
                     Assert.AreNotEqual(exposed.GetHashCode(), specialized.GetHashCode());
                     Assert.AreEqual(exposed.GetHashCode(), unexposed.GetHashCode());
