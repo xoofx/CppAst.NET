@@ -200,7 +200,11 @@ namespace CppAst
                                         compilation.Diagnostics.Info(message, location);
                                         break;
                                     case CXDiagnosticSeverity.CXDiagnostic_Warning:
-                                        compilation.Diagnostics.Warning(message, location);
+                                        // Avoid warning from clang (0, 0): warning: argument unused during compilation: '-fsyntax-only'
+                                        if (!message.Contains("-fsyntax-only"))
+                                        {
+                                            compilation.Diagnostics.Warning(message, location);
+                                        }
                                         break;
                                     case CXDiagnosticSeverity.CXDiagnostic_Error:
                                     case CXDiagnosticSeverity.CXDiagnostic_Fatal:
