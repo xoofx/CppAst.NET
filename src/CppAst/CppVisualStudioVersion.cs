@@ -97,9 +97,9 @@ namespace CppAst
         /// </summary>
         VS2019 = 1920,
 
-        /// <summary>
-        /// Visual Studio 2022 RTW (17.0)
-        /// </summary>
-        VS2022 = 1930
+        ///// <summary>
+        ///// Visual Studio 2022 RTW (17.0)
+        ///// </summary>
+        //VS2022 = 1930
     }
 }

@@ -1826,8 +1826,8 @@ namespace CppAst
             var templateCppTypes = new List<CppType>();
             for (var templateIndex = 0; templateIndex < numTemplateArguments; ++templateIndex)
             {
-                var templateArg = type.GetTemplateArgument((uint)templateIndex);
-                var templateCppType = GetCppType(templateArg.AsDecl, templateArg.AsType, cursor, data);
+                var templateArg = type.GetTemplateArgumentAsType((uint)templateIndex);
+                var templateCppType = GetCppType(templateArg.Declaration, templateArg, cursor, data);
                 templateCppTypes.Add(templateCppType);
             }
 

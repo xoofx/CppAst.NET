@@ -155,7 +155,7 @@ namespace CppAst
         /// Configure this instance with Windows and MSVC.
         /// </summary>
         /// <returns>This instance</returns>
-        public CppParserOptions ConfigureForWindowsMsvc(CppTargetCpu targetCpu = CppTargetCpu.X86, CppVisualStudioVersion vsVersion = CppVisualStudioVersion.VS2022)
+        public CppParserOptions ConfigureForWindowsMsvc(CppTargetCpu targetCpu = CppTargetCpu.X86, CppVisualStudioVersion vsVersion = CppVisualStudioVersion.VS2019)
         {
             // 1920
             var highVersion = ((int)vsVersion) / 100;  // => 19

@@ -1,7 +1,6 @@
 # Changelog
 
 ## 0.9.0 (12 Feb 2022)
-- Use CLangSharp - libclang 13.0
 - Update tests to net6.0
 - Add support for specialized template (#34)
 - Fix parsing qualifier (#37)
