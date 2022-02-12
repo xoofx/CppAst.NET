@@ -1,4 +1,4 @@
-# CppAst.NET [![Build Status](https://github.com/xoofx/CppAst/workflows/ci/badge.svg?branch=master)](https://github.com/xoofx/CppAst/actions)   [![NuGet](https://img.shields.io/nuget/v/CppAst.svg)](https://www.nuget.org/packages/CppAst/)
+# CppAst.NET [![Build Status](https://github.com/xoofx/CppAst/workflows/ci/badge.svg?branch=main)](https://github.com/xoofx/CppAst/actions)   [![NuGet](https://img.shields.io/nuget/v/CppAst.svg)](https://www.nuget.org/packages/CppAst/)
 
 <img align="right" width="160px" height="160px" src="img/cppast.png">
 
