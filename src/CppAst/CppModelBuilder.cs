@@ -319,6 +319,9 @@ namespace CppAst
                         }
                     }
                     break;
+                case CXCursorKind.CXCursor_InclusionDirective:
+                    // Don't emit warning for this directive
+                    break;
 
                 default:
                     WarningUnhandled(cursor, parent);
@@ -1808,7 +1811,7 @@ namespace CppAst
             {
                 cppLocation = GetSourceLocation(parent.Location);
             }
-            RootCompilation.Diagnostics.Warning($"Unhandled declaration: {cursor} in {parent}.", cppLocation);
+            RootCompilation.Diagnostics.Warning($"Unhandled declaration: {cursor.Kind}/{cursor} in {parent}.", cppLocation);
         }
 
         private List<CppType> ParseTemplateParameters(CXCursor cursor, CXType type, CXClientData data)
@@ -1819,8 +1822,8 @@ namespace CppAst
             var templateCppTypes = new List<CppType>();
             for (var templateIndex = 0; templateIndex < numTemplateArguments; ++templateIndex)
             {
-                var templateArg = type.GetTemplateArgumentAsType((uint)templateIndex);
-                var templateCppType = GetCppType(templateArg.Declaration, templateArg, cursor, data);
+                var templateArg = type.GetTemplateArgument((uint)templateIndex);
+                var templateCppType = GetCppType(templateArg.AsDecl, templateArg.AsType, cursor, data);
                 templateCppTypes.Add(templateCppType);
             }
 
