@@ -65,7 +65,7 @@ namespace CppAst
         public bool ParseAsCpp { get; set; }
 
         /// <summary>
-        /// Gets or sets a boolean indicating whether to parser comments. Default is <c>true</c>
+        /// Gets or sets a boolean indicating whether to parser non-Doxygen comments in addition to Doxygen comments. Default is <c>true</c>
         /// </summary>
         public bool ParseComments { get; set; }
 
