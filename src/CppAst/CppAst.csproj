@@ -6,8 +6,8 @@
     <Copyright>Alexandre Mutel</Copyright>
     <Authors>Alexandre Mutel</Authors>
     <PackageTags>parser;c++;ast;syntax</PackageTags>
-    <PackageReleaseNotes>https://github.com/xoofx/CppAst/blob/master/changelog.md</PackageReleaseNotes>
-    <PackageIconUrl>https://raw.githubusercontent.com/xoofx/CppAst/master/img/cppast.png</PackageIconUrl>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
+    <PackageIcon>logo.png</PackageIcon>
     <PackageProjectUrl>https://github.com/xoofx/CppAst</PackageProjectUrl>
     <PackageLicenseExpression>BSD-2-Clause</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
@@ -15,7 +15,6 @@
     <LangVersion>7.3</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NeutralLanguage>en-US</NeutralLanguage>
-    <VersionSuffix Condition="'$(VersionSuffix)' != '' AND '$(BuildNumber)' != ''">$(VersionSuffix)-$(BuildNumber)</VersionSuffix>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <!--Add support for sourcelink-->
@@ -25,6 +24,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="../../img/cppast.png" Pack="true" PackagePath="/logo.png" />
+    <None Include="../../readme.md" Pack="true" PackagePath="/" />
+
     <PackageReference Include="ClangSharp" Version="10.0.0-beta" />
   </ItemGroup>
 
