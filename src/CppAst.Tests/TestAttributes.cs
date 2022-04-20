@@ -197,6 +197,30 @@ struct [[deprecated(""old"")]] TestMessage{
         }
 
         [Test]
+        public void TestCpp11StructAttributesWithMacro()
+        {
+          ParseAssert(@"
+#define CLASS_ATTRIBUTE [[deprecated]]
+struct CLASS_ATTRIBUTE  Test{
+    int a;
+    int b;
+};", compilation =>
+          {
+            Assert.False(compilation.HasErrors);
+
+            Assert.AreEqual(1, compilation.Classes.Count);
+            Assert.AreEqual(1, compilation.Classes[0].Attributes.Count);
+            {
+              var attr = compilation.Classes[0].Attributes[0];
+              Assert.AreEqual("deprecated", attr.Name);
+            }
+          },
+          // we are using a C++14 attribute because it can be used everywhere
+          new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseAttributes = true }
+        );
+        }
+
+        [Test]
         public void TestCpp11VariablesAttributes()
         {
             ParseAssert(@"

@@ -1337,6 +1337,41 @@ namespace CppAst
             return attributes;
         }
 
+        private (string, string) GetNameSpaceAndAttribute(string fullAttribute)
+        {
+            string[] colons = { "::" };
+            string[] tokens = fullAttribute.Split(colons, System.StringSplitOptions.None);
+            if (tokens.Length == 2)
+            {
+                return (tokens[0], tokens[1]);
+            }
+            else
+            {
+                return (null, tokens[0]);
+            }
+        }
+
+
+        private (string, string) GetNameAndArguments(string name)
+        {
+            if (name.Contains("("))
+            {
+                Char[] seperator = { '(' };
+                var argumentTokens = name.Split(seperator, 2);
+                var length = argumentTokens[1].LastIndexOf(')');
+                string argument = null;
+                if (length > 0)
+                {
+                    argument = argumentTokens[1].Substring(0, length);
+                }
+                return (argumentTokens[0], argument);
+            }
+            else
+            {
+                return (name, null);
+            }
+        }
+
         private bool ParseAttributes(TokenIterator tokenIt, ref List<CppAttribute> attributes)
         {
             // Parse C++ attributes
@@ -1414,6 +1449,32 @@ namespace CppAst
                 return tokenIt.Skip(")"); ;
             }
 
+            // See if we have a macro
+            var value = tokenIt.PeekText();
+            var globalContainer = (CppGlobalDeclarationContainer)_rootContainerContext.DeclarationContainer;
+            var macro = globalContainer.Macros.Find(v => v.Name == value);
+            if (macro != null)
+            {
+                if (macro.Value.StartsWith("[[") && macro.Value.EndsWith("]]"))
+                {
+                    CppAttribute attribute = null;
+                    var fullAttribute = macro.Value.Substring(2, macro.Value.Length - 4);
+                    var (scope, name) = GetNameSpaceAndAttribute(fullAttribute);
+                    var (attributeName, arguments) = GetNameAndArguments(name);
+
+                    attribute = new CppAttribute(attributeName);
+                    attribute.Scope = scope;
+                    attribute.Arguments = arguments;
+
+                    if (attributes == null)
+                    {
+                        attributes = new List<CppAttribute>();
+                    }
+                    attributes.Add(attribute);
+                    tokenIt.Next();
+                    return true;
+                }
+            }
             return false;
         }
 
