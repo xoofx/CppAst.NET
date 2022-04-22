@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.8.0-alpha-002 (22 Apr 2022)
+- Fix issue with attributes in macros (#51)
+
 ## 0.8.0-alpha-001 (2 May 2020)
 - Use CLangSharp - libclang 10.0
 
