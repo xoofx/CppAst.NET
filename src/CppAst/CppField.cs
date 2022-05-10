@@ -64,7 +64,12 @@ namespace CppAst
         /// Gets or sets the number of bits for this bit field. Only valid if <see cref="IsBitField"/> is <c>true</c>.
         /// </summary>
         public int BitFieldWidth { get; set; }
-
+        
+        /// <summary>
+        /// Gets or sets the offset of the field in bytes.
+        /// </summary>
+        public long Offset { get; set; }
+        
         /// <inheritdoc />
         public override string ToString()
         {
