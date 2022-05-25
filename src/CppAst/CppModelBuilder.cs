@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Runtime.InteropServices;
 using ClangSharp;
 using ClangSharp.Interop;
 
@@ -1702,7 +1703,7 @@ namespace CppAst
                     return CppPrimitiveType.Int;
 
                 case CXTypeKind.CXType_Long:
-                    return CppPrimitiveType.Int;
+                    return System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Linux)? CppPrimitiveType.LongLong : CppPrimitiveType.Int;
 
                 case CXTypeKind.CXType_LongLong:
                     return CppPrimitiveType.LongLong;

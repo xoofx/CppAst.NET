@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.8.0-alpha-003 (25 May 2022)
+- Fix issue with Int64 on Linux machines (#52)
+
 ## 0.8.0-alpha-002 (22 Apr 2022)
 - Fix issue with attributes in macros (#51)
 
