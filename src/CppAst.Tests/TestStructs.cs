@@ -74,6 +74,7 @@ public:
                         Assert.AreEqual(CppTypeKind.Primitive, cppStruct.Fields[1].Type.TypeKind);
                         Assert.AreEqual(CppPrimitiveKind.Float, ((CppPrimitiveType) cppStruct.Fields[1].Type).Kind);
                         Assert.AreEqual(CppVisibility.Public, cppStruct.Fields[1].Visibility);
+                        Assert.AreEqual(sizeof(int), cppStruct.Fields[1].Offset);
                         Assert.AreEqual(sizeof(int) + sizeof(float), cppStruct.SizeOf);
                     }
                 }
@@ -101,6 +102,8 @@ struct
                         var cppStruct = compilation.Classes[0];
                         Assert.AreEqual(string.Empty, cppStruct.Name);
                         Assert.AreEqual(2, cppStruct.Fields.Count);
+                        Assert.AreEqual(sizeof(int), cppStruct.Fields[1].Offset);
+                        Assert.AreEqual(sizeof(int) + sizeof(int), cppStruct.SizeOf);
                     }
                 }
             );

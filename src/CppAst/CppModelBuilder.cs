@@ -713,6 +713,7 @@ namespace CppAst
                 StorageQualifier = GetStorageQualifier(cursor),
                 IsBitField = cursor.IsBitField,
                 BitFieldWidth = cursor.FieldDeclBitWidth,
+                Offset = cursor.OffsetOfField / 8,
             };
             containerContext.DeclarationContainer.Fields.Add(cppField);
             cppField.Attributes = ParseAttributes(cursor);
@@ -735,6 +736,7 @@ namespace CppAst
                 Visibility = containerContext.CurrentVisibility,
                 StorageQualifier = GetStorageQualifier(cursor),
                 IsAnonymous = true,
+                Offset = cursor.OffsetOfField / 8,
             };
             containerContext.DeclarationContainer.Fields.Add(cppField);
             cppField.Attributes = ParseAttributes(cursor);
