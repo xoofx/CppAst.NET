@@ -187,6 +187,7 @@ namespace CppAst
                 cppStruct.Attributes.AddRange(ParseAttributes(cursor));
                 cppStruct.IsDefinition = true;
                 cppStruct.SizeOf = (int)cursor.Type.SizeOf;
+                AssignSourceSpan(cursor, cppStruct);
                 context.IsChildrenVisited = true;
                 cursor.VisitChildren(VisitMember, new CXClientData((IntPtr)data));
             }
@@ -289,9 +290,9 @@ namespace CppAst
                     break;
             }
 
-            if (element != null)
+            if (element != null && string.IsNullOrEmpty(element.Span.Start.File))
             {
-                AssignSourceSpan(cursor, element);
+               AssignSourceSpan(cursor, element);
             }
 
             if (element is ICppDeclaration cppDeclaration)
@@ -1012,6 +1013,7 @@ namespace CppAst
                 cppEnum.IntegerType = GetCppType(integralType.Declaration, integralType, cursor, data);
                 cppEnum.IsScoped = cursor.EnumDecl_IsScoped;
                 cppEnum.Attributes.AddRange(ParseAttributes(cursor));
+                AssignSourceSpan(cursor, cppEnum);
                 context.IsChildrenVisited = true;
                 cursor.VisitChildren(VisitMember, new CXClientData((IntPtr)data));
             }
