@@ -100,6 +100,6 @@ namespace CppAst
         ///// <summary>
         ///// Visual Studio 2022 RTW (17.0)
         ///// </summary>
-        //VS2022 = 1930
+        VS2022 = 1930
     }
 }

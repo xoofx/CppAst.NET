@@ -11,7 +11,7 @@ CppAst provides a C/C++ parser for header files with access to the full AST, com
 ## Features
 
 - Compatible with `.NET Standard 2.0+`
-- Using `Clang/libclang 10.0.0`
+- Using `Clang/libclang 15.0.2`
 - Allow to parse *in-memory* C/C++ text and C/C++ files from the disk
 - Simple AST model
 - Full type system

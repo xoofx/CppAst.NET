@@ -128,7 +128,7 @@ namespace CppAst
                     }
                     else
                     {
-                        var templateParameters = ParseTemplateParameters(cursor, cursor.Type, new CXClientData((IntPtr)data));
+                        var templateParameters = ParseTemplateArguments(cursor, cursor.Type, new CXClientData((IntPtr)data));
                         if (templateParameters != null)
                         {
                             cppClass.TemplateParameters.AddRange(templateParameters);
@@ -237,9 +237,13 @@ namespace CppAst
                     break;
 
                 case CXCursorKind.CXCursor_TypedefDecl:
+                    element = VisitTypeDefDecl(cursor, data);
+                    break;
+
                 case CXCursorKind.CXCursor_TypeAliasDecl:
                 case CXCursorKind.CXCursor_TypeAliasTemplateDecl:
-                    element = VisitTypeDefDecl(cursor, data);
+                    
+                    element = VisitTypeAliasDecl(cursor, data);
                     break;
 
                 case CXCursorKind.CXCursor_FunctionTemplate:
@@ -1538,6 +1542,43 @@ namespace CppAst
             return true;
         }
 
+        private CppType VisitTypeAliasDecl(CXCursor cursor, void* data)
+        {
+            var fulltypeDefName = clang.getCursorUSR(cursor).CString;
+            if (_typedefs.TryGetValue(fulltypeDefName, out var type))
+            {
+                return type;
+            }
+
+            var contextContainer = GetOrCreateDeclarationContainer(cursor.SemanticParent, data);
+            var underlyingTypeDefType = GetCppType(cursor.TypedefDeclUnderlyingType.Declaration, cursor.TypedefDeclUnderlyingType, cursor, data);
+
+            var typedefName = GetCursorSpelling(cursor);
+
+            if (AutoSquashTypedef && underlyingTypeDefType is ICppMember cppMember && (string.IsNullOrEmpty(cppMember.Name) || typedefName == cppMember.Name))
+            {
+                cppMember.Name = typedefName;
+                type = (CppType)cppMember;
+            }
+            else
+            {
+                var typedef = new CppTypedef(GetCursorSpelling(cursor), underlyingTypeDefType) { Visibility = contextContainer.CurrentVisibility };
+                contextContainer.DeclarationContainer.Typedefs.Add(typedef);
+                type = typedef;
+            }
+
+            // The type could have been added separately as part of the GetCppType above
+            if (_typedefs.TryGetValue(fulltypeDefName, out var cppPreviousCppType))
+            {
+                Debug.Assert(cppPreviousCppType.GetType() == type.GetType());
+            }
+            else
+            {
+                _typedefs.Add(fulltypeDefName, type);
+            }
+            return type;
+        }
+
         private CppType VisitTypeDefDecl(CXCursor cursor, void* data)
         {
             var fulltypeDefName = clang.getCursorUSR(cursor).CString;
@@ -1739,7 +1780,7 @@ namespace CppAst
                         }
 
                         var cppUnexposedType = new CppUnexposedType(type.ToString()) { SizeOf = (int)type.SizeOf };
-                        var templateParameters = ParseTemplateParameters(cursor, type, new CXClientData((IntPtr)data));
+                        var templateParameters = ParseTemplateArguments(cursor, type, new CXClientData((IntPtr)data));
                         if (templateParameters != null)
                         {
                             cppUnexposedType.TemplateParameters.AddRange(templateParameters);
@@ -1820,7 +1861,7 @@ namespace CppAst
             RootCompilation.Diagnostics.Warning($"Unhandled declaration: {cursor.Kind}/{cursor} in {parent}.", cppLocation);
         }
 
-        private List<CppType> ParseTemplateParameters(CXCursor cursor, CXType type, CXClientData data)
+        private List<CppType> ParseTemplateArguments(CXCursor cursor, CXType type, CXClientData data)
         {
             var numTemplateArguments = type.NumTemplateArguments;
             if (numTemplateArguments < 0) return null;
@@ -1828,9 +1869,29 @@ namespace CppAst
             var templateCppTypes = new List<CppType>();
             for (var templateIndex = 0; templateIndex < numTemplateArguments; ++templateIndex)
             {
-                var templateArg = type.GetTemplateArgumentAsType((uint)templateIndex);
-                var templateCppType = GetCppType(templateArg.Declaration, templateArg, cursor, data);
-                templateCppTypes.Add(templateCppType);
+                var templateArg = type.GetTemplateArgument((uint)templateIndex);
+                
+                switch (templateArg.kind)
+                {
+                    case CXTemplateArgumentKind.CXTemplateArgumentKind_Type:
+                        var templateArgType = templateArg.AsType;
+                        //var templateArg = type.GetTemplateArgumentAsType((uint)templateIndex);
+                        var templateCppType = GetCppType(templateArgType.Declaration, templateArgType, cursor, data);
+                        templateCppTypes.Add(templateCppType);
+                        break;
+                    case CXTemplateArgumentKind.CXTemplateArgumentKind_Null:
+                    case CXTemplateArgumentKind.CXTemplateArgumentKind_Declaration:
+                    case CXTemplateArgumentKind.CXTemplateArgumentKind_NullPtr:
+                    case CXTemplateArgumentKind.CXTemplateArgumentKind_Integral:
+                    case CXTemplateArgumentKind.CXTemplateArgumentKind_Template:
+                    case CXTemplateArgumentKind.CXTemplateArgumentKind_TemplateExpansion:
+                    case CXTemplateArgumentKind.CXTemplateArgumentKind_Expression:
+                    case CXTemplateArgumentKind.CXTemplateArgumentKind_Pack:
+                    case CXTemplateArgumentKind.CXTemplateArgumentKind_Invalid:
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
             }
 
             return templateCppTypes;
