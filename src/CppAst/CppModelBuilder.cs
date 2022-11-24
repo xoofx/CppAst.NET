@@ -482,9 +482,16 @@ namespace CppAst
                     cppComment = verbatimBlock;
                     break;
                 case CppCommentKind.VerbatimBlockLine:
+                    var text = cxComment.VerbatimBlockLineComment_Text.ToString();
+                    var indexOfLine = text.IndexOf('\n');
+                    if (indexOfLine >= 0)
+                    {
+                        text = text.Substring(0, indexOfLine);
+                    }
+
                     cppComment = new CppCommentVerbatimBlockLine()
                     {
-                        Text = cxComment.VerbatimBlockLineComment_Text.ToString()
+                        Text = text
                     };
                     break;
                 case CppCommentKind.VerbatimLine:
