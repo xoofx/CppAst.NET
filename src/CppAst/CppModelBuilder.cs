@@ -229,8 +229,22 @@ namespace CppAst
                 case CXCursorKind.CXCursor_ClassDecl:
                 case CXCursorKind.CXCursor_StructDecl:
                 case CXCursorKind.CXCursor_UnionDecl:
-                    element = VisitClassDecl(cursor, data);
+                {
+                    var cppClass = VisitClassDecl(cursor, data);
+                    // Empty struct/class/union declaration are considered as fields
+                    if (string.IsNullOrEmpty(cppClass.Name))
+                    {
+                        var containerContext = GetOrCreateDeclarationContainer(parent, data);
+                        var cppField = new CppField(cppClass, string.Empty);
+                        containerContext.DeclarationContainer.Fields.Add(cppField);
+                        element = cppField;
+                    }
+                    else
+                    {
+                        element = cppClass;
+                    }
                     break;
+                }
 
                 case CXCursorKind.CXCursor_EnumDecl:
                     element = VisitEnumDecl(cursor, data);
@@ -483,6 +497,9 @@ namespace CppAst
                     break;
                 case CppCommentKind.VerbatimBlockLine:
                     var text = cxComment.VerbatimBlockLineComment_Text.ToString();
+
+                    // For some reason, VerbatimBlockLineComment_Text can return the rest of the file instead of just the line
+                    // So we explicitly trim the line here
                     var indexOfLine = text.IndexOf('\n');
                     if (indexOfLine >= 0)
                     {

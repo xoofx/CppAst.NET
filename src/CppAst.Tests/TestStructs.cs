@@ -108,5 +108,41 @@ struct
                 }
             );
         }
+
+
+        [Test]
+        public void TestUnion()
+        {
+            ParseAssert(@"
+struct HelloWorld
+{
+    int a;
+    union {
+        int c;
+        int d;
+    };
+    int b;
+};
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(1, compilation.Classes.Count);
+
+                    {
+                        var cppStruct = compilation.Classes[0];
+                        Assert.AreEqual(3, cppStruct.Fields.Count);
+                        Assert.AreEqual(string.Empty, cppStruct.Fields[1].Name);
+                        Assert.IsInstanceOf<CppClass>(cppStruct.Fields[1].Type);
+                        var cppUnion = ((CppClass)cppStruct.Fields[1].Type);
+                        Assert.AreEqual(CppClassKind.Union, ((CppClass)cppStruct.Fields[1].Type).ClassKind);
+                        Assert.AreEqual(2, cppUnion.Fields.Count);
+                    }
+                }
+            );
+        }
+
+
     }
 }
