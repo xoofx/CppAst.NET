@@ -51,8 +51,14 @@ namespace CppAst
 
         private CppContainerContext GetOrCreateDeclarationContainer(CXCursor cursor, void* data)
         {
-            var fullName = clang.getCursorUSR(cursor).CString;
-            if (_containers.TryGetValue(fullName, out var containerContext))
+            var typeAsCString = clang.getCursorUSR(cursor).CString.ToString();
+            if (string.IsNullOrEmpty(typeAsCString))
+            {
+                typeAsCString = clang.getCursorDisplayName(cursor).ToString();
+            }
+            // Try to workaround anonymous types
+            var typeKey = $"{cursor.Kind}:{typeAsCString}{(cursor.IsAnonymous ? "/" + cursor.Hash : string.Empty)}";
+            if (_containers.TryGetValue(typeKey, out var containerContext))
             {
                 return containerContext;
             }
@@ -153,9 +159,9 @@ namespace CppAst
             containerContext = new CppContainerContext(symbol) { CurrentVisibility = defaultContainerVisibility };
 
             // The type could have been added separately as part of the GetCppType above TemplateParameters
-            if (!_containers.ContainsKey(fullName))
+            if (!_containers.ContainsKey(typeKey))
             {
-                _containers.Add(fullName, containerContext);
+                _containers.Add(typeKey, containerContext);
             }
             return containerContext;
         }
@@ -196,7 +202,6 @@ namespace CppAst
         private CXChildVisitResult VisitMember(CXCursor cursor, CXCursor parent, void* data)
         {
             CppElement element = null;
-
             switch (cursor.Kind)
             {
                 case CXCursorKind.CXCursor_FieldDecl:
@@ -230,12 +235,34 @@ namespace CppAst
                 case CXCursorKind.CXCursor_StructDecl:
                 case CXCursorKind.CXCursor_UnionDecl:
                 {
+                    bool isAnonymous = cursor.IsAnonymous;
                     var cppClass = VisitClassDecl(cursor, data);
                     // Empty struct/class/union declaration are considered as fields
-                    if (string.IsNullOrEmpty(cppClass.Name))
+                    if (isAnonymous)
                     {
+                        Debug.Assert(string.IsNullOrEmpty(cppClass.Name));
                         var containerContext = GetOrCreateDeclarationContainer(parent, data);
-                        var cppField = new CppField(cppClass, string.Empty);
+
+                        // We try to recover the offset from the previous field
+                        // Might not be always correct (with alignment rules),
+                        // but not sure how to recover the offset without recalculating the entire offsets
+                        var offset = 0;
+                        var cppClassContainer = containerContext.Container as CppClass;
+                        if (cppClassContainer is object && cppClassContainer.Fields.Count > 0)
+                        {
+                            var lastField = cppClassContainer.Fields[cppClassContainer.Fields.Count - 1];
+                            offset = (int)lastField.Offset + lastField.Type.SizeOf;
+                        }
+
+                        // Create an anonymous field for the type
+                        var cppField = new CppField(cppClass, string.Empty)
+                        {
+                            Visibility = containerContext.CurrentVisibility,
+                            StorageQualifier = GetStorageQualifier(cursor),
+                            IsAnonymous = true,
+                            Offset = offset,
+                            Attributes = ParseAttributes(cursor)
+                        };
                         containerContext.DeclarationContainer.Fields.Add(cppField);
                         element = cppField;
                     }
@@ -735,22 +762,34 @@ namespace CppAst
             var fieldName = GetCursorSpelling(cursor);
             var type = GetCppType(cursor.Type.Declaration, cursor.Type, cursor, data);
 
-            var cppField = new CppField(type, fieldName)
+            var previousField = containerContext.DeclarationContainer.Fields.Count > 0 ? containerContext.DeclarationContainer.Fields[containerContext.DeclarationContainer.Fields.Count - 1] : null;
+            CppField cppField;
+            // This happen in the type is anonymous, we create implicitly a field for it, but if type is the same
+            // we should reuse the anonymous field we created just before
+            if (previousField != null && previousField.IsAnonymous && ReferenceEquals(previousField.Type, type))
             {
-                Visibility = containerContext.CurrentVisibility,
-                StorageQualifier = GetStorageQualifier(cursor),
-                IsBitField = cursor.IsBitField,
-                BitFieldWidth = cursor.FieldDeclBitWidth,
-                Offset = cursor.OffsetOfField / 8,
-            };
-            containerContext.DeclarationContainer.Fields.Add(cppField);
-            cppField.Attributes = ParseAttributes(cursor);
+                cppField = previousField;
+                cppField.Offset = cursor.OffsetOfField / 8;
+            }
+            else
+            {
+                cppField = new CppField(type, fieldName)
+                {
+                    Visibility = containerContext.CurrentVisibility,
+                    StorageQualifier = GetStorageQualifier(cursor),
+                    IsBitField = cursor.IsBitField,
+                    BitFieldWidth = cursor.FieldDeclBitWidth,
+                    Offset = cursor.OffsetOfField / 8,
+                };
+                containerContext.DeclarationContainer.Fields.Add(cppField);
+                cppField.Attributes = ParseAttributes(cursor);
 
-            if (cursor.Kind == CXCursorKind.CXCursor_VarDecl)
-            {
-                VisitInitValue(cursor, data, out var fieldExpr, out var fieldValue);
-                cppField.InitValue = fieldValue;
-                cppField.InitExpression = fieldExpr;
+                if (cursor.Kind == CXCursorKind.CXCursor_VarDecl)
+                {
+                    VisitInitValue(cursor, data, out var fieldExpr, out var fieldValue);
+                    cppField.InitValue = fieldValue;
+                    cppField.InitExpression = fieldExpr;
+                }
             }
 
             return cppField;

@@ -111,7 +111,7 @@ struct
 
 
         [Test]
-        public void TestUnion()
+        public void TestAnonymousUnion()
         {
             ParseAssert(@"
 struct HelloWorld
@@ -122,6 +122,10 @@ struct HelloWorld
         int d;
     };
     int b;
+    union {
+        int e;
+        int f;
+    };
 };
 ",
                 compilation =>
@@ -132,7 +136,61 @@ struct HelloWorld
 
                     {
                         var cppStruct = compilation.Classes[0];
-                        Assert.AreEqual(3, cppStruct.Fields.Count);
+                        Assert.AreEqual(4, cppStruct.Fields.Count);
+
+                        for (int i = 0; i < 4; i++)
+                        {
+                            Assert.AreEqual(i * 4, cppStruct.Fields[i].Offset);
+                            Assert.AreEqual(4, cppStruct.Fields[i].Type.SizeOf);
+                        }
+
+                        // Check first union
+                        Assert.AreEqual(string.Empty, cppStruct.Fields[1].Name);
+                        Assert.IsInstanceOf<CppClass>(cppStruct.Fields[1].Type);
+                        var cppUnion = ((CppClass)cppStruct.Fields[1].Type);
+                        Assert.AreEqual(CppClassKind.Union, ((CppClass)cppStruct.Fields[1].Type).ClassKind);
+                        Assert.AreEqual(2, cppUnion.Fields.Count);
+
+                        // Check 2nd union
+                        Assert.AreEqual(string.Empty, cppStruct.Fields[3].Name);
+                        Assert.IsInstanceOf<CppClass>(cppStruct.Fields[3].Type);
+                        cppUnion = ((CppClass)cppStruct.Fields[3].Type);
+                        Assert.AreEqual(CppClassKind.Union, ((CppClass)cppStruct.Fields[3].Type).ClassKind);
+                        Assert.AreEqual(2, cppUnion.Fields.Count);
+                    }
+                }
+            );
+        }
+
+        [Test]
+        public void TestAnonymousUnionWithField()
+        {
+            ParseAssert(@"
+struct HelloWorld
+{
+    int a;
+    union {
+        int c;
+        int d;
+    } e;
+};
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(1, compilation.Classes.Count);
+
+                    {
+                        var cppStruct = compilation.Classes[0];
+
+                        // Only one union
+                        Assert.AreEqual(1, cppStruct.Classes.Count);
+
+                        // Only 2 fields
+                        Assert.AreEqual(2, cppStruct.Fields.Count);
+
+                        // Check the union
                         Assert.AreEqual(string.Empty, cppStruct.Fields[1].Name);
                         Assert.IsInstanceOf<CppClass>(cppStruct.Fields[1].Type);
                         var cppUnion = ((CppClass)cppStruct.Fields[1].Type);
