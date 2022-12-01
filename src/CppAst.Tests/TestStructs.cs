@@ -191,7 +191,7 @@ struct HelloWorld
                         Assert.AreEqual(2, cppStruct.Fields.Count);
 
                         // Check the union
-                        Assert.AreEqual(string.Empty, cppStruct.Fields[1].Name);
+                        Assert.AreEqual("e", cppStruct.Fields[1].Name);
                         Assert.IsInstanceOf<CppClass>(cppStruct.Fields[1].Type);
                         var cppUnion = ((CppClass)cppStruct.Fields[1].Type);
                         Assert.AreEqual(CppClassKind.Union, ((CppClass)cppStruct.Fields[1].Type).ClassKind);

@@ -769,6 +769,7 @@ namespace CppAst
             if (previousField != null && previousField.IsAnonymous && ReferenceEquals(previousField.Type, type))
             {
                 cppField = previousField;
+                cppField.Name = fieldName;
                 cppField.Offset = cursor.OffsetOfField / 8;
             }
             else
