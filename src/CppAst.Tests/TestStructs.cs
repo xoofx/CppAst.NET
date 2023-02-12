@@ -40,6 +40,7 @@ public:
                         Assert.AreEqual("Struct0", cppStruct.Name);
                         Assert.AreEqual(0, cppStruct.Fields.Count);
                         Assert.AreEqual(sizeof(byte), cppStruct.SizeOf);
+                        Assert.AreEqual(1, cppStruct.AlignOf);
                     }
 
                     {
@@ -50,6 +51,7 @@ public:
                         Assert.True(cppStruct.BaseTypes[0].Type is CppClass);
                         Assert.True(ReferenceEquals(compilation.Classes[0], cppStruct.BaseTypes[0].Type));
                         Assert.AreEqual(sizeof(byte), cppStruct.SizeOf);
+                        Assert.AreEqual(1, cppStruct.AlignOf);
                     }
 
                     {
@@ -60,6 +62,7 @@ public:
                         Assert.AreEqual(CppTypeKind.Primitive, cppStruct.Fields[0].Type.TypeKind);
                         Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType) cppStruct.Fields[0].Type).Kind);
                         Assert.AreEqual(sizeof(int), cppStruct.SizeOf);
+                        Assert.AreEqual(4, cppStruct.AlignOf);
                     }
 
                     {
@@ -76,6 +79,7 @@ public:
                         Assert.AreEqual(CppVisibility.Public, cppStruct.Fields[1].Visibility);
                         Assert.AreEqual(sizeof(int), cppStruct.Fields[1].Offset);
                         Assert.AreEqual(sizeof(int) + sizeof(float), cppStruct.SizeOf);
+                        Assert.AreEqual(4, cppStruct.AlignOf);
                     }
                 }
             );
@@ -104,6 +108,7 @@ struct
                         Assert.AreEqual(2, cppStruct.Fields.Count);
                         Assert.AreEqual(sizeof(int), cppStruct.Fields[1].Offset);
                         Assert.AreEqual(sizeof(int) + sizeof(int), cppStruct.SizeOf);
+                        Assert.AreEqual(4, cppStruct.AlignOf);
                     }
                 }
             );
