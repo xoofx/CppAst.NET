@@ -96,6 +96,11 @@ namespace CppAst
         /// <inheritdoc />
         public override int SizeOf { get; set; }
 
+        /// <summary>
+        /// Gets the alignment of this instance.
+        /// </summary>
+        public int AlignOf { get; set; }
+
         /// <inheritdoc />
         public override bool Equals(object obj)
         {

@@ -193,6 +193,7 @@ namespace CppAst
                 cppStruct.Attributes.AddRange(ParseAttributes(cursor));
                 cppStruct.IsDefinition = true;
                 cppStruct.SizeOf = (int)cursor.Type.SizeOf;
+                cppStruct.AlignOf = (int)cursor.Type.AlignOf;
                 context.IsChildrenVisited = true;
                 cursor.VisitChildren(VisitMember, new CXClientData((IntPtr)data));
             }
