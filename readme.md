@@ -26,6 +26,18 @@ Check the [user guide](doc/readme.md) documentation from the `doc/` folder.
 
 ## Usage Example
 
+### Setup
+After installing the NuGet package, you need to modify your csproj to select a Platform RID via the `RuntimeIdentifier` property:
+
+```xml
+  <PropertyGroup>
+    <!-- Workaround for issue https://github.com/microsoft/ClangSharp/issues/129 -->
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$(PackAsTool)' != 'true'">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
+  </PropertyGroup>
+```
+
+### Code
+
 You can jump-start with the `CppParser.Parse` method:
 
 ```C#
