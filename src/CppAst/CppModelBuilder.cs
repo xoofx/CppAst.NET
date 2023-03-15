@@ -5,6 +5,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using ClangSharp.Interop;
 
@@ -35,6 +37,19 @@ namespace CppAst
 
         public CppCompilation RootCompilation { get; }
 
+
+        public void ParseFromTranslationUnit(CXTranslationUnit tu)
+        {
+            using (tu)
+            {
+                unsafe
+                {
+                    tu.Cursor.VisitChildren(VisitTranslationUnit, clientData: default);
+                }
+            }
+
+        }
+
         public CXChildVisitResult VisitTranslationUnit(CXCursor cursor, CXCursor parent, void* data)
         {
             _rootContainerContext.Container = RootCompilation;
@@ -48,6 +63,46 @@ namespace CppAst
             }
             return VisitMember(cursor, parent, data);
         }
+
+        private void TryToCreateTemplateParameters(CppClass parentclass, CXCursor cursor, void* data)
+        {
+            switch (cursor.Kind)
+            {
+                case CXCursorKind.CXCursor_TemplateTypeParameter:
+                    {
+                        var parameterTypeName = new CppTemplateParameterType(GetCursorSpelling(cursor));
+                        parentclass.TemplateParameters.Add(parameterTypeName);
+                    }
+                    break;
+                case CXCursorKind.CXCursor_NonTypeTemplateParameter:
+                    {
+                        //Use reflection to call ClangSharp Decl internal Create() function here~~
+                        Type decl_type = typeof(ClangSharp.Decl);
+                        var create_func = decl_type.GetMethod("Create", BindingFlags.Static | BindingFlags.NonPublic);
+                        var decl = create_func.Invoke(null, new object[] { cursor }) as ClangSharp.NonTypeTemplateParmDecl;
+                        //Here is code for not with internal limit call version
+                        //var decl = ClangSharp.Decl.Create(cursor) as ClangSharp.NonTypeTemplateParmDecl;
+                        
+                        var tmptype = decl.Type.Handle;
+                        var tmpcpptype = GetCppType(tmptype.Declaration, tmptype, cursor, data);
+                        var tmpname = decl.Name;
+
+                        var noneTypeParam = new CppNoneTypeTemplateParameterType(tmpname, tmpcpptype);
+                        parentclass.TemplateParameters.Add(noneTypeParam);
+                    }
+                    break;
+                case CXCursorKind.CXCursor_TemplateTemplateParameter:
+                    {
+                        //ToDo: add template template parameter support here~~
+                        Debug.WriteLine("[Warning] template template parameter maybe not handle right here!");
+                        var tmplparam = new CppTemplateParameterType(GetCursorSpelling(cursor));
+                        parentclass.TemplateParameters.Add(tmplparam);
+                    }
+                    break;
+            }
+
+        }
+
 
         private CppContainerContext GetOrCreateDeclarationContainer(CXCursor cursor, void* data)
         {
@@ -117,39 +172,88 @@ namespace CppAst
                             break;
                     }
 
+                    cppClass.IsAbstract = cursor.CXXRecord_IsAbstract;
+
                     if (cursor.Kind == CXCursorKind.CXCursor_ClassTemplate)
                     {
+                        cppClass.TemplateKind = CppTemplateKind.TemplateClass;
                         cursor.VisitChildren((childCursor, classCursor, clientData) =>
                         {
-                            switch (childCursor.Kind)
-                            {
-                                case CXCursorKind.CXCursor_TemplateTypeParameter:
-                                    var parameterTypeName = new CppTemplateParameterType(GetCursorSpelling(childCursor));
-                                    cppClass.TemplateParameters.Add(parameterTypeName);
-                                    break;
-                            }
+                            TryToCreateTemplateParameters(cppClass, childCursor, clientData);
 
                             return CXChildVisitResult.CXChildVisit_Continue;
                         }, new CXClientData((IntPtr)data));
                     }
+                    else if (cursor.DeclKind == CX_DeclKind.CX_DeclKind_ClassTemplateSpecialization)
+                    {
+                        //Try to generate template class first
+                        cppClass.SpecializedTemplate = (CppClass)GetOrCreateDeclarationContainer(cursor.SpecializedCursorTemplate, data).Container;
+                        cppClass.TemplateKind = CppTemplateKind.TemplateSpecializedClass;
+
+                        //Use reflection to call ClangSharp Decl internal Create() function here~~
+                        Type decl_type = typeof(ClangSharp.Decl);
+                        var create_func = decl_type.GetMethod("Create", BindingFlags.Static | BindingFlags.NonPublic);
+                        var specilize_decl = create_func.Invoke(null, new object[] { cursor }) as ClangSharp.ClassTemplateSpecializationDecl;
+                        //Here is code for not with internal limit call version
+                        //var specilize_decl = ClangSharp.ClassTemplateSpecializationDecl.Create(cursor) as ClangSharp.ClassTemplateSpecializationDecl;
+
+                        var temp_args = specilize_decl.TemplateArgs;
+                        var temp_params = cppClass.SpecializedTemplate.TemplateParameters;
+
+                        //Just use template class template params here
+                        foreach (var param in temp_params)
+                        {
+                            cppClass.TemplateParameters.Add(param);
+                        }
+
+                        ////var temp_decl = specilize_decl.SpecializedTemplate;
+
+                        Debug.Assert(cppClass.SpecializedTemplate.TemplateParameters.Count == temp_args.Count);
+
+                        for (int i = 0; i < temp_args.Count; i++)
+                        {
+                            var arg = temp_args[i];
+                            switch (arg.Kind)
+                            {
+                                case CXTemplateArgumentKind.CXTemplateArgumentKind_Type:
+                                    {
+                                        var argh = arg.AsType.Handle;
+                                        var arg_type = GetCppType(argh.Declaration, argh, cursor, data);
+                                        cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(temp_params[i], arg_type));
+                                    }
+                                    break;
+                                case CXTemplateArgumentKind.CXTemplateArgumentKind_Integral:
+                                    {
+                                        cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(temp_params[i], arg.AsIntegral));
+                                    }
+                                    break;
+                                default:
+                                    {
+                                        Debug.WriteLine($"[Warning]template argument in class:{cppClass.FullName} with type: {arg.Kind.ToString()} do not handle right now!");
+                                        cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(temp_params[i], arg.ToString()));
+                                    }
+                                    break;
+                            }
+
+                        }
+                    }
+                    else if (cursor.DeclKind == CX_DeclKind.CX_DeclKind_ClassTemplatePartialSpecialization)
+                    {
+                        Debug.WriteLine("[Warning]Maybe can not run to here in CppAst!");
+                        //Try to generate template class first
+                        cppClass.SpecializedTemplate = (CppClass)GetOrCreateDeclarationContainer(cursor.SpecializedCursorTemplate, data).Container;
+                        cppClass.TemplateKind = CppTemplateKind.PartialTemplateClass;
+                    }
                     else
                     {
-                        var templateParameters = ParseTemplateArguments(cursor, cursor.Type, new CXClientData((IntPtr)data));
-                        if (templateParameters != null)
-                        {
-                            cppClass.TemplateParameters.AddRange(templateParameters);
-
-                            if (cursor.DeclKind == CX_DeclKind.CX_DeclKind_ClassTemplateSpecialization)
-                            {
-                                cppClass.SpecializedTemplate = (CppClass)GetOrCreateDeclarationContainer(cursor.SpecializedCursorTemplate, data).Container;
-                            }
-                        }
+                        cppClass.TemplateKind = CppTemplateKind.NormalClass;
                     }
 
                     defaultContainerVisibility = cursor.Kind == CXCursorKind.CXCursor_ClassDecl ? CppVisibility.Private : CppVisibility.Public;
                     break;
                 case CXCursorKind.CXCursor_TranslationUnit:
                 case CXCursorKind.CXCursor_UnexposedDecl:
+                case CXCursorKind.CXCursor_FirstInvalid:
                     return _rootContainerContext;
                 default:
                     Unhandled(cursor);
@@ -235,45 +339,44 @@ namespace CppAst
                 case CXCursorKind.CXCursor_ClassDecl:
                 case CXCursorKind.CXCursor_StructDecl:
                 case CXCursorKind.CXCursor_UnionDecl:
-                {
-                    bool isAnonymous = cursor.IsAnonymous;
-                    var cppClass = VisitClassDecl(cursor, data);
-                    // Empty struct/class/union declaration are considered as fields
-                    if (isAnonymous)
                     {
-                        Debug.Assert(string.IsNullOrEmpty(cppClass.Name));
-                        var containerContext = GetOrCreateDeclarationContainer(parent, data);
-
-                        // We try to recover the offset from the previous field
-                        // Might not be always correct (with alignment rules),
-                        // but not sure how to recover the offset without recalculating the entire offsets
-                        var offset = 0;
-                        var cppClassContainer = containerContext.Container as CppClass;
-                        if (cppClassContainer is object && cppClassContainer.Fields.Count > 0)
+                        bool isAnonymous = cursor.IsAnonymous;
+                        var cppClass = VisitClassDecl(cursor, data);
+                        // Empty struct/class/union declaration are considered as fields
+                        if (isAnonymous)
                         {
-                            var lastField = cppClassContainer.Fields[cppClassContainer.Fields.Count - 1];
-                            offset = (int)lastField.Offset + lastField.Type.SizeOf;
+                            Debug.Assert(string.IsNullOrEmpty(cppClass.Name));
+                            var containerContext = GetOrCreateDeclarationContainer(parent, data);
+
+                            // We try to recover the offset from the previous field
+                            // Might not be always correct (with alignment rules),
+                            // but not sure how to recover the offset without recalculating the entire offsets
+                            var offset = 0;
+                            var cppClassContainer = containerContext.Container as CppClass;
+                            if (cppClassContainer is object && cppClassContainer.Fields.Count > 0)
+                            {
+                                var lastField = cppClassContainer.Fields[cppClassContainer.Fields.Count - 1];
+                                offset = (int)lastField.Offset + lastField.Type.SizeOf;
+                            }
+
+                            // Create an anonymous field for the type
+                            var cppField = new CppField(cppClass, string.Empty)
+                            {
+                                Visibility = containerContext.CurrentVisibility,
+                                StorageQualifier = GetStorageQualifier(cursor),
+                                IsAnonymous = true,
+                                Offset = offset,
+                                Attributes = ParseAttributes(cursor)
+                            };
+                            containerContext.DeclarationContainer.Fields.Add(cppField);
+                            element = cppField;
                         }
-
-                        // Create an anonymous field for the type
-                        var cppField = new CppField(cppClass, string.Empty)
+                        else
                         {
-                            Visibility = containerContext.CurrentVisibility,
-                            StorageQualifier = GetStorageQualifier(cursor),
-                            IsAnonymous = true,
-                            Offset = offset,
-                            Attributes = ParseAttributes(cursor)
-                        };
-                        containerContext.DeclarationContainer.Fields.Add(cppField);
-                        element = cppField;
-                    }
-                    else
-                    {
-                        element = cppClass;
+                            element = cppClass;
+                        }
                     }
                     break;
-                }
-
                 case CXCursorKind.CXCursor_EnumDecl:
                     element = VisitEnumDecl(cursor, data);
                     break;
@@ -390,6 +493,7 @@ namespace CppAst
 
             return CXChildVisitResult.CXChildVisit_Continue;
         }
+
 
         private CppComment GetComment(CXCursor cursor)
         {
@@ -1845,7 +1949,7 @@ namespace CppAst
                         }
 
                         var cppUnexposedType = new CppUnexposedType(type.ToString()) { SizeOf = (int)type.SizeOf };
-                        var templateParameters = ParseTemplateArguments(cursor, type, new CXClientData((IntPtr)data));
+                        var templateParameters = ParseTemplateSpecializedArguments(cursor, type, new CXClientData((IntPtr)data));
                         if (templateParameters != null)
                         {
                             cppUnexposedType.TemplateParameters.AddRange(templateParameters);
@@ -1926,7 +2030,7 @@ namespace CppAst
             RootCompilation.Diagnostics.Warning($"Unhandled declaration: {cursor.Kind}/{cursor} in {parent}.", cppLocation);
         }
 
-        private List<CppType> ParseTemplateArguments(CXCursor cursor, CXType type, CXClientData data)
+        private List<CppType> ParseTemplateSpecializedArguments(CXCursor cursor, CXType type, CXClientData data)
         {
             var numTemplateArguments = type.NumTemplateArguments;
             if (numTemplateArguments < 0) return null;

@@ -49,9 +49,13 @@ namespace CppAst
         /// A template parameter type.
         /// </summary>
         TemplateParameterType,
-        /// <summary>
-        /// An unexposed type.
-        /// </summary>
-        Unexposed,
+		/// <summary>
+		/// A none type template parameter type.
+		/// </summary>
+		NoneTypeTemplateParameterType,
+		/// <summary>
+		/// An unexposed type.
+		/// </summary>
+		Unexposed,
     }
 }

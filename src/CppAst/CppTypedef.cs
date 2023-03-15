@@ -34,7 +34,23 @@ namespace CppAst
         /// </summary>
         public string Name { get; set; }
 
-        private bool Equals(CppTypedef other)
+		public string FullName
+		{
+			get
+			{
+				string fullparent = FullParentName;
+				if (string.IsNullOrEmpty(fullparent))
+				{
+					return Name;
+				}
+				else
+				{
+					return $"{fullparent}{Name}";
+				}
+			}
+		}
+
+		private bool Equals(CppTypedef other)
         {
             return base.Equals(other) && string.Equals(Name, other.Name);
         }

@@ -36,8 +36,26 @@ namespace CppAst
         /// </summary>
         public CppClassKind ClassKind { get; set; }
 
+        public CppTemplateKind TemplateKind { get; set; }
+
         /// <inheritdoc />
         public string Name { get; set; }
+
+        public string FullName 
+        { 
+            get 
+            {
+                string fullparent = FullParentName;
+                if(string.IsNullOrEmpty(fullparent))
+                {
+                    return Name;
+                }
+                else
+                {
+                    return $"{fullparent}{Name}";
+                }
+            } 
+        }
 
         /// <inheritdoc />
         public CppVisibility Visibility { get; set; }
@@ -83,12 +101,20 @@ namespace CppAst
         /// <inheritdoc />
         public List<CppType> TemplateParameters { get; }
 
+        public List<CppTemplateArgument> TemplateSpecializedArguments { get; } = new List<CppTemplateArgument>();
+
         /// <summary>
         /// Gets the specialized class template of this instance.
         /// </summary>
         public CppClass SpecializedTemplate { get; set; }
 
-        private bool Equals(CppClass other)
+
+        public bool IsEmbeded => Parent is CppClass;
+
+        public bool IsAbstract { get; set; }
+
+
+		private bool Equals(CppClass other)
         {
             return base.Equals(other) && Equals(Parent, other.Parent) && Name.Equals(other.Name);
         }
@@ -115,7 +141,7 @@ namespace CppAst
                 int hashCode = base.GetHashCode();
                 hashCode = (hashCode * 397) ^ (Parent != null ? Parent.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ Name.GetHashCode();
-                foreach (var templateParameter in TemplateParameters)
+                foreach (var templateParameter in TemplateSpecializedArguments)
                 {
                     hashCode = (hashCode * 397) ^ templateParameter.GetHashCode();
                 }
@@ -162,6 +188,31 @@ namespace CppAst
                     if (i > 0) builder.Append(", ");
                     builder.Append(baseType);
                 }
+            }
+
+            //Add template arguments here
+            if(TemplateKind != CppTemplateKind.NormalClass)
+            {
+                builder.Append("<");
+
+                if(TemplateKind == CppTemplateKind.TemplateSpecializedClass)
+                {
+                    for(var i = 0; i < TemplateSpecializedArguments.Count; i++)
+                    {
+                        if(i > 0) builder.Append(", ");
+                        builder.Append(TemplateSpecializedArguments[i].ToString());
+                    }
+                }
+                else if(TemplateKind == CppTemplateKind.TemplateClass)
+                {
+					for (var i = 0; i < TemplateParameters.Count; i++)
+					{
+						if (i > 0) builder.Append(", ");
+						builder.Append(TemplateParameters[i].ToString());
+					}
+				}
+
+                builder.Append(">");
             }
 
             builder.Append(" { ... }");

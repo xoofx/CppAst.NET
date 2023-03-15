@@ -5,6 +5,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace CppAst
@@ -77,6 +78,35 @@ namespace CppAst
             return FindByName(this, name);
         }
 
+		public CppElement FindByFullName(string name)
+        {
+            string ns, cn;
+            int lindex = name.LastIndexOf("::");
+            if(lindex == -1)
+            {
+                ns = "";
+                cn = name;
+            }
+            else
+            {
+                ns = name.Substring(0, lindex);
+                cn = name.Substring(lindex + 2);
+            }
+
+            var elemList =  FindListByName(this, cn);
+            foreach(var elem in elemList)
+            {
+                if(elem is CppElement)
+                {
+                    if(ns == elem.FullParentName)
+                    {
+                        return elem;
+                    }
+                }
+            }
+
+            return null;
+        }
         /// <summary>
         /// Find a <see cref="CppElement"/> by name declared within the specified container.
         /// </summary>
