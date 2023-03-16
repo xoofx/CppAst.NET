@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using ClangSharp;
 using ClangSharp.Interop;
 
 namespace CppAst
@@ -76,16 +77,10 @@ namespace CppAst
                     break;
                 case CXCursorKind.CXCursor_NonTypeTemplateParameter:
                     {
-                        //Use reflection to call ClangSharp Decl internal Create() function here~~
-                        Type decl_type = typeof(ClangSharp.Decl);
-                        var create_func = decl_type.GetMethod("Create", BindingFlags.Static | BindingFlags.NonPublic);
-                        var decl = create_func.Invoke(null, new object[] { cursor }) as ClangSharp.NonTypeTemplateParmDecl;
-                        //Here is code for not with internal limit call version
-                        //var decl = ClangSharp.Decl.Create(cursor) as ClangSharp.NonTypeTemplateParmDecl;
-                        
-                        var tmptype = decl.Type.Handle;
+                        //Just use low level ClangSharp object to do the logic
+                        var tmptype = cursor.Type;
                         var tmpcpptype = GetCppType(tmptype.Declaration, tmptype, cursor, data);
-                        var tmpname = decl.Name;
+                        var tmpname = cursor.Spelling.ToString();
 
                         var noneTypeParam = new CppNoneTypeTemplateParameterType(tmpname, tmpcpptype);
                         parentclass.TemplateParameters.Add(noneTypeParam);
@@ -190,16 +185,11 @@ namespace CppAst
                         cppClass.SpecializedTemplate = (CppClass)GetOrCreateDeclarationContainer(cursor.SpecializedCursorTemplate, data).Container;
                         cppClass.TemplateKind = CppTemplateKind.TemplateSpecializedClass;
 
-                        //Use reflection to call ClangSharp Decl internal Create() function here~~
-                        Type decl_type = typeof(ClangSharp.Decl);
-                        var create_func = decl_type.GetMethod("Create", BindingFlags.Static | BindingFlags.NonPublic);
-                        var specilize_decl = create_func.Invoke(null, new object[] { cursor }) as ClangSharp.ClassTemplateSpecializationDecl;
-                        //Here is code for not with internal limit call version
-                        //var specilize_decl = ClangSharp.ClassTemplateSpecializationDecl.Create(cursor) as ClangSharp.ClassTemplateSpecializationDecl;
-
-                        var temp_args = specilize_decl.TemplateArgs;
+                        //Just use low level api to call ClangSharp 
                         var temp_params = cppClass.SpecializedTemplate.TemplateParameters;
 
+                        var temp_args_count = cursor.NumTemplateArguments;
+                        
                         //Just use template class template params here
                         foreach (var param in temp_params)
                         {
@@ -208,29 +198,29 @@ namespace CppAst
 
                         ////var temp_decl = specilize_decl.SpecializedTemplate;
 
-                        Debug.Assert(cppClass.SpecializedTemplate.TemplateParameters.Count == temp_args.Count);
+                        Debug.Assert(cppClass.SpecializedTemplate.TemplateParameters.Count == temp_args_count);
 
-                        for (int i = 0; i < temp_args.Count; i++)
+                        for (uint i = 0; i < temp_args_count; i++)
                         {
-                            var arg = temp_args[i];
-                            switch (arg.Kind)
+                            var arg = cursor.GetTemplateArgument(i);
+                            switch (arg.kind)
                             {
                                 case CXTemplateArgumentKind.CXTemplateArgumentKind_Type:
                                     {
-                                        var argh = arg.AsType.Handle;
+                                        var argh = arg.AsType;
                                         var arg_type = GetCppType(argh.Declaration, argh, cursor, data);
-                                        cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(temp_params[i], arg_type));
+                                        cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(temp_params[(int)i], arg_type));
                                     }
                                     break;
                                 case CXTemplateArgumentKind.CXTemplateArgumentKind_Integral:
                                     {
-                                        cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(temp_params[i], arg.AsIntegral));
+                                        cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(temp_params[(int)i], arg.AsIntegral));
                                     }
                                     break;
                                 default:
                                     {
-                                        Debug.WriteLine($"[Warning]template argument in class:{cppClass.FullName} with type: {arg.Kind.ToString()} do not handle right now!");
-                                        cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(temp_params[i], arg.ToString()));
+                                        Debug.WriteLine($"[Warning]template argument in class:{cppClass.FullName} with type: {arg.kind.ToString()} do not handle right now!");
+                                        cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(temp_params[(int)i], arg.ToString()));
                                     }
                                     break;
                             }
