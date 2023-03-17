@@ -5,7 +5,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq.Expressions;
 using System.Text;
+using ClangSharp;
 using ClangSharp.Interop;
 
 namespace CppAst
@@ -48,6 +50,40 @@ namespace CppAst
             }
             return VisitMember(cursor, parent, data);
         }
+
+        private void TryToCreateTemplateParameters(CppClass parentclass, CXCursor cursor, void* data)
+        {
+            switch (cursor.Kind)
+            {
+                case CXCursorKind.CXCursor_TemplateTypeParameter:
+                    {
+                        var parameterTypeName = new CppTemplateParameterType(GetCursorSpelling(cursor));
+                        parentclass.TemplateParameters.Add(parameterTypeName);
+                    }
+                    break;
+                case CXCursorKind.CXCursor_NonTypeTemplateParameter:
+                    {
+                        //Just use low level ClangSharp object to do the logic
+                        var tmptype = cursor.Type;
+                        var tmpcpptype = GetCppType(tmptype.Declaration, tmptype, cursor, data);
+                        var tmpname = cursor.Spelling.ToString();
+
+                        var noneTypeParam = new CppTemplateParameterNonType(tmpname, tmpcpptype);
+                        parentclass.TemplateParameters.Add(noneTypeParam);
+                    }
+                    break;
+                case CXCursorKind.CXCursor_TemplateTemplateParameter:
+                    {
+                        //ToDo: add template template parameter support here~~
+                        Debug.WriteLine("[Warning] template template parameter maybe not handle right here!");
+                        var tmplparam = new CppTemplateParameterType(GetCursorSpelling(cursor));
+                        parentclass.TemplateParameters.Add(tmplparam);
+                    }
+                    break;
+            }
+
+        }
+
 
         private CppContainerContext GetOrCreateDeclarationContainer(CXCursor cursor, void* data)
         {
@@ -117,39 +153,83 @@ namespace CppAst
                             break;
                     }
 
+                    cppClass.IsAbstract = cursor.CXXRecord_IsAbstract;
+
                     if (cursor.Kind == CXCursorKind.CXCursor_ClassTemplate)
                     {
+                        cppClass.TemplateKind = CppTemplateKind.TemplateClass;
                         cursor.VisitChildren((childCursor, classCursor, clientData) =>
                         {
-                            switch (childCursor.Kind)
-                            {
-                                case CXCursorKind.CXCursor_TemplateTypeParameter:
-                                    var parameterTypeName = new CppTemplateParameterType(GetCursorSpelling(childCursor));
-                                    cppClass.TemplateParameters.Add(parameterTypeName);
-                                    break;
-                            }
+                            TryToCreateTemplateParameters(cppClass, childCursor, clientData);
 
                             return CXChildVisitResult.CXChildVisit_Continue;
                         }, new CXClientData((IntPtr)data));
                     }
+                    else if (cursor.DeclKind == CX_DeclKind.CX_DeclKind_ClassTemplateSpecialization)
+                    {
+                        //Try to generate template class first
+                        cppClass.SpecializedTemplate = (CppClass)GetOrCreateDeclarationContainer(cursor.SpecializedCursorTemplate, data).Container;
+                        cppClass.TemplateKind = CppTemplateKind.TemplateSpecializedClass;
+
+                        //Just use low level api to call ClangSharp 
+                        var temp_params = cppClass.SpecializedTemplate.TemplateParameters;
+
+                        var temp_args_count = cursor.NumTemplateArguments;
+                        
+                        //Just use template class template params here
+                        foreach (var param in temp_params)
+                        {
+                            cppClass.TemplateParameters.Add(param);
+                        }
+
+                        ////var temp_decl = specilize_decl.SpecializedTemplate;
+
+                        Debug.Assert(cppClass.SpecializedTemplate.TemplateParameters.Count == temp_args_count);
+
+                        for (uint i = 0; i < temp_args_count; i++)
+                        {
+                            var arg = cursor.GetTemplateArgument(i);
+                            switch (arg.kind)
+                            {
+                                case CXTemplateArgumentKind.CXTemplateArgumentKind_Type:
+                                    {
+                                        var argh = arg.AsType;
+                                        var arg_type = GetCppType(argh.Declaration, argh, cursor, data);
+                                        cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(temp_params[(int)i], arg_type));
+                                    }
+                                    break;
+                                case CXTemplateArgumentKind.CXTemplateArgumentKind_Integral:
+                                    {
+                                        cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(temp_params[(int)i], arg.AsIntegral));
+                                    }
+                                    break;
+                                default:
+                                    {
+                                        Debug.WriteLine($"[Warning]template argument in class:{cppClass.FullName} with type: {arg.kind.ToString()} do not handle right now!");
+                                        cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(temp_params[(int)i], arg.ToString()));
+                                    }
+                                    break;
+                            }
+
+                        }
+                    }
+                    else if (cursor.DeclKind == CX_DeclKind.CX_DeclKind_ClassTemplatePartialSpecialization)
+                    {
+                        Debug.WriteLine("[Warning]Maybe can not run to here in CppAst!");
+                        //Try to generate template class first
+                        cppClass.SpecializedTemplate = (CppClass)GetOrCreateDeclarationContainer(cursor.SpecializedCursorTemplate, data).Container;
+                        cppClass.TemplateKind = CppTemplateKind.PartialTemplateClass;
+                    }
                     else
                     {
-                        var templateParameters = ParseTemplateArguments(cursor, cursor.Type, new CXClientData((IntPtr)data));
-                        if (templateParameters != null)
-                        {
-                            cppClass.TemplateParameters.AddRange(templateParameters);
-
-                            if (cursor.DeclKind == CX_DeclKind.CX_DeclKind_ClassTemplateSpecialization)
-                            {
-                                cppClass.SpecializedTemplate = (CppClass)GetOrCreateDeclarationContainer(cursor.SpecializedCursorTemplate, data).Container;
-                            }
-                        }
+                        cppClass.TemplateKind = CppTemplateKind.NormalClass;
                     }
 
                     defaultContainerVisibility = cursor.Kind == CXCursorKind.CXCursor_ClassDecl ? CppVisibility.Private : CppVisibility.Public;
                     break;
                 case CXCursorKind.CXCursor_TranslationUnit:
                 case CXCursorKind.CXCursor_UnexposedDecl:
+                case CXCursorKind.CXCursor_FirstInvalid:
                     return _rootContainerContext;
                 default:
                     Unhandled(cursor);
@@ -390,6 +470,7 @@ namespace CppAst
 
             return CXChildVisitResult.CXChildVisit_Continue;
         }
+
 
         private CppComment GetComment(CXCursor cursor)
         {
@@ -1845,7 +1926,7 @@ namespace CppAst
                         }
 
                         var cppUnexposedType = new CppUnexposedType(type.ToString()) { SizeOf = (int)type.SizeOf };
-                        var templateParameters = ParseTemplateArguments(cursor, type, new CXClientData((IntPtr)data));
+                        var templateParameters = ParseTemplateSpecializedArguments(cursor, type, new CXClientData((IntPtr)data));
                         if (templateParameters != null)
                         {
                             cppUnexposedType.TemplateParameters.AddRange(templateParameters);
@@ -1926,7 +2007,7 @@ namespace CppAst
             RootCompilation.Diagnostics.Warning($"Unhandled declaration: {cursor.Kind}/{cursor} in {parent}.", cppLocation);
         }
 
-        private List<CppType> ParseTemplateArguments(CXCursor cursor, CXType type, CXClientData data)
+        private List<CppType> ParseTemplateSpecializedArguments(CXCursor cursor, CXType type, CXClientData data)
         {
             var numTemplateArguments = type.NumTemplateArguments;
             if (numTemplateArguments < 0) return null;

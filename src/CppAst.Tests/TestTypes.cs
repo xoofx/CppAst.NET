@@ -5,6 +5,7 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
+using static CppAst.CppTemplateArgument;
 
 namespace CppAst.Tests
 {
@@ -82,8 +83,9 @@ TemplateStruct<int, Struct2> unexposed;
                     var exposed = compilation.Fields[0].Type as CppClass;
                     Assert.AreEqual("TemplateStruct", exposed.Name);
                     Assert.AreEqual(2, exposed.TemplateParameters.Count);
-                    Assert.AreEqual(CppPrimitiveKind.Int, (exposed.TemplateParameters[0] as CppPrimitiveType)?.Kind);
-                    Assert.AreEqual("Struct2", (exposed.TemplateParameters[1] as CppClass)?.Name);
+                    Assert.AreEqual(CppTemplateArgumentKind.AsType, exposed.TemplateSpecializedArguments[0]?.ArgKind);
+                    Assert.AreEqual(CppPrimitiveKind.Int, (exposed.TemplateSpecializedArguments[0]?.ArgAsType as CppPrimitiveType).Kind);
+                    Assert.AreEqual("Struct2", (exposed.TemplateSpecializedArguments[1].ArgAsType as CppClass)?.Name);
 
                     var specialized = exposed.SpecializedTemplate;
                     Assert.AreEqual("TemplateStruct", specialized.Name);
@@ -96,8 +98,9 @@ TemplateStruct<int, Struct2> unexposed;
                     var unexposed = compilation.Fields[1].Type as CppClass;
                     Assert.AreEqual("TemplateStruct", unexposed.Name);
                     Assert.AreEqual(2, unexposed.TemplateParameters.Count);
-                    Assert.AreEqual(CppPrimitiveKind.Int, (unexposed.TemplateParameters[0] as CppPrimitiveType)?.Kind);
-                    Assert.AreEqual("Struct2", (unexposed.TemplateParameters[1] as CppClass)?.Name);
+                    Assert.AreEqual(CppTemplateArgumentKind.AsType, unexposed.TemplateSpecializedArguments[0]?.ArgKind);
+                    Assert.AreEqual(CppPrimitiveKind.Int, (exposed.TemplateSpecializedArguments[0]?.ArgAsType as CppPrimitiveType).Kind);
+                    Assert.AreEqual("Struct2", (unexposed.TemplateSpecializedArguments[1].ArgAsType as CppClass)?.Name);
 
                     Assert.AreNotEqual(exposed.GetHashCode(), specialized.GetHashCode());
                     Assert.AreEqual(exposed.GetHashCode(), unexposed.GetHashCode());
@@ -136,7 +139,9 @@ class Derived : public ::BaseTemplate<::Derived>
                     Assert.AreEqual(baseClassSpecialized, derived.BaseTypes[0].Type);
 
                     Assert.AreEqual(1, baseClassSpecialized.TemplateParameters.Count);
-                    Assert.AreEqual(derived, baseClassSpecialized.TemplateParameters[0]);
+
+                    //Here change to argument as a template deduce instance, not as a Template Parameters~~
+                    Assert.AreEqual(derived, baseClassSpecialized.TemplateSpecializedArguments[0].ArgAsType);
                     Assert.AreEqual(baseTemplate, baseClassSpecialized.SpecializedTemplate);
                 }
             );

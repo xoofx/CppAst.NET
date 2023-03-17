@@ -2,6 +2,7 @@
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -65,10 +66,37 @@ namespace CppAst
         /// </summary>
         public CppContainerList<CppParameter> Parameters { get; }
 
+        public int DefaultParamCount
+        {
+            get
+            {
+                int default_count = 0;
+                foreach (var param in Parameters)
+                {
+                    if(param.InitExpression != null)
+                    {
+                        default_count++;
+                    }
+                }
+                return default_count;
+            }
+        }
+
         /// <summary>
         /// Gets or sets the flags of this function.
         /// </summary>
         public CppFunctionFlags Flags { get; set; }
+
+        public bool IsCxxClassMethod => ((int)Flags & (int)CppFunctionFlags.Method) != 0;
+
+        public bool IsPureVirtual => ((int)Flags & (int)CppFunctionFlags.Pure) != 0;
+
+		public bool IsVirtual => ((int)Flags & (int)CppFunctionFlags.Virtual) != 0;
+
+		public bool IsStatic => StorageQualifier == CppStorageQualifier.Static;
+
+        public bool IsConst => ((int)Flags & (int)CppFunctionFlags.Const) != 0;
+
 
         /// <inheritdoc />
         public List<CppType> TemplateParameters { get; }
