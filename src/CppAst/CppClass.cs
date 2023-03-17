@@ -141,9 +141,13 @@ namespace CppAst
                 int hashCode = base.GetHashCode();
                 hashCode = (hashCode * 397) ^ (Parent != null ? Parent.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ Name.GetHashCode();
-                foreach (var templateParameter in TemplateSpecializedArguments)
+                foreach (var templateParameter in TemplateParameters)
                 {
                     hashCode = (hashCode * 397) ^ templateParameter.GetHashCode();
+                }
+				foreach (var templateArgument in TemplateSpecializedArguments)
+                {
+                    hashCode = (hashCode * 397) ^ templateArgument.GetHashCode();
                 }
                 return hashCode;
             }

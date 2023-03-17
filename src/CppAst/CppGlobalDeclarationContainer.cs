@@ -78,35 +78,77 @@ namespace CppAst
             return FindByName(this, name);
         }
 
-		public CppElement FindByFullName(string name)
+        private CppElement SearchForChild(CppElement parent, string child_name)
         {
-            string ns, cn;
-            int lindex = name.LastIndexOf("::");
-            if(lindex == -1)
+            ICppDeclarationContainer container = null;
+            if(parent is CppNamespace)
             {
-                ns = "";
-                cn = name;
+                var ns = parent as CppNamespace;
+                var n = ns.Namespaces.FirstOrDefault(x => x.Name == child_name);
+                if (n != null) return n;
+
+                container = ns;
             }
-            else
+            else if(parent is CppClass)
             {
-                ns = name.Substring(0, lindex);
-                cn = name.Substring(lindex + 2);
+                container = parent as ICppDeclarationContainer;
             }
 
-            var elemList =  FindListByName(this, cn);
-            foreach(var elem in elemList)
+            if(container != null)
             {
-                if(elem is CppElement)
-                {
-                    if(ns == elem.FullParentName)
-                    {
-                        return elem;
-                    }
-                }
+                var c = container.Classes.FirstOrDefault(x => x.Name == child_name);
+                if (c != null) return c;
+
+                var e = container.Enums.FirstOrDefault(x => x.Name == child_name);
+                if (e != null) return e;
+
+                var f = container.Functions.FirstOrDefault(x => x.Name == child_name);
+                if (f != null) return f;
+
+                var t = container.Typedefs.FirstOrDefault(x => x.Name == child_name);
+                if (t != null) return t;
             }
 
             return null;
         }
+
+        /// <summary>
+        /// Find a <see cref="CppElement"/> by full name(such as gbf::math::Vector3).
+        /// </summary>
+        /// <param name="name">Name of the element to find</param>
+        /// <returns>The CppElement found or null if not found</returns>
+        public CppElement FindByFullName(string name)
+        {
+            var arr = name.Split(new string[] { "::" }, StringSplitOptions.RemoveEmptyEntries);
+            if(arr.Length == 0) return null;
+
+            CppElement elem = null;
+            for(int i = 0; i < arr.Length; i++)
+            {
+                if (i == 0)
+                {
+                   elem = FindByName(arr[0]);
+                }
+                else
+                {
+                   elem = SearchForChild(elem, arr[i]);
+                }
+
+                if (elem == null) return null;
+            }
+            return elem;
+        }
+
+        /// <summary>
+        /// Find a <see cref="CppElement"/> by full name(such as gbf::math::Vector3).
+        /// </summary>
+        /// <param name="name">Name of the element to find</param>
+        /// <returns>The CppElement found or null if not found</returns>
+        public TCppElement FindByFullName<TCppElement>(string name) where TCppElement : CppElement
+        {
+            return (TCppElement)FindByFullName(name);
+        }
+
         /// <summary>
         /// Find a <see cref="CppElement"/> by name declared within the specified container.
         /// </summary>

@@ -77,5 +77,35 @@ A::a c;
                 }
             );
         }
+
+
+
+        [Test]
+        public void TestNamespaceFindByFullName()
+        {
+            var text = @"
+namespace A
+{
+// Test using Template
+template <typename T>
+struct MyStruct;
+
+using MyStructInt = MyStruct<int>;
+}
+
+";
+
+            ParseAssert(text,
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(1, compilation.Namespaces.Count);
+
+                    var cppStruct = compilation.FindByFullName<CppClass>("A::MyStruct");
+                    Assert.AreEqual(compilation.Namespaces[0].Classes[0], cppStruct);
+                }
+            );
+        }
     }
 }

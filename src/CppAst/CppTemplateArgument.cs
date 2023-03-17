@@ -12,32 +12,24 @@ namespace CppAst
     /// </summary>
     public class CppTemplateArgument : CppElement
     {
-        //Nested types
-		public enum CppTemplateArgumentKind
-		{
-			AsType,
-			AsInteger,
-			Unknown,
-		}
-
-		public CppTemplateArgument(CppType source_param, CppType type_arg)
+		public CppTemplateArgument(CppType sourceParam, CppType typeArg)
         {
-            SourceParam = source_param ?? throw new ArgumentNullException(nameof(source_param));
-            ArgAsType = type_arg ?? throw new ArgumentNullException(nameof(type_arg));
+            SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
+            ArgAsType = typeArg ?? throw new ArgumentNullException(nameof(typeArg));
             ArgKind = CppTemplateArgumentKind.AsType;
         }
 
-		public CppTemplateArgument(CppType source_param, long int_arg)
+		public CppTemplateArgument(CppType sourceParam, long intArg)
 		{
-			SourceParam = source_param ?? throw new ArgumentNullException(nameof(source_param));
-            ArgAsInteger = int_arg;
+			SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
+            ArgAsInteger = intArg;
 			ArgKind = CppTemplateArgumentKind.AsInteger;
 		}
 
-		public CppTemplateArgument(CppType source_param, string unknown_str)
+		public CppTemplateArgument(CppType sourceParam, string unknownStr)
         {
-			SourceParam = source_param ?? throw new ArgumentNullException(nameof(source_param));
-            ArgAsUnknown = unknown_str;
+			SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
+            ArgAsUnknown = unknownStr;
 			ArgKind = CppTemplateArgumentKind.Unknown;
 		}
 

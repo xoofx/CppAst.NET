@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Text;
 using ClangSharp;
 using ClangSharp.Interop;
@@ -37,19 +36,6 @@ namespace CppAst
         public bool ParseAttributeEnabled { get; set; }
 
         public CppCompilation RootCompilation { get; }
-
-
-        public void ParseFromTranslationUnit(CXTranslationUnit tu)
-        {
-            using (tu)
-            {
-                unsafe
-                {
-                    tu.Cursor.VisitChildren(VisitTranslationUnit, clientData: default);
-                }
-            }
-
-        }
 
         public CXChildVisitResult VisitTranslationUnit(CXCursor cursor, CXCursor parent, void* data)
         {
@@ -82,7 +68,7 @@ namespace CppAst
                         var tmpcpptype = GetCppType(tmptype.Declaration, tmptype, cursor, data);
                         var tmpname = cursor.Spelling.ToString();
 
-                        var noneTypeParam = new CppNoneTypeTemplateParameterType(tmpname, tmpcpptype);
+                        var noneTypeParam = new CppTemplateParameterNonType(tmpname, tmpcpptype);
                         parentclass.TemplateParameters.Add(noneTypeParam);
                     }
                     break;
@@ -329,44 +315,45 @@ namespace CppAst
                 case CXCursorKind.CXCursor_ClassDecl:
                 case CXCursorKind.CXCursor_StructDecl:
                 case CXCursorKind.CXCursor_UnionDecl:
+                {
+                    bool isAnonymous = cursor.IsAnonymous;
+                    var cppClass = VisitClassDecl(cursor, data);
+                    // Empty struct/class/union declaration are considered as fields
+                    if (isAnonymous)
                     {
-                        bool isAnonymous = cursor.IsAnonymous;
-                        var cppClass = VisitClassDecl(cursor, data);
-                        // Empty struct/class/union declaration are considered as fields
-                        if (isAnonymous)
-                        {
-                            Debug.Assert(string.IsNullOrEmpty(cppClass.Name));
-                            var containerContext = GetOrCreateDeclarationContainer(parent, data);
+                        Debug.Assert(string.IsNullOrEmpty(cppClass.Name));
+                        var containerContext = GetOrCreateDeclarationContainer(parent, data);
 
-                            // We try to recover the offset from the previous field
-                            // Might not be always correct (with alignment rules),
-                            // but not sure how to recover the offset without recalculating the entire offsets
-                            var offset = 0;
-                            var cppClassContainer = containerContext.Container as CppClass;
-                            if (cppClassContainer is object && cppClassContainer.Fields.Count > 0)
-                            {
-                                var lastField = cppClassContainer.Fields[cppClassContainer.Fields.Count - 1];
-                                offset = (int)lastField.Offset + lastField.Type.SizeOf;
-                            }
-
-                            // Create an anonymous field for the type
-                            var cppField = new CppField(cppClass, string.Empty)
-                            {
-                                Visibility = containerContext.CurrentVisibility,
-                                StorageQualifier = GetStorageQualifier(cursor),
-                                IsAnonymous = true,
-                                Offset = offset,
-                                Attributes = ParseAttributes(cursor)
-                            };
-                            containerContext.DeclarationContainer.Fields.Add(cppField);
-                            element = cppField;
-                        }
-                        else
+                        // We try to recover the offset from the previous field
+                        // Might not be always correct (with alignment rules),
+                        // but not sure how to recover the offset without recalculating the entire offsets
+                        var offset = 0;
+                        var cppClassContainer = containerContext.Container as CppClass;
+                        if (cppClassContainer is object && cppClassContainer.Fields.Count > 0)
                         {
-                            element = cppClass;
+                            var lastField = cppClassContainer.Fields[cppClassContainer.Fields.Count - 1];
+                            offset = (int)lastField.Offset + lastField.Type.SizeOf;
                         }
+
+                        // Create an anonymous field for the type
+                        var cppField = new CppField(cppClass, string.Empty)
+                        {
+                            Visibility = containerContext.CurrentVisibility,
+                            StorageQualifier = GetStorageQualifier(cursor),
+                            IsAnonymous = true,
+                            Offset = offset,
+                            Attributes = ParseAttributes(cursor)
+                        };
+                        containerContext.DeclarationContainer.Fields.Add(cppField);
+                        element = cppField;
+                    }
+                    else
+                    {
+                        element = cppClass;
                     }
                     break;
+                }
+
                 case CXCursorKind.CXCursor_EnumDecl:
                     element = VisitEnumDecl(cursor, data);
                     break;

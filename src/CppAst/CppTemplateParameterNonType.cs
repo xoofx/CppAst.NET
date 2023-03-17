@@ -9,16 +9,17 @@ namespace CppAst
     /// <summary>
     /// A C++ template parameter type.
     /// </summary>
-    public sealed class CppNoneTypeTemplateParameterType : CppType
+    public sealed class CppTemplateParameterNonType : CppType
     {
         /// <summary>
         /// Constructor of this none type template parameter type.
         /// </summary>
         /// <param name="name"></param>
-        public CppNoneTypeTemplateParameterType(string name, CppType none_template_type) : base(CppTypeKind.NoneTypeTemplateParameterType)
+        /// <param name="templateNonType"></param>
+        public CppTemplateParameterNonType(string name, CppType templateNonType) : base(CppTypeKind.TemplateParameterNonType)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
-            NoneTemplateType = none_template_type ?? throw new ArgumentNullException(nameof(none_template_type));
+            NoneTemplateType = templateNonType ?? throw new ArgumentNullException(nameof(templateNonType));
         }
 
         /// <summary>
@@ -28,7 +29,7 @@ namespace CppAst
 
         public CppType NoneTemplateType { get; }
 
-        private bool Equals(CppNoneTypeTemplateParameterType other)
+        private bool Equals(CppTemplateParameterNonType other)
         {
             return base.Equals(other) && Name.Equals(other.Name) && NoneTemplateType.Equals(other.NoneTemplateType);
         }
@@ -43,7 +44,7 @@ namespace CppAst
         /// <inheritdoc />
         public override bool Equals(object obj)
         {
-            return ReferenceEquals(this, obj) || obj is CppNoneTypeTemplateParameterType other && Equals(other);
+            return ReferenceEquals(this, obj) || obj is CppTemplateParameterNonType other && Equals(other);
         }
 
         /// <inheritdoc />

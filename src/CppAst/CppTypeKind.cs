@@ -52,7 +52,7 @@ namespace CppAst
 		/// <summary>
 		/// A none type template parameter type.
 		/// </summary>
-		NoneTypeTemplateParameterType,
+		TemplateParameterNonType,
 		/// <summary>
 		/// An unexposed type.
 		/// </summary>
