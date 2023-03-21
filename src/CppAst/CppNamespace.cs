@@ -33,6 +33,11 @@ namespace CppAst
         /// </summary>
         public string Name { get; set; }
 
+        /// <summary>
+        /// Is the namespace inline or not(such as std::__1::vector).
+        /// </summary>
+        public bool IsInlineNamespace { get; set; }
+
         /// <inheritdoc />
         public CppContainerList<CppField> Fields { get; }
 

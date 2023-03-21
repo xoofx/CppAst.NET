@@ -51,6 +51,31 @@ namespace CppAst
             }
 
             builder.Append(Type.GetDisplayName());
+
+            var cls = Type as CppClass;
+            if(cls != null && cls.TemplateKind != CppTemplateKind.NormalClass)
+            {
+                builder.Append("<");
+
+                if (cls.TemplateKind == CppTemplateKind.TemplateSpecializedClass)
+                {
+                    for (var i = 0; i < cls.TemplateSpecializedArguments.Count; i++)
+                    {
+                        if (i > 0) builder.Append(", ");
+                        builder.Append(cls.TemplateSpecializedArguments[i].ToString());
+                    }
+                }
+                else if (cls.TemplateKind == CppTemplateKind.TemplateClass)
+                {
+                    for (var i = 0; i < cls.TemplateParameters.Count; i++)
+                    {
+                        if (i > 0) builder.Append(", ");
+                        builder.Append(cls.TemplateParameters[i].ToString());
+                    }
+                }
+
+                builder.Append(">");
+            }
             return builder.ToString();
         }
     }

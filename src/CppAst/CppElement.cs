@@ -25,35 +25,46 @@ namespace CppAst
         {
             get
             {
-				string tmpname = "";
-				var p = Parent;
-				while (p != null)
-				{
-					if (p is CppClass)
-					{
-						var cpp = p as CppClass;
-						tmpname = $"{cpp.Name}::{tmpname}";
-						p = cpp.Parent;
-					}
-					else if (p is CppNamespace)
-					{
-						var ns = p as CppNamespace;
-						tmpname = $"{ns.Name}::{tmpname}";
-						p = ns.Parent;
-					}
-					else if (p is CppCompilation)
-					{
-						// root namespace here, just ignore~
-						p = null;
-					}
-					else
-					{
-						throw new NotImplementedException("Can not be here, not support type here!");
-					}
-				}
+                string tmpname = "";
+                var p = Parent;
+                while (p != null)
+                {
+                    if (p is CppClass)
+                    {
+                        var cpp = p as CppClass;
+                        tmpname = $"{cpp.Name}::{tmpname}";
+                        p = cpp.Parent;
+                    }
+                    else if (p is CppNamespace)
+                    {
+                        var ns = p as CppNamespace;
 
-				return tmpname;
-			}
+                        //Just ignore inline namespace
+                        if (!ns.IsInlineNamespace)
+                        {
+                            tmpname = $"{ns.Name}::{tmpname}";
+                        }
+                        p = ns.Parent;
+                    }
+                    else if (p is CppCompilation)
+                    {
+                        // root namespace here, just ignore~
+                        p = null;
+                    }
+                    else
+                    {
+                        throw new NotImplementedException("Can not be here, not support type here!");
+                    }
+                }
+
+                //Try to remove not need `::` in string tails.
+                if (tmpname.EndsWith("::"))
+                {
+                    tmpname = tmpname.Substring(0, tmpname.Length - 2);
+                }
+
+                return tmpname;
+            }
         }
 
         /// <summary>

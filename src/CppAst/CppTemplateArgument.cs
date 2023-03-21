@@ -10,30 +10,30 @@ namespace CppAst
     /// <summary>
     /// For c++ specialized template argument
     /// </summary>
-    public class CppTemplateArgument : CppElement
+    public class CppTemplateArgument : CppType
     {
-		public CppTemplateArgument(CppType sourceParam, CppType typeArg)
+        public CppTemplateArgument(CppType sourceParam, CppType typeArg) : base(CppTypeKind.TemplateArgumentType)
         {
             SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
             ArgAsType = typeArg ?? throw new ArgumentNullException(nameof(typeArg));
             ArgKind = CppTemplateArgumentKind.AsType;
         }
 
-		public CppTemplateArgument(CppType sourceParam, long intArg)
-		{
+        public CppTemplateArgument(CppType sourceParam, long intArg) : base(CppTypeKind.TemplateArgumentType)
+        {
 			SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
             ArgAsInteger = intArg;
-			ArgKind = CppTemplateArgumentKind.AsInteger;
-		}
+            ArgKind = CppTemplateArgumentKind.AsInteger;
+        }
 
-		public CppTemplateArgument(CppType sourceParam, string unknownStr)
+		public CppTemplateArgument(CppType sourceParam, string unknownStr) : base(CppTypeKind.TemplateArgumentType)
         {
 			SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
             ArgAsUnknown = unknownStr;
-			ArgKind = CppTemplateArgumentKind.Unknown;
-		}
+            ArgKind = CppTemplateArgumentKind.Unknown;
+        }
 
-		public CppTemplateArgumentKind ArgKind { get; }
+        public CppTemplateArgumentKind ArgKind { get; }
 
         public CppType ArgAsType { get; }
 
@@ -45,17 +45,17 @@ namespace CppAst
         {
             get
             {
-                switch(ArgKind)
+                switch (ArgKind)
                 {
                     case CppTemplateArgumentKind.AsType:
-                        return ArgAsType.ToString();
+                        return ArgAsType.FullName;
                     case CppTemplateArgumentKind.AsInteger:
                         return ArgAsInteger.ToString();
-					case CppTemplateArgumentKind.Unknown:
+                    case CppTemplateArgumentKind.Unknown:
                         return ArgAsUnknown;
                     default:
                         return "?";
-				}
+                }
             }
         }
 
@@ -65,6 +65,20 @@ namespace CppAst
         /// </summary>
         public CppType SourceParam { get; }
 
+
+        /// <inheritdoc />
+        public override int SizeOf
+        {
+            get => 0;
+            set => throw new InvalidOperationException("This type does not support SizeOf");
+        }
+
+        /// <inheritdoc />
+        public override bool Equals(object obj)
+        {
+            return ReferenceEquals(this, obj) || obj is CppTemplateArgument other && Equals(other);
+        }
+
         /// <inheritdoc />
         public override int GetHashCode()
         {
@@ -73,6 +87,12 @@ namespace CppAst
                 return (base.GetHashCode() * 397) ^ SourceParam.GetHashCode() ^ ArgString.GetHashCode();
             }
         }
+
+
+        /// <inheritdoc />
+        public override CppType GetCanonicalType() => this;
+
+        /// <inheritdoc />
 
 
         /// <inheritdoc />

@@ -48,5 +48,16 @@ namespace CppAst
         /// </summary>
         /// <returns>A canonical type of this type instance</returns>
         public abstract CppType GetCanonicalType();
+
+        /// <summary>
+        /// We can use this name in exporter to use this type.
+        /// </summary>
+        public virtual string FullName
+        {
+            get
+            {
+                return ToString();
+            }
+        }
     }
 }

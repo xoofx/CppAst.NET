@@ -97,6 +97,7 @@ namespace CppAst
 
         public bool IsConst => ((int)Flags & (int)CppFunctionFlags.Const) != 0;
 
+        public bool IsFunctionTemplate => ((int)Flags & (int)CppFunctionFlags.FunctionTemplate) != 0;
 
         /// <inheritdoc />
         public List<CppType> TemplateParameters { get; }
