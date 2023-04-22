@@ -256,5 +256,32 @@ void function2(int, ...);
             );
         }
 
+
+
+        [Test]
+        public void TestFunctionTemplate()
+        {
+            ParseAssert(@"
+template<class T>
+void function0(T t);
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(1, compilation.Functions.Count);
+
+                    {
+                        var cppFunction = compilation.Functions[0];
+                        Assert.AreEqual(1, cppFunction.Parameters.Count);
+                        Assert.AreEqual("void", cppFunction.ReturnType.ToString());
+                        Assert.AreEqual(cppFunction.IsFunctionTemplate, true);
+                        Assert.AreEqual(cppFunction.TemplateParameters.Count, 1);
+                    }
+
+                }
+            );
+        }
+
     }
 }

@@ -109,6 +109,21 @@ namespace CppAst
                 if (t != null) return t;
             }
 
+            //Not found, try to find in inline namespace.
+            if(parent is CppNamespace)
+            {
+                var ns = parent as CppNamespace;
+                foreach(var sn in ns.Namespaces)
+                {
+                    if (sn.IsInlineNamespace)
+                    {
+                        var findElem = SearchForChild(sn, child_name);
+                        //Find it in inline namespace, just return.
+                        if(findElem != null) return findElem;
+                    }
+                }
+            }
+
             return null;
         }
 
@@ -117,7 +132,7 @@ namespace CppAst
         /// </summary>
         /// <param name="name">Name of the element to find</param>
         /// <returns>The CppElement found or null if not found</returns>
-        public CppElement FindByFullName(string name)
+		public CppElement FindByFullName(string name)
         {
             var arr = name.Split(new string[] { "::" }, StringSplitOptions.RemoveEmptyEntries);
             if(arr.Length == 0) return null;

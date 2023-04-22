@@ -107,5 +107,48 @@ using MyStructInt = MyStruct<int>;
                 }
             );
         }
+
+        [Test]
+        public void TestInlineNamespace()
+        {
+            var text = @"
+namespace A
+{
+
+inline namespace __1
+{
+    // Test using Template
+    template <typename T>
+    struct MyStruct;
+
+    using MyStructInt = MyStruct<int>;
+}
+
+}
+
+";
+
+            ParseAssert(text,
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(1, compilation.Namespaces.Count);
+
+                    var inlineNs = compilation.Namespaces[0].Namespaces[0];
+                    Assert.AreEqual(inlineNs.Name, "__1");
+                    Assert.AreEqual(true, inlineNs.IsInlineNamespace);
+
+                    var cppStruct = compilation.FindByFullName<CppClass>("A::MyStruct");
+                    Assert.AreEqual(inlineNs.Classes[0], cppStruct);
+                    Assert.AreEqual(cppStruct.FullName, "A::MyStruct<T>");
+
+                    var cppTypedef = compilation.FindByFullName<CppTypedef>("A::MyStructInt");
+                    var cppStructInt = cppTypedef.ElementType as CppClass;
+                    //So now we can use this full name in exporter convenience.
+                    Assert.AreEqual(cppStructInt.FullName, "A::MyStruct<int>");
+                }
+            );
+        }
     }
 }

@@ -41,20 +41,57 @@ namespace CppAst
         /// <inheritdoc />
         public string Name { get; set; }
 
-        public string FullName 
-        { 
-            get 
+        public override string FullName
+        {
+            get
             {
+                StringBuilder sb = new StringBuilder();
                 string fullparent = FullParentName;
-                if(string.IsNullOrEmpty(fullparent))
+                if (string.IsNullOrEmpty(fullparent))
                 {
-                    return Name;
+                    sb.Append(Name);
                 }
                 else
                 {
-                    return $"{fullparent}{Name}";
+                    sb.Append($"{fullparent}::{Name}");
                 }
-            } 
+
+                if (TemplateKind == CppTemplateKind.TemplateClass
+                    || TemplateKind == CppTemplateKind.PartialTemplateClass)
+                {
+                    sb.Append('<');
+                    for (int i = 0; i < TemplateParameters.Count; i++)
+                    {
+                        var tp = TemplateParameters[i];
+                        if (i != 0)
+                        {
+                            sb.Append(", ");
+                        }
+                        sb.Append(tp.ToString());
+                    }
+                    sb.Append('>');
+                }
+                else if (TemplateKind == CppTemplateKind.TemplateSpecializedClass)
+                {
+                    sb.Append('<');
+                    for (int i = 0; i < TemplateSpecializedArguments.Count; i++)
+                    {
+                        var ta = TemplateSpecializedArguments[i];
+                        if (i != 0)
+                        {
+                            sb.Append(", ");
+                        }
+                        sb.Append(ta.ArgString);
+                    }
+                    sb.Append('>');
+                }
+                //else if(TemplateKind == CppTemplateKind.PartialTemplateClass)
+                //{
+                //    sb.Append('<');
+                //    sb.Append('>');
+                //}
+                return sb.ToString();
+            }
         }
 
         /// <inheritdoc />

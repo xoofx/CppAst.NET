@@ -30,22 +30,21 @@ namespace CppAst
         /// <inheritdoc />
         public string Name { get; set; }
 
-		public string FullName
-		{
-			get
-			{
-				string fullparent = FullParentName;
-				if (string.IsNullOrEmpty(fullparent))
-				{
-					return Name;
-				}
-				else
-				{
-					return $"{fullparent}{Name}";
-				}
-			}
-		}
-
+        public override string FullName
+        {
+            get
+            {
+                string fullparent = FullParentName;
+                if (string.IsNullOrEmpty(fullparent))
+                {
+                    return Name;
+                }
+                else
+                {
+                    return $"{fullparent}::{Name}";
+                }
+            }
+        }
 
 		/// <summary>
 		/// Gets or sets a boolean indicating if this enum is scoped.

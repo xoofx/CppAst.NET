@@ -61,5 +61,10 @@ namespace CppAst
         /// This is a variadic function (has `...` parameter)
         /// </summary>
         Variadic = 1 << 8,
+
+        /// <summary>
+        /// This is a function template (has template params in function)
+        /// </summary>
+        FunctionTemplate = 1 << 9,
     }
 }

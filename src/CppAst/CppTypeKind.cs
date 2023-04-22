@@ -54,6 +54,10 @@ namespace CppAst
 		/// </summary>
 		TemplateParameterNonType,
 		/// <summary>
+		/// A template specialized argument type.
+		/// </summary>
+		TemplateArgumentType,
+		/// <summary>
 		/// An unexposed type.
 		/// </summary>
 		Unexposed,
