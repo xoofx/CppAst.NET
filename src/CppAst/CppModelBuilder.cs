@@ -207,7 +207,8 @@ namespace CppAst
                                     {
                                         var argh = arg.AsType;
                                         var argType = GetCppType(argh.Declaration, argh, cursor, data);
-                                        cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(tempParams[(int)i], argType));
+                                        var depend = arg.Dependence;
+                                        cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(tempParams[(int)i], argType, argh.TypeClass != CX_TypeClass.CX_TypeClass_TemplateTypeParm));
                                     }
                                     break;
                                 case CXTemplateArgumentKind.CXTemplateArgumentKind_Integral:
