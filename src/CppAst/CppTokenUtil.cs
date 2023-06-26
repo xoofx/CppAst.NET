@@ -14,22 +14,106 @@ namespace CppAst
 {
     static internal unsafe class CppTokenUtil
     {
-        public static bool ParseDirectAttribute(CXCursor cursor, ref List<CppAttribute> attributes)
+        public static void ParseCursorAttributs(CXCursor cursor, ref List<CppAttribute> attributes)
         {
             var tokenizer = new AttributeTokenizer(cursor);
             var tokenIt = new TokenIterator(tokenizer);
-            if (ParseAttribute(tokenIt, out var attribute))
+
+            // if this is a template then we need to skip that ?
+            if (tokenIt.CanPeek && tokenIt.PeekText() == "template")
+                SkipTemplates(tokenIt);
+
+            while (tokenIt.CanPeek)
             {
-                if (attributes == null)
+                if (ParseAttributes(tokenIt, ref attributes))
                 {
-                    attributes = new List<CppAttribute>();
+                    continue;
                 }
-                attributes.Add(attribute);
-                return true;
+
+                // If we have a keyword, try to skip it and process following elements
+                // for example attribute put right after a struct __declspec(uuid("...")) Test {...}
+                if (tokenIt.Peek().Kind == CppTokenKind.Keyword)
+                {
+                    tokenIt.Next();
+                    continue;
+                }
+                break;
+            }
+        }
+
+
+        public static void ParseFunctionAttributes(CXCursor cursor, string functionName, ref List<CppAttribute> attributes)
+        {
+            // TODO: This function is not 100% correct when parsing tokens up to the function name
+            // we assume to find the function name immediately followed by a `(`
+            // but some return type parameter could actually interfere with that
+            // Ideally we would need to parse more properly return type and skip parenthesis for example
+            var tokenizer = new AttributeTokenizer(cursor);
+            var tokenIt = new TokenIterator(tokenizer);
+
+            // if this is a template then we need to skip that ?
+            if (tokenIt.CanPeek && tokenIt.PeekText() == "template")
+                SkipTemplates(tokenIt);
+
+            // Parse leading attributes
+            while (tokenIt.CanPeek)
+            {
+                if (ParseAttributes(tokenIt, ref attributes))
+                {
+                    continue;
+                }
+                break;
             }
 
-            return false;
+            if (!tokenIt.CanPeek)
+            {
+                return;
+            }
+
+            // Find function name (We only support simple function name declaration)
+            if (!tokenIt.Find(functionName, "("))
+            {
+                return;
+            }
+
+            Debug.Assert(tokenIt.PeekText() == functionName);
+            tokenIt.Next();
+            Debug.Assert(tokenIt.PeekText() == "(");
+            tokenIt.Next();
+
+            int parentCount = 1;
+            while (parentCount > 0 && tokenIt.CanPeek)
+            {
+                var text = tokenIt.PeekText();
+                if (text == "(")
+                {
+                    parentCount++;
+                }
+                else if (text == ")")
+                {
+                    parentCount--;
+                }
+                tokenIt.Next();
+            }
+
+            if (parentCount != 0)
+            {
+                return;
+            }
+
+            while (tokenIt.CanPeek)
+            {
+                if (ParseAttributes(tokenIt, ref attributes))
+                {
+                    continue;
+                }
+                // Skip the token if we can parse it.
+                tokenIt.Next();
+            }
+
+            return;
         }
+
 
         public static void ParseAttributesInRange(CXTranslationUnit tu, CXSourceRange range, ref List<CppAttribute> collectAttributes)
         {

@@ -45,8 +45,7 @@ namespace CppAst
         {
             var builder = new StringBuilder();
 
-
-            builder.Append("[[");
+            ////builder.Append("[[");
 
             builder.Append(Name);
             if (Arguments != null)
@@ -59,15 +58,14 @@ namespace CppAst
                 builder.Append("...");
             }
 
-            builder.Append("]]");
+            ////builder.Append("]]");
 
-
-            if (Scope != null)
-            {
-                builder.Append(" { scope:");
-                builder.Append(Scope).Append("::");
-                builder.Append("}");
-            }
+            ////if (Scope != null)
+            ////{
+            ////    builder.Append(" { scope:");
+            ////    builder.Append(Scope).Append("::");
+            ////    builder.Append("}");
+            ////}
 
             return builder.ToString();
         }

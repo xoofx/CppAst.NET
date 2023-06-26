@@ -13,7 +13,7 @@ namespace CppAst
     public enum AttributeKind
     {
         CxxSystemAttribute,
-        CxxCustomAttribute,
+        ////CxxCustomAttribute,
         AnnotateAttribute,
         CommentAttribute,
         TokenAttribute,         //the attribute is parse from token, and the parser is slow.

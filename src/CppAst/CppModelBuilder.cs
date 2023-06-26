@@ -415,44 +415,6 @@ namespace CppAst
                     break;
                 case CXCursorKind.CXCursor_MacroExpansion:
                     break;
-                    
-                case CXCursorKind.CXCursor_VisibilityAttr:
-                    {
-                        var containerContext = GetOrCreateDeclarationContainer(parent, data).Container;
-                        var cppClass = containerContext as CppClass;
-                        if (cppClass != null)
-                        {
-                            CppAttribute attribute = new CppAttribute("visibility", AttributeKind.CxxSystemAttribute);
-                            AssignSourceSpan(cursor, attribute);
-                            attribute.Arguments = string.Format("\"{0}\"", cursor.DisplayName.ToString());
-                            cppClass.Attributes.Add(attribute);
-                        }
-                    }
-                    break;
-                case CXCursorKind.CXCursor_DLLImport:
-                    {
-                        var containerContext = GetOrCreateDeclarationContainer(parent, data).Container;
-                        var cppClass = containerContext as CppClass;
-                        if (cppClass != null)
-                        {
-                            CppAttribute attribute = new CppAttribute("dllimport", AttributeKind.CxxSystemAttribute);
-                            AssignSourceSpan(cursor, attribute);
-                            cppClass.Attributes.Add(attribute);
-                        }
-                    }
-                    break;
-                case CXCursorKind.CXCursor_DLLExport:
-                    {
-                        var containerContext = GetOrCreateDeclarationContainer(parent, data).Container;
-                        var cppClass = containerContext as CppClass;
-                        if (cppClass != null)
-                        {
-                            CppAttribute attribute = new CppAttribute("dllexport", AttributeKind.CxxSystemAttribute);
-                            AssignSourceSpan(cursor, attribute);
-                            cppClass.Attributes.Add(attribute);
-                        }
-                    }
-                    break;
                 case CXCursorKind.CXCursor_InclusionDirective:
                     // Don't emit warning for this directive
                     break;
@@ -744,6 +706,12 @@ namespace CppAst
             var tokens = tu.Tokenize(range);
 
             var name = GetCursorSpelling(cursor);
+            if(name.StartsWith("__cppast"))
+            {
+                //cppast system macros, just ignore here
+                return null;
+            }
+
             var cppMacro = new CppMacro(name);
 
             uint previousLine = 0;
@@ -1449,6 +1417,14 @@ namespace CppAst
                 var meta = argCursor.Spelling.CString;
                 switch (argCursor.Kind)
                 {
+                    case CXCursorKind.CXCursor_VisibilityAttr:
+                        {
+                            CppAttribute attribute = new CppAttribute("visibility", AttributeKind.CxxSystemAttribute);
+                            AssignSourceSpan(argCursor, attribute);
+                            attribute.Arguments = string.Format("\"{0}\"", argCursor.DisplayName.ToString());
+                            collectAttributes.Add(attribute);
+                        }
+                        break;
                     case CXCursorKind.CXCursor_AnnotateAttr:
                         {
                             var attribute = new CppAttribute("annotate", AttributeKind.AnnotateAttribute)
@@ -1569,7 +1545,16 @@ namespace CppAst
             }
 
             //Parse attributes contains in cursor
-            CppTokenUtil.ParseDirectAttribute(cursor, ref tokenAttributes);
+            if(attrContainer is CppFunction)
+            {
+                var func = attrContainer as CppFunction;
+                CppTokenUtil.ParseFunctionAttributes(cursor, func.Name, ref tokenAttributes);
+            }   
+            else
+            {
+                CppTokenUtil.ParseCursorAttributs(cursor, ref tokenAttributes);
+            }
+            
             attrContainer.TokenAttributes.AddRange(tokenAttributes);
         }
 

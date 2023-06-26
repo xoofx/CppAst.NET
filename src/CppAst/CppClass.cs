@@ -29,6 +29,7 @@ namespace CppAst
             Typedefs = new CppContainerList<CppTypedef>(this);
             TemplateParameters = new List<CppType>();
             Attributes = new List<CppAttribute>();
+            TokenAttributes = new List<CppAttribute>();
         }
 
         /// <summary>

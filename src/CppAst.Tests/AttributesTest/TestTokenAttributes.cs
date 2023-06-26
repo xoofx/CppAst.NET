@@ -46,12 +46,12 @@ void *fun2(int align) __attribute__((alloc_align(1)));
 
                     Assert.AreEqual(1, compilation.Fields.Count);
                     Assert.NotNull(compilation.Fields[0].TokenAttributes);
-                    Assert.AreEqual("dllimport", compilation.Fields[0].TokenAttributes[0].Arguments);
+                    Assert.AreEqual("dllimport", compilation.Fields[0].TokenAttributes[0].Name);
 
                     Assert.AreEqual(3, compilation.Functions.Count);
                     Assert.NotNull(compilation.Functions[0].TokenAttributes);
                     Assert.AreEqual(1, compilation.Functions[0].TokenAttributes.Count);
-                    Assert.AreEqual("dllexport", compilation.Functions[0].TokenAttributes[0].Arguments);
+                    Assert.AreEqual("dllexport", compilation.Functions[0].TokenAttributes[0].Name);
 
                     Assert.AreEqual(CppCallingConvention.X86StdCall, compilation.Functions[1].CallingConvention);
 
@@ -108,51 +108,6 @@ alignas(128) char cacheline[128];", compilation =>
                 Assert.AreEqual(1, compilation.Fields[0].TokenAttributes.Count);
                 {
                     var attr = compilation.Fields[0].TokenAttributes[0];
-                    Assert.AreEqual("alignas", attr.Name);
-                }
-            },
-            // we are using a C++14 attribute because it can be used everywhere
-            new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseTokenAttributes = true }
-          );
-        }
-
-        [Test]
-        public void TestCpp11StructAlignas()
-        {
-            ParseAssert(@"
-struct alignas(8) S {};", compilation =>
-            {
-                Assert.False(compilation.HasErrors);
-
-                Assert.AreEqual(1, compilation.Classes.Count);
-                Assert.AreEqual(1, compilation.Classes[0].TokenAttributes.Count);
-                {
-                    var attr = compilation.Classes[0].TokenAttributes[0];
-                    Assert.AreEqual("alignas", attr.Name);
-                }
-            },
-            // we are using a C++14 attribute because it can be used everywhere
-            new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseTokenAttributes = true }
-          );
-        }
-
-        [Test]
-        public void TestCpp11StructAlignasWithAttribute()
-        {
-            ParseAssert(@"
-struct [[deprecated(""abc"")]] alignas(8) S {};", compilation =>
-            {
-                Assert.False(compilation.HasErrors);
-
-                Assert.AreEqual(1, compilation.Classes.Count);
-                Assert.AreEqual(2, compilation.Classes[0].TokenAttributes.Count);
-                {
-                    var attr = compilation.Classes[0].TokenAttributes[0];
-                    Assert.AreEqual("deprecated", attr.Name);
-                }
-
-                {
-                    var attr = compilation.Classes[0].TokenAttributes[1];
                     Assert.AreEqual("alignas", attr.Name);
                 }
             },
@@ -518,43 +473,7 @@ struct Test{
             new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseTokenAttributes = false }
           );
         }
-        
-        [Test]
-        public void TestClassPublicExportAttribute()
-        {
-            var text = @"
-#ifdef WIN32
-#define EXPORT_API __declspec(dllexport)
-#else
-#define EXPORT_API __attribute__((visibility(""default"")))
-#endif
-class EXPORT_API TestClass
-{
-};
-";
-            ParseAssert(text,
-                compilation =>
-                {
-                    Assert.False(compilation.HasErrors);
 
-                    var cppClass = compilation.Classes[0];
-                    Assert.AreEqual(1, cppClass.TokenAttributes.Count);
-                    Assert.True(cppClass.IsPublicExport());
-                    
-                },
-                new CppParserOptions() { ParseTokenAttributes = true }
-            );
-            ParseAssert(text,
-                compilation =>
-                {
-                    Assert.False(compilation.HasErrors);
-
-                    var cppClass = compilation.Classes[0];
-                    Assert.AreEqual(1, cppClass.TokenAttributes.Count);
-                    Assert.True(cppClass.IsPublicExport());
-                }, new CppParserOptions() { ParseTokenAttributes = true }.ConfigureForWindowsMsvc()
-            );
-        }
 
     }
 }

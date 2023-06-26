@@ -23,7 +23,7 @@ namespace CppAst
 
             //Add a default macro here for CppAst.Net
             Defines = new List<string>() { 
-                "CPPAST_GENERATOR",                                     //Help us for identify the CppAst.Net handler
+                "__cppast_run__",                                     //Help us for identify the CppAst.Net handler
                 @"__cppast_impl(...)=__attribute__((annotate(#__VA_ARGS__)))",          //Help us for use annotate attribute convenience
                 @"__cppast(...)=__cppast_impl(__VA_ARGS__)",                         //Add a macro wrapper here, so the argument with macro can be handle right for compiler.
             };
