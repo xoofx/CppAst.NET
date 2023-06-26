@@ -33,7 +33,9 @@ namespace CppAst
 
         public bool ParseSystemIncludes { get; set; }
 
-        public bool ParseAttributeEnabled { get; set; }
+        public bool ParseTokenAttributeEnabled { get; set; }
+
+        public bool ParseCommentAttributeEnabled { get; set; }
 
         public CppCompilation RootCompilation { get; }
 
@@ -207,7 +209,6 @@ namespace CppAst
                                     {
                                         var argh = arg.AsType;
                                         var argType = GetCppType(argh.Declaration, argh, cursor, data);
-                                        var depend = arg.Dependence;
                                         cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(tempParams[(int)i], argType, argh.TypeClass != CX_TypeClass.CX_TypeClass_TemplateTypeParm));
                                     }
                                     break;
@@ -266,7 +267,7 @@ namespace CppAst
         {
             // Create the container if not already created
             var ns = GetOrCreateDeclarationContainer<CppNamespace>(cursor, data, out var context);
-            ns.Attributes.AddRange(ParseAttributes(cursor));
+            ParseAttributes(cursor, ns, false);
             cursor.VisitChildren(VisitMember, new CXClientData((IntPtr)data));
             return ns;
         }
@@ -276,7 +277,7 @@ namespace CppAst
             var cppStruct = GetOrCreateDeclarationContainer<CppClass>(cursor, data, out var context);
             if (cursor.IsDefinition && !cppStruct.IsDefinition)
             {
-                cppStruct.Attributes.AddRange(ParseAttributes(cursor));
+                ParseAttributes(cursor, cppStruct, false);
                 cppStruct.IsDefinition = true;
                 cppStruct.SizeOf = (int)cursor.Type.SizeOf;
                 cppStruct.AlignOf = (int)cursor.Type.AlignOf;
@@ -304,6 +305,7 @@ namespace CppAst
                         var containerContext = GetOrCreateDeclarationContainer(parent, data);
                         var cppEnum = (CppEnum)containerContext.Container;
                         var enumItem = new CppEnumItem(GetCursorSpelling(cursor), cursor.EnumConstantDeclValue);
+                        ParseAttributes(cursor, enumItem, true);
 
                         VisitInitValue(cursor, data, out var enumItemExpression, out var enumValue);
                         enumItem.ValueExpression = enumItemExpression;
@@ -348,8 +350,8 @@ namespace CppAst
                             StorageQualifier = GetStorageQualifier(cursor),
                             IsAnonymous = true,
                             Offset = offset,
-                            Attributes = ParseAttributes(cursor)
                         };
+                        ParseAttributes(cursor, cppField, true);
                         containerContext.DeclarationContainer.Fields.Add(cppField);
                         element = cppField;
                     }
@@ -420,7 +422,7 @@ namespace CppAst
                         var cppClass = containerContext as CppClass;
                         if (cppClass != null)
                         {
-                            CppAttribute attribute = new CppAttribute("visibility");
+                            CppAttribute attribute = new CppAttribute("visibility", AttributeKind.CxxSystemAttribute);
                             AssignSourceSpan(cursor, attribute);
                             attribute.Arguments = string.Format("\"{0}\"", cursor.DisplayName.ToString());
                             cppClass.Attributes.Add(attribute);
@@ -433,7 +435,7 @@ namespace CppAst
                         var cppClass = containerContext as CppClass;
                         if (cppClass != null)
                         {
-                            CppAttribute attribute = new CppAttribute("dllimport");
+                            CppAttribute attribute = new CppAttribute("dllimport", AttributeKind.CxxSystemAttribute);
                             AssignSourceSpan(cursor, attribute);
                             cppClass.Attributes.Add(attribute);
                         }
@@ -445,7 +447,7 @@ namespace CppAst
                         var cppClass = containerContext as CppClass;
                         if (cppClass != null)
                         {
-                            CppAttribute attribute = new CppAttribute("dllexport");
+                            CppAttribute attribute = new CppAttribute("dllexport", AttributeKind.CxxSystemAttribute);
                             AssignSourceSpan(cursor, attribute);
                             cppClass.Attributes.Add(attribute);
                         }
@@ -457,6 +459,7 @@ namespace CppAst
 
                 case CXCursorKind.CXCursor_Destructor:
                 case CXCursorKind.CXCursor_TemplateTypeParameter:
+                case CXCursorKind.CXCursor_AnnotateAttr:
                     // Don't emit warning
                     break;
                 default:
@@ -472,6 +475,13 @@ namespace CppAst
             if (element is ICppDeclaration cppDeclaration)
             {
                 cppDeclaration.Comment = GetComment(cursor);
+
+                var attrContainer = cppDeclaration as ICppAttributeContainer;
+                //Only handle commnet attribute when we need
+                if(attrContainer != null && ParseCommentAttributeEnabled)
+                {
+                    TryToParseAttributesFromComment(cppDeclaration.Comment, attrContainer);
+                }
             }
 
             return CXChildVisitResult.CXChildVisit_Continue;
@@ -871,7 +881,7 @@ namespace CppAst
                     Offset = cursor.OffsetOfField / 8,
                 };
                 containerContext.DeclarationContainer.Fields.Add(cppField);
-                cppField.Attributes = ParseAttributes(cursor);
+                ParseAttributes(cursor, cppField, true);
 
                 if (cursor.Kind == CXCursorKind.CXCursor_VarDecl)
                 {
@@ -895,7 +905,7 @@ namespace CppAst
                 Offset = cursor.OffsetOfField / 8,
             };
             containerContext.DeclarationContainer.Fields.Add(cppField);
-            cppField.Attributes = ParseAttributes(cursor);
+            ParseAttributes(cursor, cppField, true);
         }
 
         private void VisitInitValue(CXCursor cursor, void* data, out CppExpression expression, out CppValue value)
@@ -995,7 +1005,7 @@ namespace CppAst
                     visitChildren = true;
                     break;
                 case CXCursorKind.CXCursor_UnaryOperator:
-                    var tokens = new Tokenizer(cursor);
+                    var tokens = new CppTokenUtil.Tokenizer(cursor);
                     expr = new CppUnaryExpression(CppExpressionKind.UnaryOperator)
                     {
                         Operator = tokens.Count > 0 ? tokens.GetString(0) : string.Empty
@@ -1185,7 +1195,7 @@ namespace CppAst
         {
             if (expression is CppRawExpression tokensExpr)
             {
-                var tokenizer = new Tokenizer(cursor);
+                var tokenizer = new CppTokenUtil.Tokenizer(cursor);
                 for (int i = 0; i < tokenizer.Count; i++)
                 {
                     tokensExpr.Tokens.Add(tokenizer[i]);
@@ -1202,7 +1212,7 @@ namespace CppAst
                 var integralType = cursor.EnumDecl_IntegerType;
                 cppEnum.IntegerType = GetCppType(integralType.Declaration, integralType, cursor, data);
                 cppEnum.IsScoped = cursor.EnumDecl_IsScoped;
-                cppEnum.Attributes.AddRange(ParseAttributes(cursor));
+                ParseAttributes(cursor, cppEnum, false);
                 context.IsChildrenVisited = true;
                 cursor.VisitChildren(VisitMember, new CXClientData((IntPtr)data));
             }
@@ -1323,7 +1333,7 @@ namespace CppAst
             var returnType = GetCppType(cursor.ResultType.Declaration, cursor.ResultType, cursor, data);
             cppFunction.ReturnType = returnType;
 
-            cppFunction.Attributes.AddRange(ParseFunctionAttributes(cursor, cppFunction.Name));
+            ParseAttributes(cursor, cppFunction, true);
             cppFunction.CallingConvention = GetCallingConvention(cursor.Type);
 
             int i = 0;
@@ -1430,293 +1440,139 @@ namespace CppAst
             }
         }
 
-        private void SkipTemplates(TokenIterator iter)
+        private List<CppAttribute> ParseSystemAndAnnotateAttributeInCursor(CXCursor cursor)
         {
-            if (iter.CanPeek)
+            List<CppAttribute> collectAttributes = new List<CppAttribute>();
+            cursor.VisitChildren((argCursor, parentCursor, clientData) =>
             {
-                if (iter.Skip("template"))
+                var sourceSpan = new CppSourceSpan(GetSourceLocation(argCursor.SourceRange.Start), GetSourceLocation(argCursor.SourceRange.End));
+                var meta = argCursor.Spelling.CString;
+                switch (argCursor.Kind)
                 {
-                    iter.Next(); // skip the first >
-                    int parentCount = 1;
-                    while (parentCount > 0 && iter.CanPeek)
-                    {
-                        var text = iter.PeekText();
-                        if (text == ">")
+                    case CXCursorKind.CXCursor_AnnotateAttr:
                         {
-                            parentCount--;
+                            var attribute = new CppAttribute("annotate", AttributeKind.AnnotateAttribute)
+                            {
+                                Span = sourceSpan,
+                                Scope = "",
+                                Arguments = meta,
+                                IsVariadic = false,
+                            };
+
+                            collectAttributes.Add(attribute);
                         }
-                        iter.Next();
-                    }
+                        break;
+                    case CXCursorKind.CXCursor_AlignedAttr:
+                        {
+                            var attrKindSpelling = argCursor.AttrKindSpelling.ToLower();
+                            var attribute = new CppAttribute("alignas", AttributeKind.CxxSystemAttribute)
+                            {
+                                Span = sourceSpan,
+                                Scope = "",
+                                Arguments = "",
+                                IsVariadic = false,
+                            };
+
+                            collectAttributes.Add(attribute);
+                        }
+                        break;
+                    case CXCursorKind.CXCursor_FirstAttr:
+                        { 
+                            var attrKind = argCursor.AttrKind;
+                            var attrKindSpelling = argCursor.AttrKindSpelling.ToLower();
+          
+                            var attribute = new CppAttribute(attrKindSpelling, AttributeKind.CxxSystemAttribute)
+                            {
+                                Span = sourceSpan,
+                                Scope = "",
+                                Arguments = "",
+                                IsVariadic = false,
+                            };
+
+                            collectAttributes.Add(attribute);
+                        }
+                        break;
+                    case CXCursorKind.CXCursor_DLLImport:
+                    case CXCursorKind.CXCursor_DLLExport:
+                        {
+                            var attrKind = argCursor.AttrKind;
+                            var attrKindSpelling = argCursor.AttrKindSpelling.ToLower();
+
+                            var attribute = new CppAttribute(attrKindSpelling, AttributeKind.CxxSystemAttribute)
+                            {
+                                Span = sourceSpan,
+                                Scope = "",
+                                Arguments = "",
+                                IsVariadic = false,
+                            };
+
+                            collectAttributes.Add(attribute);
+                        }
+                        break;
+                
+                    // Don't generate a warning for unsupported cursor
+                    default:
+                        break;
                 }
-            }
+
+                return CXChildVisitResult.CXChildVisit_Continue;
+
+            }, new CXClientData((IntPtr)0));
+            return collectAttributes;
         }
 
-        private List<CppAttribute> ParseAttributes(CXCursor cursor)
+        private void TryToParseAttributesFromComment(CppComment comment, ICppAttributeContainer attrContainer)
         {
-            if (!ParseAttributeEnabled) return null;
+            if (comment == null) return;
 
-            var tokenizer = new AttributeTokenizer(cursor);
-            var tokenIt = new TokenIterator(tokenizer);
-
-            // if this is a template then we need to skip that ?
-            if (tokenIt.CanPeek && tokenIt.PeekText() == "template")
-                SkipTemplates(tokenIt);
-
-            List<CppAttribute> attributes = null;
-            while (tokenIt.CanPeek)
+            if(comment is CppCommentText ctxt)
             {
-                if (ParseAttributes(tokenIt, ref attributes))
+                var txt = ctxt.Text.Trim();
+                if(txt.StartsWith("[[") && txt.EndsWith("]]"))
                 {
-                    continue;
+                    attrContainer.Attributes.Add(new CppAttribute("comment", AttributeKind.CommentAttribute)
+                    {
+                        Arguments = txt,
+                        Scope = "",
+                        IsVariadic = false,
+                    }) ;
                 }
-
-                // If we have a keyword, try to skip it and process following elements
-                // for example attribute put right after a struct __declspec(uuid("...")) Test {...}
-                if (tokenIt.Peek().Kind == CppTokenKind.Keyword)
-                {
-                    tokenIt.Next();
-                    continue;
-                }
-                break;
             }
-            return attributes;
+
+            if (comment.Children != null)
+            {
+                foreach (var child in comment.Children)
+                {
+                    TryToParseAttributesFromComment(child, attrContainer);
+                }
+            }
         }
 
-        private List<CppAttribute> ParseFunctionAttributes(CXCursor cursor, string functionName)
+        private void ParseAttributes(CXCursor cursor, ICppAttributeContainer attrContainer, bool needOnlineSeek = false)
         {
-            if (!ParseAttributeEnabled) return null;
+            //Try to handle annotate in cursor first
+            //Low spend handle here, just open always
+            attrContainer.Attributes.AddRange(ParseSystemAndAnnotateAttributeInCursor(cursor));
 
-            // TODO: This function is not 100% correct when parsing tokens up to the function name
-            // we assume to find the function name immediately followed by a `(`
-            // but some return type parameter could actually interfere with that
-            // Ideally we would need to parse more properly return type and skip parenthesis for example
-            var tokenizer = new AttributeTokenizer(cursor);
-            var tokenIt = new TokenIterator(tokenizer);
+            //Low performance tokens handle here
+            if (!ParseTokenAttributeEnabled) return;
 
-            // if this is a template then we need to skip that ?
-            if (tokenIt.CanPeek && tokenIt.PeekText() == "template")
-                SkipTemplates(tokenIt);
-
-            // Parse leading attributes
-            List<CppAttribute> attributes = null;
-            while (tokenIt.CanPeek)
+            var tokenAttributes = new List<CppAttribute>();
+            //Parse attributes online
+            if (needOnlineSeek)
             {
-                if (ParseAttributes(tokenIt, ref attributes))
+                bool hasOnlineAttribute = CppTokenUtil.TryToSeekOnlineAttributes(cursor, out var onLineRange);
+                if (hasOnlineAttribute)
                 {
-                    continue;
+                    CppTokenUtil.ParseAttributesInRange(cursor.TranslationUnit, onLineRange, ref tokenAttributes);
                 }
-                break;
             }
 
-            if (!tokenIt.CanPeek)
-            {
-                return attributes;
-            }
-
-            // Find function name (We only support simple function name declaration)
-            if (!tokenIt.Find(functionName, "("))
-            {
-                return attributes;
-            }
-
-            Debug.Assert(tokenIt.PeekText() == functionName);
-            tokenIt.Next();
-            Debug.Assert(tokenIt.PeekText() == "(");
-            tokenIt.Next();
-
-            int parentCount = 1;
-            while (parentCount > 0 && tokenIt.CanPeek)
-            {
-                var text = tokenIt.PeekText();
-                if (text == "(")
-                {
-                    parentCount++;
-                }
-                else if (text == ")")
-                {
-                    parentCount--;
-                }
-                tokenIt.Next();
-            }
-
-            if (parentCount != 0)
-            {
-                return attributes;
-            }
-
-            while (tokenIt.CanPeek)
-            {
-                if (ParseAttributes(tokenIt, ref attributes))
-                {
-                    continue;
-                }
-                // Skip the token if we can parse it.
-                tokenIt.Next();
-            }
-
-            return attributes;
+            //Parse attributes contains in cursor
+            CppTokenUtil.ParseDirectAttribute(cursor, ref tokenAttributes);
+            attrContainer.TokenAttributes.AddRange(tokenAttributes);
         }
 
-        private bool ParseAttributes(TokenIterator tokenIt, ref List<CppAttribute> attributes)
-        {
-            // Parse C++ attributes
-            // [[<attribute>]]
-            if (tokenIt.Skip("[", "["))
-            {
-                while (ParseAttribute(tokenIt, out var attribute))
-                {
-                    if (attributes == null)
-                    {
-                        attributes = new List<CppAttribute>();
-                    }
-                    attributes.Add(attribute);
-
-                    tokenIt.Skip(",");
-                }
-
-                return tokenIt.Skip("]", "]");
-            }
-
-            // Parse GCC or clang attributes
-            // __attribute__((<attribute>))
-            if (tokenIt.Skip("__attribute__", "(", "("))
-            {
-                while (ParseAttribute(tokenIt, out var attribute))
-                {
-                    if (attributes == null)
-                    {
-                        attributes = new List<CppAttribute>();
-                    }
-                    attributes.Add(attribute);
-
-                    tokenIt.Skip(",");
-                }
-
-                return tokenIt.Skip(")", ")");
-            }
-
-            // Parse MSVC attributes
-            // __declspec(<attribute>)
-            if (tokenIt.Skip("__declspec", "("))
-            {
-                while (ParseAttribute(tokenIt, out var attribute))
-                {
-                    if (attributes == null)
-                    {
-                        attributes = new List<CppAttribute>();
-                    }
-                    attributes.Add(attribute);
-
-                    tokenIt.Skip(",");
-                }
-                return tokenIt.Skip(")");
-            }
-
-            // Parse C++11 alignas attribute
-            // alignas(expression)
-            if (tokenIt.PeekText() == "alignas")
-            {
-                while (ParseAttribute(tokenIt, out var attribute))
-                {
-                    if (attributes == null)
-                    {
-                        attributes = new List<CppAttribute>();
-                    }
-                    attributes.Add(attribute);
-
-                    break;
-                }
-
-                return tokenIt.Skip(")"); ;
-            }
-
-            return false;
-        }
-
-        private bool ParseDirectAttribute(CXCursor cursor, ref List<CppAttribute> attributes)
-        {
-            var tokenizer = new AttributeTokenizer(cursor);
-            var tokenIt = new TokenIterator(tokenizer);
-            if (ParseAttribute(tokenIt, out var attribute))
-            {
-                if (attributes == null)
-                {
-                    attributes = new List<CppAttribute>();
-                }
-                attributes.Add(attribute);
-                return true;
-            }
-
-            return false;
-        }
-
-        private bool ParseAttribute(TokenIterator tokenIt, out CppAttribute attribute)
-        {
-            // (identifier ::)? identifier ('(' tokens ')' )? (...)?
-            attribute = null;
-            var token = tokenIt.Peek();
-            if (token == null || !token.Kind.IsIdentifierOrKeyword())
-            {
-                return false;
-            }
-            tokenIt.Next(out token);
-
-            var firstToken = token;
-
-            // try (identifier ::)?
-            string scope = null;
-            if (tokenIt.Skip("::"))
-            {
-                scope = token.Text;
-
-                token = tokenIt.Peek();
-                if (token == null || !token.Kind.IsIdentifierOrKeyword())
-                {
-                    return false;
-                }
-                tokenIt.Next(out token);
-            }
-
-            // identifier
-            string tokenIdentifier = token.Text;
-
-            string arguments = null;
-
-            // ('(' tokens ')' )?
-            if (tokenIt.Skip("("))
-            {
-                var builder = new StringBuilder();
-                var previousTokenKind = CppTokenKind.Punctuation;
-                while (tokenIt.PeekText() != ")" && tokenIt.Next(out token))
-                {
-                    if (token.Kind.IsIdentifierOrKeyword() && previousTokenKind.IsIdentifierOrKeyword())
-                    {
-                        builder.Append(" ");
-                    }
-                    previousTokenKind = token.Kind;
-                    builder.Append(token.Text);
-                }
-
-                if (!tokenIt.Skip(")"))
-                {
-                    return false;
-                }
-                arguments = builder.ToString();
-            }
-
-            var isVariadic = tokenIt.Skip("...");
-
-            var previousToken = tokenIt.PreviousToken();
-
-            attribute = new CppAttribute(tokenIdentifier)
-            {
-                Span = new CppSourceSpan(firstToken.Span.Start, previousToken.Span.End),
-                Scope = scope,
-                Arguments = arguments,
-                IsVariadic = isVariadic,
-            };
-            return true;
-        }
 
         private CppType VisitTypeAliasDecl(CXCursor cursor, void* data)
         {
@@ -1810,11 +1666,11 @@ namespace CppAst
             return GetCppType(type.CanonicalType.Declaration, type.CanonicalType, parent, data);
         }
 
-        private static string GetCursorAsText(CXCursor cursor) => new Tokenizer(cursor).TokensToString();
+        private static string GetCursorAsText(CXCursor cursor) => new CppTokenUtil.Tokenizer(cursor).TokensToString();
 
         private string GetCursorAsTextBetweenOffset(CXCursor cursor, int startOffset, int endOffset)
         {
-            var tokenizer = new Tokenizer(cursor);
+            var tokenizer = new CppTokenUtil.Tokenizer(cursor);
             var builder = new StringBuilder();
             var previousTokenKind = CppTokenKind.Punctuation;
             for (int i = 0; i < tokenizer.Count; i++)
@@ -2079,575 +1935,6 @@ namespace CppAst
             }
 
             return templateCppTypes;
-        }
-
-        /// <summary>
-        /// Internal class to iterate on tokens
-        /// </summary>
-        private class TokenIterator
-        {
-            private readonly Tokenizer _tokens;
-            private int _index;
-
-            public TokenIterator(Tokenizer tokens)
-            {
-                _tokens = tokens;
-            }
-
-            public bool Skip(string expectedText)
-            {
-                if (_index < _tokens.Count)
-                {
-                    if (_tokens.GetString(_index) == expectedText)
-                    {
-                        _index++;
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-
-            public CppToken PreviousToken()
-            {
-                if (_index > 0)
-                {
-                    return _tokens[_index - 1];
-                }
-
-                return null;
-            }
-
-            public bool Skip(params string[] expectedTokens)
-            {
-                var startIndex = _index;
-                foreach (var expectedToken in expectedTokens)
-                {
-                    if (startIndex < _tokens.Count)
-                    {
-                        if (_tokens.GetString(startIndex) == expectedToken)
-                        {
-                            startIndex++;
-                            continue;
-                        }
-                    }
-                    return false;
-                }
-                _index = startIndex;
-                return true;
-            }
-
-            public bool Find(params string[] expectedTokens)
-            {
-                var startIndex = _index;
-            restart:
-                while (startIndex < _tokens.Count)
-                {
-                    var firstIndex = startIndex;
-                    foreach (var expectedToken in expectedTokens)
-                    {
-                        if (startIndex < _tokens.Count)
-                        {
-                            if (_tokens.GetString(startIndex) == expectedToken)
-                            {
-                                startIndex++;
-                                continue;
-                            }
-                        }
-                        startIndex = firstIndex + 1;
-                        goto restart;
-                    }
-                    _index = firstIndex;
-                    return true;
-                }
-                return false;
-            }
-
-            public bool Next(out CppToken token)
-            {
-                token = null;
-                if (_index < _tokens.Count)
-                {
-                    token = _tokens[_index];
-                    _index++;
-                    return true;
-                }
-                return false;
-            }
-
-            public bool CanPeek => _index < _tokens.Count;
-
-            public bool Next()
-            {
-                if (_index < _tokens.Count)
-                {
-                    _index++;
-                    return true;
-                }
-                return false;
-            }
-
-            public CppToken Peek()
-            {
-                if (_index < _tokens.Count)
-                {
-                    return _tokens[_index];
-                }
-                return null;
-            }
-
-            public string PeekText()
-            {
-                if (_index < _tokens.Count)
-                {
-                    return _tokens.GetString(_index);
-                }
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Internal class to tokenize
-        /// </summary>
-        [DebuggerTypeProxy(typeof(TokenizerDebuggerType))]
-        private class Tokenizer
-        {
-            private readonly CXToken[] _tokens;
-            private CppToken[] _cppTokens;
-            protected readonly CXTranslationUnit _tu;
-
-            public Tokenizer(CXCursor cursor)
-            {
-                _tu = cursor.TranslationUnit;
-                var range = GetRange(cursor);
-                _tokens = _tu.Tokenize(range).ToArray();
-            }
-
-            public Tokenizer(CXTranslationUnit tu, CXSourceRange range)
-            {
-                _tu = tu;
-                _tokens = _tu.Tokenize(range).ToArray();
-            }
-
-            public virtual CXSourceRange GetRange(CXCursor cursor)
-            {
-                return cursor.Extent;
-            }
-
-            public int Count => _tokens?.Length ?? 0;
-
-            public CppToken this[int i]
-            {
-                get
-                {
-                    // Only create a tokenizer if necessary
-                    if (_cppTokens == null)
-                    {
-                        _cppTokens = new CppToken[_tokens.Length];
-                    }
-
-                    ref var cppToken = ref _cppTokens[i];
-                    if (cppToken != null)
-                    {
-                        return cppToken;
-                    }
-
-                    var token = _tokens[i];
-                    CppTokenKind cppTokenKind = 0;
-                    switch (token.Kind)
-                    {
-                        case CXTokenKind.CXToken_Punctuation:
-                            cppTokenKind = CppTokenKind.Punctuation;
-                            break;
-                        case CXTokenKind.CXToken_Keyword:
-                            cppTokenKind = CppTokenKind.Keyword;
-                            break;
-                        case CXTokenKind.CXToken_Identifier:
-                            cppTokenKind = CppTokenKind.Identifier;
-                            break;
-                        case CXTokenKind.CXToken_Literal:
-                            cppTokenKind = CppTokenKind.Literal;
-                            break;
-                        case CXTokenKind.CXToken_Comment:
-                            cppTokenKind = CppTokenKind.Comment;
-                            break;
-                        default:
-                            break;
-                    }
-
-                    var tokenStr = token.GetSpelling(_tu).CString;
-                    var tokenLocation = token.GetLocation(_tu);
-
-                    var tokenRange = token.GetExtent(_tu);
-                    cppToken = new CppToken(cppTokenKind, tokenStr)
-                    {
-                        Span = new CppSourceSpan(GetSourceLocation(tokenRange.Start), GetSourceLocation(tokenRange.End))
-                    };
-                    return cppToken;
-                }
-            }
-
-            public string GetString(int i)
-            {
-                var token = _tokens[i];
-                return token.GetSpelling(_tu).CString;
-            }
-
-            public string TokensToString()
-            {
-                if (_tokens == null)
-                {
-                    return null;
-                }
-
-                var tokens = new List<CppToken>(_tokens.Length);
-
-                for (int i = 0; i < _tokens.Length; i++)
-                {
-                    tokens.Add(this[i]);
-                }
-
-                return CppToken.TokensToString(tokens);
-            }
-
-            public string GetStringForLength(int length)
-            {
-                StringBuilder result = new StringBuilder(length);
-                for (var cur = 0; cur < Count; ++cur)
-                {
-                    result.Append(GetString(cur));
-                    if (result.Length >= length)
-                        return result.ToString();
-                }
-                return result.ToString();
-            }
-        }
-
-        private class AttributeTokenizer : Tokenizer
-        {
-            public AttributeTokenizer(CXCursor cursor) : base(cursor)
-            {
-            }
-
-            public AttributeTokenizer(CXTranslationUnit tu, CXSourceRange range) : base(tu, range)
-            {
-
-            }
-
-            private uint IncOffset(int inc, uint offset)
-            {
-                if (inc >= 0)
-                    offset += (uint)inc;
-                else
-                    offset -= (uint)-inc;
-                return offset;
-            }
-
-            private Tuple<CXSourceRange, CXSourceRange> GetExtent(CXTranslationUnit tu, CXCursor cur)
-            {
-                var cursorExtend = cur.Extent;
-                var begin = cursorExtend.Start;
-                var end = cursorExtend.End;
-
-                bool CursorIsFunction(CXCursorKind inKind)
-                {
-                    return inKind == CXCursorKind.CXCursor_FunctionDecl || inKind == CXCursorKind.CXCursor_CXXMethod
-                           || inKind == CXCursorKind.CXCursor_Constructor || inKind == CXCursorKind.CXCursor_Destructor
-                           || inKind == CXCursorKind.CXCursor_ConversionFunction;
-                }
-
-                bool CursorIsVar(CXCursorKind inKind)
-                {
-                    return inKind == CXCursorKind.CXCursor_VarDecl || inKind == CXCursorKind.CXCursor_FieldDecl;
-                }
-
-                bool IsInRange(CXSourceLocation loc, CXSourceRange range)
-                {
-                    var xbegin = range.Start;
-                    var xend = range.End;
-
-                    loc.GetSpellingLocation(out var fileLocation, out var lineLocation, out var u1, out var u2);
-                    xbegin.GetSpellingLocation(out var fileBegin, out var lineBegin, out u1, out u2);
-                    xend.GetSpellingLocation(out var fileEnd, out var lineEnd, out u1, out u2);
-
-                    return lineLocation >= lineBegin && lineLocation < lineEnd && (fileLocation.Equals(fileBegin));
-                }
-
-                bool HasInlineTypeDefinition(CXCursor varDecl)
-                {
-                    var typeDecl = varDecl.Type.Declaration;
-                    if (typeDecl.IsNull)
-                        return false;
-
-                    var typeLocation = typeDecl.Location;
-                    var varRange = typeDecl.Extent;
-                    return IsInRange(typeLocation, varRange);
-                }
-
-                CXSourceLocation GetNextLocation(CXSourceLocation loc, int inc = 1)
-                {
-                    CXSourceLocation value;
-                    loc.GetSpellingLocation(out var f, out var u, out var z, out var originalOffset);
-                    var offset = IncOffset(inc, z);
-                    var shouldUseLine = (z != 0 && (offset != 0 || offset != uint.MaxValue));
-                    if (shouldUseLine)
-                    {
-                        value = tu.GetLocation(f, u, offset);
-                    }
-                    else
-                    {
-                        offset = IncOffset(inc, originalOffset);
-                        value = tu.GetLocationForOffset(f, offset);
-                    }
-
-                    return value;
-                }
-
-                CXSourceLocation GetPrevLocation(CXSourceLocation loc, int tokenLength)
-                {
-                    var inc = 1;
-                    while (true)
-                    {
-                        var locBefore = GetNextLocation(loc, -inc);
-                        CXToken* tokens;
-                        uint size;
-                        clang.tokenize(tu, clang.getRange(locBefore, loc), &tokens, &size);
-                        if (size == 0)
-                            return CXSourceLocation.Null;
-
-                        var tokenLocation = tokens[0].GetLocation(tu);
-                        if (locBefore.Equals(tokenLocation))
-                        {
-                            return GetNextLocation(loc, -1 * (inc + tokenLength - 1));
-                        }
-                        else
-                            ++inc;
-                    }
-                }
-
-                bool TokenIsBefore(CXSourceLocation loc, string tokenString)
-                {
-                    var length = tokenString.Length;
-                    var locBefore = GetPrevLocation(loc, length);
-
-                    var tokenizer = new Tokenizer(tu, clang.getRange(locBefore, loc));
-                    if (tokenizer.Count == 0) return false;
-
-                    return tokenizer.GetStringForLength(length) == tokenString;
-                }
-
-                bool TokenAtIs(CXSourceLocation loc, string tokenString)
-                {
-                    var length = tokenString.Length;
-
-                    var locAfter = GetNextLocation(loc, length);
-                    var tokenizer = new Tokenizer(tu, clang.getRange(locAfter, loc));
-
-                    return tokenizer.GetStringForLength(length) == tokenString;
-                }
-
-                bool ConsumeIfTokenAtIs(ref CXSourceLocation loc, string tokenString)
-                {
-                    var length = tokenString.Length;
-
-                    var locAfter = GetNextLocation(loc, length);
-                    var tokenizer = new Tokenizer(tu, clang.getRange(locAfter, loc));
-                    if (tokenizer.Count == 0)
-                        return false;
-
-                    if (tokenizer.GetStringForLength(length) == tokenString)
-                    {
-                        loc = locAfter;
-                        return true;
-                    }
-                    else
-                        return false;
-                }
-
-                bool ConsumeIfTokenBeforeIs(ref CXSourceLocation loc, string tokenString)
-                {
-                    var length = tokenString.Length;
-
-                    var locBefore = GetPrevLocation(loc, length);
-
-                    var tokenizer = new Tokenizer(tu, clang.getRange(locBefore, loc));
-                    if (tokenizer.GetStringForLength(length) == tokenString)
-                    {
-                        loc = locBefore;
-                        return true;
-                    }
-                    else
-                        return false;
-                }
-
-                bool CheckIfValidOrReset(ref CXSourceLocation checkedLocation, CXSourceLocation resetLocation)
-                {
-                    bool isValid = true;
-                    if (checkedLocation.Equals(CXSourceLocation.Null))
-                    {
-                        checkedLocation = resetLocation;
-                        isValid = false;
-                    }
-
-                    return isValid;
-                }
-
-                var kind = cur.Kind;
-                if (CursorIsFunction(kind) || CursorIsFunction(cur.TemplateCursorKind)
-                || kind == CXCursorKind.CXCursor_VarDecl || kind == CXCursorKind.CXCursor_FieldDecl || kind == CXCursorKind.CXCursor_ParmDecl
-                || kind == CXCursorKind.CXCursor_NonTypeTemplateParameter)
-                {
-                    while (TokenIsBefore(begin, "]]") || TokenIsBefore(begin, ")"))
-                    {
-                        var saveBegin = begin;
-                        if (ConsumeIfTokenBeforeIs(ref begin, "]]"))
-                        {
-                            bool isValid = true;
-                            while (!ConsumeIfTokenBeforeIs(ref begin, "[[") && isValid)
-                            {
-                                begin = GetPrevLocation(begin, 1);
-                                isValid = CheckIfValidOrReset(ref begin, saveBegin);
-                            }
-
-                            if (!isValid)
-                            {
-                                break;
-                            }
-                        }
-                        else if (ConsumeIfTokenBeforeIs(ref begin, ")"))
-                        {
-                            var parenCount = 1;
-                            for (var lastBegin = begin; parenCount != 0; lastBegin = begin)
-                            {
-                                if (TokenIsBefore(begin, "("))
-                                    --parenCount;
-                                else if (TokenIsBefore(begin, ")"))
-                                    ++parenCount;
-
-                                begin = GetPrevLocation(begin, 1);
-
-                                // We have reached the end of the source of trying to deal
-                                // with the potential of alignas, so we just break, which
-                                // will cause ConsumeIfTokenBeforeIs(ref begin, "alignas") to be false
-                                // and thus fall back to saveBegin which is the correct behavior
-                                if (!CheckIfValidOrReset(ref begin, saveBegin))
-                                    break;
-                            }
-
-                            if (!ConsumeIfTokenBeforeIs(ref begin, "alignas"))
-                            {
-                                begin = saveBegin;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (CursorIsVar(kind) || CursorIsVar(cur.TemplateCursorKind))
-                    {
-                        if (HasInlineTypeDefinition(cur))
-                        {
-                            var typeCursor = clang.getTypeDeclaration(clang.getCursorType(cur));
-                            var typeExtent = clang.getCursorExtent(typeCursor);
-
-                            var typeBegin = clang.getRangeStart(typeExtent);
-                            var typeEnd = clang.getRangeEnd(typeExtent);
-
-                            return new Tuple<CXSourceRange, CXSourceRange>(clang.getRange(begin, typeBegin), clang.getRange(typeEnd, end));
-                        }
-                    }
-                    else if (kind == CXCursorKind.CXCursor_TemplateTypeParameter && TokenAtIs(end, "("))
-                    {
-                        var next = GetNextLocation(end, 1);
-                        var prev = end;
-                        for (var parenCount = 1; parenCount != 0; next = GetNextLocation(next, 1))
-                        {
-                            if (TokenAtIs(next, "("))
-                                ++parenCount;
-                            else if (TokenAtIs(next, ")"))
-                                --parenCount;
-                            prev = next;
-                        }
-                        end = next;
-                    }
-                    else if (kind == CXCursorKind.CXCursor_TemplateTemplateParameter && TokenAtIs(end, "<"))
-                    {
-                        var next = GetNextLocation(end, 1);
-                        for (var angleCount = 1; angleCount != 0; next = GetNextLocation(next, 1))
-                        {
-                            if (TokenAtIs(next, ">"))
-                                --angleCount;
-                            else if (TokenAtIs(next, ">>"))
-                                angleCount -= 2;
-                            else if (TokenAtIs(next, "<"))
-                                ++angleCount;
-                        }
-
-                        while (!TokenAtIs(next, ">") && !TokenAtIs(next, ","))
-                            next = GetNextLocation(next, 1);
-
-                        end = GetPrevLocation(next, 1);
-                    }
-                    else if ((kind == CXCursorKind.CXCursor_TemplateTypeParameter || kind == CXCursorKind.CXCursor_NonTypeTemplateParameter
-                        || kind == CXCursorKind.CXCursor_TemplateTemplateParameter))
-                    {
-                        ConsumeIfTokenAtIs(ref end, "...");
-                    }
-                    else if (kind == CXCursorKind.CXCursor_EnumConstantDecl && !TokenAtIs(end, ","))
-                    {
-                        var parent = clang.getCursorLexicalParent(cur);
-                        end = clang.getRangeEnd(clang.getCursorExtent(parent));
-                    }
-                }
-
-                return new Tuple<CXSourceRange, CXSourceRange>(clang.getRange(begin, end), clang.getNullRange());
-            }
-
-            public override CXSourceRange GetRange(CXCursor cursor)
-            {
-                /*  This process is complicated when parsing attributes that use
-                    C++11 syntax, essentially even if libClang understands them
-                    it doesn't always return them back as parse of the token range.
-
-                    This is kind of frustrating when you want to be able to do something
-                    with custom or even compiler attributes in your parsing. Thus we have
-                    to do things a little manually in order to make this work. 
-
-                    This code supports stepping back when its valid to parse attributes, it 
-                    doesn't currently support all cases but it supports most valid cases.
-                */
-                var range = GetExtent(_tu, cursor);
-
-                var beg = range.Item1.Start;
-                var end = range.Item1.End;
-                if (!range.Item2.Equals(CXSourceRange.Null))
-                    end = range.Item2.End;
-
-                return clang.getRange(beg, end);
-            }
-        }
-
-        private class TokenizerDebuggerType
-        {
-            private readonly Tokenizer _tokenizer;
-
-            public TokenizerDebuggerType(Tokenizer tokenizer)
-            {
-                _tokenizer = tokenizer;
-            }
-
-            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            public object[] Items
-            {
-                get
-                {
-                    var array = new object[_tokenizer.Count];
-                    for (int i = 0; i < _tokenizer.Count; i++)
-                    {
-                        array[i] = _tokenizer[i];
-                    }
-                    return array;
-                }
-            }
         }
 
         private class CppContainerContext

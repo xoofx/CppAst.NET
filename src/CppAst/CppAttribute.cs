@@ -12,9 +12,10 @@ namespace CppAst
     /// </summary>
     public class CppAttribute : CppElement
     {
-        public CppAttribute(string name)
+        public CppAttribute(string name, AttributeKind kind)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
+            Kind = kind;
         }
 
         /// <summary>
@@ -37,15 +38,15 @@ namespace CppAst
         /// </summary>
         public bool IsVariadic { get; set; }
 
+        public AttributeKind Kind { get; }
+
         /// <inheritdoc />
         public override string ToString()
         {
             var builder = new StringBuilder();
 
-            if (Scope != null)
-            {
-                builder.Append(Scope).Append("::");
-            }
+
+            builder.Append("[[");
 
             builder.Append(Name);
             if (Arguments != null)
@@ -56,6 +57,16 @@ namespace CppAst
             if (IsVariadic)
             {
                 builder.Append("...");
+            }
+
+            builder.Append("]]");
+
+
+            if (Scope != null)
+            {
+                builder.Append(" { scope:");
+                builder.Append(Scope).Append("::");
+                builder.Append("}");
             }
 
             return builder.ToString();

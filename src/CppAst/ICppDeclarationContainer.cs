@@ -8,7 +8,7 @@ namespace CppAst
     /// Base interface of a <see cref="ICppContainer"/> containing fields, functions, enums, classes, typedefs.
     /// </summary>
     /// <seealso cref="CppClass"/>
-    public interface ICppDeclarationContainer : ICppContainer
+    public interface ICppDeclarationContainer : ICppContainer, ICppAttributeContainer
     {
         /// <summary>
         /// Gets the fields/variables.
@@ -35,9 +35,7 @@ namespace CppAst
         /// </summary>
         CppContainerList<CppTypedef> Typedefs { get; }
 
-        /// <summary>
-        /// Gets the attributes.
-        /// </summary>
-        CppContainerList<CppAttribute> Attributes { get; }
+        //Just use ICppAttributeContainer here(enum can support attribute, so we just use ICppAttributeContainer here)~~
+        //CppContainerList<CppAttribute> Attributes { get; }
     }
 }

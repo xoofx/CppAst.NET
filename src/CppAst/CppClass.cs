@@ -28,7 +28,7 @@ namespace CppAst
             Classes = new CppContainerList<CppClass>(this);
             Typedefs = new CppContainerList<CppTypedef>(this);
             TemplateParameters = new List<CppType>();
-            Attributes = new CppContainerList<CppAttribute>(this);
+            Attributes = new List<CppAttribute>();
         }
 
         /// <summary>
@@ -98,7 +98,10 @@ namespace CppAst
         public CppVisibility Visibility { get; set; }
 
         /// <inheritdoc />
-        public CppContainerList<CppAttribute> Attributes { get; }
+        public List<CppAttribute> Attributes { get; }
+
+        [Obsolete("TokenAttributes is deprecated. please use system attributes and annotate attributes")]
+        public List<CppAttribute> TokenAttributes { get; }
 
         /// <summary>
         /// Gets or sets a boolean indicating if this type is a definition. If <c>false</c> the type was only declared but is not defined.

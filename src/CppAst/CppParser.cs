@@ -128,7 +128,8 @@ namespace CppAst
                 {
                     AutoSquashTypedef = options.AutoSquashTypedef,
                     ParseSystemIncludes = options.ParseSystemIncludes,
-                    ParseAttributeEnabled = options.ParseAttributes,
+                    ParseTokenAttributeEnabled = options.ParseTokenAttributes,
+                    ParseCommentAttributeEnabled = options.ParseCommentAttribute,
                 };
                 var compilation = builder.RootCompilation;
 

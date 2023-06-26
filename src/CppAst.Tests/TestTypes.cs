@@ -149,7 +149,7 @@ class Derived : public ::BaseTemplate<::Derived>
 
 
         [Test]
-        public void TestTemplatePartialSpecializationInheritance()
+        public void TestTemplatePartialSpecialization()
         {
             ParseAssert(@"
 template<typename A, typename B>
