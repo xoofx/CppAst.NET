@@ -11,12 +11,14 @@ namespace CppAst
     /// <summary>
     /// A C++ field (of a struct/class) or global variable.
     /// </summary>
-    public sealed class CppField : CppDeclaration, ICppMemberWithVisibility
+    public sealed class CppField : CppDeclaration, ICppMemberWithVisibility , ICppAttributeContainer
     {
         public CppField(CppType type, string name)
         {
             Type = type ?? throw new ArgumentNullException(nameof(type));
             Name = name;
+            Attributes = new List<CppAttribute>();
+            TokenAttributes = new List<CppAttribute>();
         }
 
         /// <inheritdoc />
@@ -30,7 +32,10 @@ namespace CppAst
         /// <summary>
         /// Gets attached attributes. Might be null.
         /// </summary>
-        public List<CppAttribute> Attributes { get; set; }
+        public List<CppAttribute> Attributes { get; }
+
+        [Obsolete("TokenAttributes is deprecated. please use system attributes and annotate attributes")]
+        public List<CppAttribute> TokenAttributes { get; }
 
         /// <summary>
         /// Gets the type of this field/variable.

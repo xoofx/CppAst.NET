@@ -20,7 +20,13 @@ namespace CppAst
             ParseAsCpp = true;
             SystemIncludeFolders = new List<string>();
             IncludeFolders = new List<string>();
-            Defines = new List<string>();
+
+            //Add a default macro here for CppAst.Net
+            Defines = new List<string>() { 
+                "__cppast_run__",                                     //Help us for identify the CppAst.Net handler
+                @"__cppast_impl(...)=__attribute__((annotate(#__VA_ARGS__)))",          //Help us for use annotate attribute convenience
+                @"__cppast(...)=__cppast_impl(__VA_ARGS__)",                         //Add a macro wrapper here, so the argument with macro can be handle right for compiler.
+            };
             AdditionalArguments = new List<string>()
             {
                 "-Wno-pragma-once-outside-header"
@@ -29,7 +35,8 @@ namespace CppAst
             ParseMacros = false;
             ParseComments = true;
             ParseSystemIncludes = true;
-            ParseAttributes = false;
+            ParseTokenAttributes = false;
+            ParseCommentAttribute = false;
 
             // Default triple targets
             TargetCpu = IntPtr.Size == 8 ? CppTargetCpu.X86_64 : CppTargetCpu.X86;
@@ -85,9 +92,14 @@ namespace CppAst
         public bool ParseSystemIncludes { get; set; }
 
         /// <summary>
-        /// Gets or sets a boolean indicating whether to parse Attributes. Default is <c>false</c>
+        /// Gets or sets a boolean indicating whether to parse meta attributes. Default is <c>false</c>
         /// </summary>
-        public bool ParseAttributes { get; set; }
+        public bool ParseTokenAttributes { get; set; }
+
+        /// <summary>
+        /// Gets or sets a boolean indicating whether to parse comment attributes. Default is <c>false</c>
+        /// </summary>
+        public bool ParseCommentAttribute { get; set; }
 
         /// <summary>
         /// Sets <see cref="ParseMacros"/> to <c>true</c> and return this instance.

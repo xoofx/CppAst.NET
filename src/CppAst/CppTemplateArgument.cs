@@ -12,11 +12,12 @@ namespace CppAst
     /// </summary>
     public class CppTemplateArgument : CppType
     {
-        public CppTemplateArgument(CppType sourceParam, CppType typeArg) : base(CppTypeKind.TemplateArgumentType)
+        public CppTemplateArgument(CppType sourceParam, CppType typeArg, bool isSpecializedArgument) : base(CppTypeKind.TemplateArgumentType)
         {
             SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
             ArgAsType = typeArg ?? throw new ArgumentNullException(nameof(typeArg));
             ArgKind = CppTemplateArgumentKind.AsType;
+            IsSpecializedArgument = isSpecializedArgument;
         }
 
         public CppTemplateArgument(CppType sourceParam, long intArg) : base(CppTypeKind.TemplateArgumentType)
@@ -24,6 +25,7 @@ namespace CppAst
 			SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
             ArgAsInteger = intArg;
             ArgKind = CppTemplateArgumentKind.AsInteger;
+            IsSpecializedArgument = true;
         }
 
 		public CppTemplateArgument(CppType sourceParam, string unknownStr) : base(CppTypeKind.TemplateArgumentType)
@@ -31,6 +33,7 @@ namespace CppAst
 			SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
             ArgAsUnknown = unknownStr;
             ArgKind = CppTemplateArgumentKind.Unknown;
+            IsSpecializedArgument = true;
         }
 
         public CppTemplateArgumentKind ArgKind { get; }
@@ -65,6 +68,7 @@ namespace CppAst
         /// </summary>
         public CppType SourceParam { get; }
 
+        public bool IsSpecializedArgument { get; }
 
         /// <inheritdoc />
         public override int SizeOf

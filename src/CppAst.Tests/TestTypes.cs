@@ -147,6 +147,60 @@ class Derived : public ::BaseTemplate<::Derived>
             );
         }
 
+
+        [Test]
+        public void TestTemplatePartialSpecialization()
+        {
+            ParseAssert(@"
+template<typename A, typename B>
+struct foo {};
+
+template<typename B>
+struct foo<int, B> {};
+
+foo<int, int> foobar;
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(3, compilation.Classes.Count);
+                    Assert.AreEqual(1, compilation.Fields.Count);
+
+                    var baseTemplate = compilation.Classes[0];
+                    var fullSpecializedClass = compilation.Classes[1];
+                    var partialSpecializedTemplate = compilation.Classes[2];
+
+                    var field = compilation.Fields[0];
+                    Assert.AreEqual(field.Name, "foobar");
+
+                    Assert.AreEqual(baseTemplate.TemplateKind, CppAst.CppTemplateKind.TemplateClass);
+                    Assert.AreEqual(fullSpecializedClass.TemplateKind, CppAst.CppTemplateKind.TemplateSpecializedClass);
+                    Assert.AreEqual(partialSpecializedTemplate.TemplateKind, CppAst.CppTemplateKind.PartialTemplateClass);
+
+                    //Need be a specialized for partial template here
+                    Assert.AreEqual(fullSpecializedClass.SpecializedTemplate, partialSpecializedTemplate);
+
+                    //Need be a full specialized class for this field
+                    Assert.AreEqual(field.Type, fullSpecializedClass);
+
+                    Assert.AreEqual(partialSpecializedTemplate.TemplateSpecializedArguments.Count, 2);
+                    //The first argument is integer now
+                    Assert.AreEqual(partialSpecializedTemplate.TemplateSpecializedArguments[0].ArgString, "int");
+                    //The second argument is not a specialized argument, we do not specialized a `B` template parameter here(partial specialized template)
+                    Assert.AreEqual(partialSpecializedTemplate.TemplateSpecializedArguments[1].IsSpecializedArgument, false);
+
+                    //The field use type is a full specialized type here~, so we can have two `int` template parmerater here
+                    //It's a not template or partial template class, so we can instantiate it, see `foo<int, int> foobar;` before.
+                    Assert.AreEqual(fullSpecializedClass.TemplateSpecializedArguments.Count, 2);
+                    //The first argument is integer now
+                    Assert.AreEqual(fullSpecializedClass.TemplateSpecializedArguments[0].ArgString, "int");
+                    //The second argument is not a specialized argument
+                    Assert.AreEqual(fullSpecializedClass.TemplateSpecializedArguments[1].ArgString, "int");
+                }
+            );
+        }
+
         [Test]
         public void TestClassPrototype()
         {

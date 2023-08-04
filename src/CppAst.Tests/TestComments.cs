@@ -136,7 +136,7 @@ int function1(int a, int b);
                 resultText = resultText?.Replace("\r\n", "\n");
                 Assert.AreEqual(expectedText, resultText);
             },
-            new CppParserOptions() { ParseAttributes = true });
+            new CppParserOptions() { ParseTokenAttributes = true });
         }
     }
 }

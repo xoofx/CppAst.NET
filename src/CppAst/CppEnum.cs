@@ -11,7 +11,7 @@ namespace CppAst
     /// <summary>
     /// A C++ standard or scoped enum.
     /// </summary>
-    public sealed class CppEnum : CppTypeDeclaration, ICppMemberWithVisibility
+    public sealed class CppEnum : CppTypeDeclaration, ICppMemberWithVisibility, ICppAttributeContainer
     {
         /// <summary>
         /// Creates a new instance of this enum.
@@ -21,7 +21,8 @@ namespace CppAst
         {
             Name = name;
             Items = new CppContainerList<CppEnumItem>(this);
-            Attributes = new CppContainerList<CppAttribute>(this);
+            Attributes = new List<CppAttribute>();
+            TokenAttributes = new List<CppAttribute>();
         }
 
         /// <inheritdoc />
@@ -67,7 +68,9 @@ namespace CppAst
         /// <summary>
         /// Gets the list of attached attributes.
         /// </summary>
-        public CppContainerList<CppAttribute> Attributes { get; }
+        public List<CppAttribute> Attributes { get; }
+        [Obsolete("TokenAttributes is deprecated. please use system attributes and annotate attributes")]
+        public List<CppAttribute> TokenAttributes { get; }
 
         private bool Equals(CppEnum other)
         {

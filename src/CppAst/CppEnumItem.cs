@@ -3,13 +3,14 @@
 // See license.txt file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 
 namespace CppAst
 {
     /// <summary>
     /// An enum item of <see cref="CppEnum"/>.
     /// </summary>
-    public sealed class CppEnumItem : CppDeclaration, ICppMember
+    public sealed class CppEnumItem : CppDeclaration, ICppMember, ICppAttributeContainer
     {
         /// <summary>
         /// Creates a new instance of this enum item.
@@ -35,6 +36,11 @@ namespace CppAst
         /// </summary>
         public CppExpression ValueExpression { get; set; }
 
+        /// <inheritdoc />
+        public List<CppAttribute> Attributes { get; } = new List<CppAttribute>();
+
+        [Obsolete("TokenAttributes is deprecated. please use system attributes and annotate attributes")]
+        public List<CppAttribute> TokenAttributes { get; } = new List<CppAttribute>();
 
         /// <inheritdoc />
         public override string ToString()

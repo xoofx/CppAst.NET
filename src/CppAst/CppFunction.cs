@@ -11,7 +11,7 @@ namespace CppAst
     /// <summary>
     /// A C++ function/method declaration.
     /// </summary>
-    public sealed class CppFunction : CppDeclaration, ICppMemberWithVisibility, ICppTemplateOwner, ICppContainer
+    public sealed class CppFunction : CppDeclaration, ICppMemberWithVisibility, ICppTemplateOwner, ICppContainer, ICppAttributeContainer
     {
         /// <summary>
         /// Creates a new instance of a function/method with the specified name.
@@ -22,7 +22,8 @@ namespace CppAst
             Name = name;
             Parameters = new CppContainerList<CppParameter>(this);
             TemplateParameters = new List<CppType>();
-            Attributes = new CppContainerList<CppAttribute>(this);
+            Attributes = new List<CppAttribute>();
+            TokenAttributes = new List<CppAttribute>();
         }
 
         /// <inheritdoc />
@@ -36,7 +37,10 @@ namespace CppAst
         /// <summary>
         /// Gets the attached attributes.
         /// </summary>
-        public CppContainerList<CppAttribute> Attributes { get; }
+        public List<CppAttribute> Attributes { get; }
+
+        [Obsolete("TokenAttributes is deprecated. please use system attributes and annotate attributes")]
+        public List<CppAttribute> TokenAttributes { get; }
 
         /// <summary>
         /// Gets or sets the storage qualifier.
