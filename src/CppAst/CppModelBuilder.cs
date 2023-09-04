@@ -2108,7 +2108,7 @@ namespace CppAst
                 return offset;
             }
 
-            private Tuple<CXSourceRange, CXSourceRange> GetExtent(CXTranslationUnit tu, CXFile file, CXCursor cur)
+            private Tuple<CXSourceRange, CXSourceRange> GetExtent(CXTranslationUnit tu, CXCursor cur)
             {
                 var cursorExtend = cur.Extent;
                 var begin = cursorExtend.Start;
@@ -2155,19 +2155,17 @@ namespace CppAst
                 CXSourceLocation GetNextLocation(CXSourceLocation loc, int inc = 1)
                 {
                     CXSourceLocation value;
-                    uint originalOffset, u, z;
-                    CXFile f;
-                    loc.GetSpellingLocation(out f, out u, out z, out originalOffset);
-                    var offset = IncOffset(inc, z);
-                    var shouldUseLine = (z != 0 && (offset != 0 || offset != uint.MaxValue));
+                    loc.GetSpellingLocation(out var file, out var line, out var column, out var originalOffset);
+                    var signedOffset = (int)column + inc;
+                    var shouldUseLine = (column != 0 && signedOffset > 0);
                     if (shouldUseLine)
                     {
-                        value = tu.GetLocation(f, u, offset);
+                        value = tu.GetLocation(file, line, (uint)signedOffset);
                     }
                     else
                     {
-                        offset = IncOffset(inc, originalOffset);
-                        value = tu.GetLocationForOffset(f, offset);
+                        var offset = IncOffset(inc, originalOffset);
+                        value = tu.GetLocationForOffset(file, offset);
                     }
 
                     return value;
@@ -2385,7 +2383,7 @@ namespace CppAst
                     This code supports stepping back when its valid to parse attributes, it 
                     doesn't currently support all cases but it supports most valid cases.
                 */
-                var range = GetExtent(_tu, cursor.IncludedFile, cursor);
+                var range = GetExtent(_tu, cursor);
 
                 var beg = range.Item1.Start;
                 var end = range.Item1.End;
