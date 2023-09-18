@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.8.0-alpha-002 (22 Apr 2022)
+- Fix issue with attributes in macros (#51)
+
 ## 0.8.0 (12 Feb 2022)
 - Update tests to net6.0
 - Add support for specialized template (#34)

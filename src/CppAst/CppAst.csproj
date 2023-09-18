@@ -1,17 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <PackageId>CppAst</PackageId>
+    <VersionPrefix>0.8.0</VersionPrefix>
+    <VersionSuffix>alpha</VersionSuffix>
+    <BuildNumber>003</BuildNumber>
+    <PackageId>CppAst.cgnx</PackageId>
     <Description>CppAst is a .NET library providing a C/C++ parser for header files with access to the full AST, comments and macros</Description>
     <Copyright>Alexandre Mutel</Copyright>
-    <Authors>Alexandre Mutel</Authors>
+    <Authors>Alexandre Mutel;Steven Whitman</Authors>
     <PackageTags>parser;c++;ast;syntax</PackageTags>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
     <PackageIcon>logo.png</PackageIcon>
-    <PackageProjectUrl>https://github.com/xoofx/CppAst</PackageProjectUrl>
+    <PackageReleaseNotes>https://github.com/CognexVisionSoftware/CppAst/blob/master/changelog.md</PackageReleaseNotes>
+    <PackageIconUrl>https://raw.githubusercontent.com/CognexVisionSoftware/CppAst/master/img/cppast.png</PackageIconUrl>
+    <PackageProjectUrl>https://github.com/CognexVisionSoftware/CppAst</PackageProjectUrl>
     <PackageLicenseExpression>BSD-2-Clause</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/xoofx/CppAst</RepositoryUrl>
+    <RepositoryUrl>https://github.com/CognexVisionSoftware/CppAst</RepositoryUrl>
     <LangVersion>7.3</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NeutralLanguage>en-US</NeutralLanguage>
@@ -21,6 +26,7 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Version>0.8.0-alpha-003</Version>
   </PropertyGroup>
 
   <ItemGroup>
