@@ -1738,6 +1738,11 @@ namespace CppAst
                 case CXTypeKind.CXType_Char_S:
                     return CppPrimitiveType.Char;
 
+                // CXTypeKind.CXType_Char_U is a char type with unsigned implementation.
+                // To keep the implementation consistent this will be mapped to unsigned char.
+                case CXTypeKind.CXType_Char_U:
+                    return CppPrimitiveType.UnsignedChar;
+
                 case CXTypeKind.CXType_WChar:
                     return CppPrimitiveType.WChar;
 
