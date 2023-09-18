@@ -2,7 +2,7 @@ name: ci
 
 on:
   push:
-    branches: [main, master, development],
+    branches: [main, master, development]
     paths-ignore:
     - 'doc/**'
     - 'img/**'
