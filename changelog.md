@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.8.0-alpha-004 (07 Sep 2022)
+- Fix issue with late predeclaration rewrites filespan (#53)
+
 ## 0.8.0-alpha-003 (25 May 2022)
 - Fix issue with Int64 on Linux machines (#52)
 

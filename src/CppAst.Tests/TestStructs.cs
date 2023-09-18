@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System.IO;
 
 namespace CppAst.Tests
 {
@@ -206,6 +207,25 @@ struct HelloWorld
             );
         }
 
+        [Test]
+        public void TestUsingDirective()
+        {
+            ParseAssert(@"
+#include ""test_usingdirective_using2.h""
+#include ""test_usingdirective_used.h""
+#include ""test_usingdirective_using.h""
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+                    CppClass myStruct = compilation.Namespaces[0].Namespaces[0].Classes[0];
+                    Assert.AreEqual("MyStruct", myStruct.Name);
+                    Assert.True(myStruct.IsDefinition);
+                    Assert.AreEqual(1, myStruct.Fields.Count);
+                    Assert.AreEqual(Path.Combine("test_usingdirective_used.h"), Path.GetFileName(myStruct.Span.Start.File));
+                }
+            );
+        }
 
     }
 }
