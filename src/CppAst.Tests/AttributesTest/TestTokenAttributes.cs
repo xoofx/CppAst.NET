@@ -229,6 +229,27 @@ struct Test{
         }
 
         [Test]
+        public void TestCpp11FunctionsAttributesOnNewLine()
+        {
+            ParseAssert(@"
+[[noreturn]]
+void x() {};", compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(1, compilation.Functions.Count);
+                    Assert.AreEqual(1, compilation.Functions[0].TokenAttributes.Count);
+                    {
+                        var attr = compilation.Functions[0].TokenAttributes[0];
+                        Assert.AreEqual("noreturn", attr.Name);
+                    }
+                },
+                // we are using a C++14 attribute because it can be used everywhere
+                new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseTokenAttributes = true }
+            );
+        }
+
+        [Test]
         public void TestCpp11NamespaceAttributes()
         {
             ParseAssert(@"

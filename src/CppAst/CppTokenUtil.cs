@@ -615,17 +615,17 @@ namespace CppAst
                 CXSourceLocation GetNextLocation(CXSourceLocation loc, int inc = 1)
                 {
                     CXSourceLocation value;
-                    loc.GetSpellingLocation(out var f, out var u, out var z, out var originalOffset);
-                    var offset = IncOffset(inc, z);
-                    var shouldUseLine = (z != 0 && (offset != 0 || offset != uint.MaxValue));
+                    loc.GetSpellingLocation(out var file, out var line, out var column, out var originalOffset);
+                    var signedOffset = (int)column + inc;
+                    var shouldUseLine = (column != 0 && signedOffset > 0);
                     if (shouldUseLine)
                     {
-                        value = tu.GetLocation(f, u, offset);
+                        value = tu.GetLocation(file, line, (uint)signedOffset);
                     }
                     else
                     {
-                        offset = IncOffset(inc, originalOffset);
-                        value = tu.GetLocationForOffset(f, offset);
+                        var offset = IncOffset(inc, originalOffset);
+                        value = tu.GetLocationForOffset(file, offset);
                     }
 
                     return value;
