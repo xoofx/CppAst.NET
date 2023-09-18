@@ -3,11 +3,11 @@
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <VersionPrefix>0.8.0</VersionPrefix>
     <VersionSuffix>alpha</VersionSuffix>
-    <BuildNumber>003</BuildNumber>
+    <BuildNumber>004</BuildNumber>
     <PackageId>CppAst.cgnx</PackageId>
     <Description>CppAst is a .NET library providing a C/C++ parser for header files with access to the full AST, comments and macros</Description>
     <Copyright>Alexandre Mutel</Copyright>
-    <Authors>Alexandre Mutel;Steven Whitman</Authors>
+    <Authors>Alexandre Mutel;Steven Whitman;Vedanta Pawar</Authors>
     <PackageTags>parser;c++;ast;syntax</PackageTags>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
     <PackageIcon>logo.png</PackageIcon>
@@ -26,7 +26,7 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>0.8.0-alpha-003</Version>
+    <Version>0.8.0-alpha-004</Version>
   </PropertyGroup>
 
   <ItemGroup>
