@@ -14,7 +14,7 @@ namespace CppAst
 {
     static internal unsafe class CppTokenUtil
     {
-        public static void ParseCursorAttributs(CXCursor cursor, ref List<CppAttribute> attributes)
+        public static void ParseCursorAttributs(CppGlobalDeclarationContainer globalContainer, CXCursor cursor, ref List<CppAttribute> attributes)
         {
             var tokenizer = new AttributeTokenizer(cursor);
             var tokenIt = new TokenIterator(tokenizer);
@@ -25,7 +25,7 @@ namespace CppAst
 
             while (tokenIt.CanPeek)
             {
-                if (ParseAttributes(tokenIt, ref attributes))
+                if (ParseAttributes(globalContainer, tokenIt, ref attributes))
                 {
                     continue;
                 }
@@ -42,7 +42,7 @@ namespace CppAst
         }
 
 
-        public static void ParseFunctionAttributes(CXCursor cursor, string functionName, ref List<CppAttribute> attributes)
+        public static void ParseFunctionAttributes(CppGlobalDeclarationContainer globalContainer, CXCursor cursor, string functionName, ref List<CppAttribute> attributes)
         {
             // TODO: This function is not 100% correct when parsing tokens up to the function name
             // we assume to find the function name immediately followed by a `(`
@@ -58,7 +58,7 @@ namespace CppAst
             // Parse leading attributes
             while (tokenIt.CanPeek)
             {
-                if (ParseAttributes(tokenIt, ref attributes))
+                if (ParseAttributes(globalContainer, tokenIt, ref attributes))
                 {
                     continue;
                 }
@@ -103,7 +103,7 @@ namespace CppAst
 
             while (tokenIt.CanPeek)
             {
-                if (ParseAttributes(tokenIt, ref attributes))
+                if (ParseAttributes(globalContainer, tokenIt, ref attributes))
                 {
                     continue;
                 }
@@ -115,7 +115,7 @@ namespace CppAst
         }
 
 
-        public static void ParseAttributesInRange(CXTranslationUnit tu, CXSourceRange range, ref List<CppAttribute> collectAttributes)
+        public static void ParseAttributesInRange(CppGlobalDeclarationContainer globalContainer, CXTranslationUnit tu, CXSourceRange range, ref List<CppAttribute> collectAttributes)
         {
             var tokenizer = new AttributeTokenizer(tu, range);
             var tokenIt = new TokenIterator(tokenizer);
@@ -134,7 +134,7 @@ namespace CppAst
 
             while (tokenIt.CanPeek)
             {
-                if (ParseAttributes(tokenIt, ref collectAttributes))
+                if (ParseAttributes(globalContainer, tokenIt, ref collectAttributes))
                 {
                     continue;
                 }
@@ -911,8 +911,42 @@ namespace CppAst
             Error,
         }
 
+        private static (string, string) GetNameSpaceAndAttribute(string fullAttribute)
+        {
+            string[] colons = { "::" };
+            string[] tokens = fullAttribute.Split(colons, System.StringSplitOptions.None);
+            if (tokens.Length == 2)
+            {
+                return (tokens[0], tokens[1]);
+            }
+            else
+            {
+                return (null, tokens[0]);
+            }
+        }
 
-        private static bool ParseAttributes(TokenIterator tokenIt, ref List<CppAttribute> attributes)
+
+        private static (string, string) GetNameAndArguments(string name)
+        {
+            if (name.Contains("("))
+            {
+                Char[] seperator = { '(' };
+                var argumentTokens = name.Split(seperator, 2);
+                var length = argumentTokens[1].LastIndexOf(')');
+                string argument = null;
+                if (length > 0)
+                {
+                    argument = argumentTokens[1].Substring(0, length);
+                }
+                return (argumentTokens[0], argument);
+            }
+            else
+            {
+                return (name, null);
+            }
+        }
+
+        private static bool ParseAttributes(CppGlobalDeclarationContainer globalContainer, TokenIterator tokenIt, ref List<CppAttribute> attributes)
         {
             // Parse C++ attributes
             // [[<attribute>]]
@@ -983,6 +1017,32 @@ namespace CppAst
                 }
 
                 return tokenIt.Skip(")"); ;
+            }
+
+            // See if we have a macro
+            var value = tokenIt.PeekText();
+            var macro = globalContainer.Macros.Find(v => v.Name == value);
+            if (macro != null)
+            {
+                if (macro.Value.StartsWith("[[") && macro.Value.EndsWith("]]"))
+                {
+                    CppAttribute attribute = null;
+                    var fullAttribute = macro.Value.Substring(2, macro.Value.Length - 4);
+                    var (scope, name) = GetNameSpaceAndAttribute(fullAttribute);
+                    var (attributeName, arguments) = GetNameAndArguments(name);
+
+                    attribute = new CppAttribute(attributeName, AttributeKind.TokenAttribute);
+                    attribute.Scope = scope;
+                    attribute.Arguments = arguments;
+
+                    if (attributes == null)
+                    {
+                        attributes = new List<CppAttribute>();
+                    }
+                    attributes.Add(attribute);
+                    tokenIt.Next();
+                    return true;
+                }
             }
 
             return false;

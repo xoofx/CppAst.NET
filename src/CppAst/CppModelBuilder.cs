@@ -1543,7 +1543,7 @@ namespace CppAst
                 bool hasOnlineAttribute = CppTokenUtil.TryToSeekOnlineAttributes(cursor, out var onLineRange);
                 if (hasOnlineAttribute)
                 {
-                    CppTokenUtil.ParseAttributesInRange(cursor.TranslationUnit, onLineRange, ref tokenAttributes);
+                    CppTokenUtil.ParseAttributesInRange(_rootContainerContext.Container as CppGlobalDeclarationContainer, cursor.TranslationUnit, onLineRange, ref tokenAttributes);
                 }
             }
 
@@ -1551,11 +1551,11 @@ namespace CppAst
             if(attrContainer is CppFunction)
             {
                 var func = attrContainer as CppFunction;
-                CppTokenUtil.ParseFunctionAttributes(cursor, func.Name, ref tokenAttributes);
+                CppTokenUtil.ParseFunctionAttributes(_rootContainerContext.Container as CppGlobalDeclarationContainer, cursor, func.Name, ref tokenAttributes);
             }   
             else
             {
-                CppTokenUtil.ParseCursorAttributs(cursor, ref tokenAttributes);
+                CppTokenUtil.ParseCursorAttributs(_rootContainerContext.Container as CppGlobalDeclarationContainer, cursor, ref tokenAttributes);
             }
             
             attrContainer.TokenAttributes.AddRange(tokenAttributes);

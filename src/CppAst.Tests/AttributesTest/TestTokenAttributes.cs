@@ -155,7 +155,7 @@ struct [[deprecated(""old"")]] TestMessage{
         public void TestCpp11StructAttributesWithMacro()
         {
           ParseAssert(@"
-#define CLASS_ATTRIBUTE [[deprecated]]
+#define CLASS_ATTRIBUTE [[complex_attribute::attribute_name(""attribute_argument"")]]
 struct CLASS_ATTRIBUTE  Test{
     int a;
     int b;
@@ -164,10 +164,12 @@ struct CLASS_ATTRIBUTE  Test{
             Assert.False(compilation.HasErrors);
 
             Assert.AreEqual(1, compilation.Classes.Count);
-            Assert.AreEqual(1, compilation.Classes[0].Attributes.Count);
+            Assert.AreEqual(1, compilation.Classes[0].TokenAttributes.Count);
             {
-              var attr = compilation.Classes[0].Attributes[0];
-              Assert.AreEqual("deprecated", attr.Name);
+              var attr = compilation.Classes[0].TokenAttributes[0];
+              Assert.AreEqual("complex_attribute", attr.Scope);
+              Assert.AreEqual("attribute_name", attr.Name);
+              Assert.AreEqual("\"attribute_argument\"", attr.Arguments);
             }
           },
           // we are using a C++14 attribute because it can be used everywhere
