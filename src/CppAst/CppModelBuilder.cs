@@ -182,7 +182,7 @@ namespace CppAst
                         {
                             cppClass.TemplateKind = CppTemplateKind.TemplateSpecializedClass;
                         }
-                       
+
 
                         //Just use low level api to call ClangSharp 
                         var tempArgsCount = cursor.NumTemplateArguments;
@@ -194,11 +194,11 @@ namespace CppAst
                             cppClass.TemplateParameters.Add(param);
                         }
 
-                        if(cppClass.TemplateKind == CppTemplateKind.TemplateSpecializedClass)
+                        if (cppClass.TemplateKind == CppTemplateKind.TemplateSpecializedClass)
                         {
                             Debug.Assert(cppClass.SpecializedTemplate.TemplateParameters.Count == tempArgsCount);
                         }
-                        
+
 
                         for (uint i = 0; i < tempArgsCount; i++)
                         {
@@ -323,44 +323,45 @@ namespace CppAst
                 case CXCursorKind.CXCursor_ClassDecl:
                 case CXCursorKind.CXCursor_StructDecl:
                 case CXCursorKind.CXCursor_UnionDecl:
-                {
-                    bool isAnonymous = cursor.IsAnonymous;
-                    var cppClass = VisitClassDecl(cursor, data);
-                    // Empty struct/class/union declaration are considered as fields
-                    if (isAnonymous)
                     {
-                        Debug.Assert(string.IsNullOrEmpty(cppClass.Name));
-                        var containerContext = GetOrCreateDeclarationContainer(parent, data);
-
-                        // We try to recover the offset from the previous field
-                        // Might not be always correct (with alignment rules),
-                        // but not sure how to recover the offset without recalculating the entire offsets
-                        var offset = 0;
-                        var cppClassContainer = containerContext.Container as CppClass;
-                        if (cppClassContainer is object && cppClassContainer.Fields.Count > 0)
+                        bool isAnonymous = cursor.IsAnonymous;
+                        var cppClass = VisitClassDecl(cursor, data);
+                        // Empty struct/class/union declaration are considered as fields
+                        if (isAnonymous)
                         {
-                            var lastField = cppClassContainer.Fields[cppClassContainer.Fields.Count - 1];
-                            offset = (int)lastField.Offset + lastField.Type.SizeOf;
+                            cppClass.Name = string.Empty;
+                            Debug.Assert(string.IsNullOrEmpty(cppClass.Name));
+                            var containerContext = GetOrCreateDeclarationContainer(parent, data);
+
+                            // We try to recover the offset from the previous field
+                            // Might not be always correct (with alignment rules),
+                            // but not sure how to recover the offset without recalculating the entire offsets
+                            var offset = 0;
+                            var cppClassContainer = containerContext.Container as CppClass;
+                            if (cppClassContainer is object && cppClassContainer.Fields.Count > 0)
+                            {
+                                var lastField = cppClassContainer.Fields[cppClassContainer.Fields.Count - 1];
+                                offset = (int)lastField.Offset + lastField.Type.SizeOf;
+                            }
+
+                            // Create an anonymous field for the type
+                            var cppField = new CppField(cppClass, string.Empty)
+                            {
+                                Visibility = containerContext.CurrentVisibility,
+                                StorageQualifier = GetStorageQualifier(cursor),
+                                IsAnonymous = true,
+                                Offset = offset,
+                            };
+                            ParseAttributes(cursor, cppField, true);
+                            containerContext.DeclarationContainer.Fields.Add(cppField);
+                            element = cppField;
                         }
-
-                        // Create an anonymous field for the type
-                        var cppField = new CppField(cppClass, string.Empty)
+                        else
                         {
-                            Visibility = containerContext.CurrentVisibility,
-                            StorageQualifier = GetStorageQualifier(cursor),
-                            IsAnonymous = true,
-                            Offset = offset,
-                        };
-                        ParseAttributes(cursor, cppField, true);
-                        containerContext.DeclarationContainer.Fields.Add(cppField);
-                        element = cppField;
+                            element = cppClass;
+                        }
+                        break;
                     }
-                    else
-                    {
-                        element = cppClass;
-                    }
-                    break;
-                }
 
                 case CXCursorKind.CXCursor_EnumDecl:
                     element = VisitEnumDecl(cursor, data);
@@ -372,7 +373,7 @@ namespace CppAst
 
                 case CXCursorKind.CXCursor_TypeAliasDecl:
                 case CXCursorKind.CXCursor_TypeAliasTemplateDecl:
-                    
+
                     element = VisitTypeAliasDecl(cursor, data);
                     break;
 
@@ -440,7 +441,7 @@ namespace CppAst
 
                 var attrContainer = cppDeclaration as ICppAttributeContainer;
                 //Only handle commnet attribute when we need
-                if(attrContainer != null && ParseCommentAttributeEnabled)
+                if (attrContainer != null && ParseCommentAttributeEnabled)
                 {
                     TryToParseAttributesFromComment(cppDeclaration.Comment, attrContainer);
                 }
@@ -706,7 +707,7 @@ namespace CppAst
             var tokens = tu.Tokenize(range);
 
             var name = GetCursorSpelling(cursor);
-            if(name.StartsWith("__cppast"))
+            if (name.StartsWith("__cppast"))
             {
                 //cppast system macros, just ignore here
                 return null;
@@ -1453,10 +1454,10 @@ namespace CppAst
                         }
                         break;
                     case CXCursorKind.CXCursor_FirstAttr:
-                        { 
+                        {
                             var attrKind = argCursor.AttrKind;
                             var attrKindSpelling = argCursor.AttrKindSpelling.ToLower();
-          
+
                             var attribute = new CppAttribute(attrKindSpelling, AttributeKind.CxxSystemAttribute)
                             {
                                 Span = sourceSpan,
@@ -1485,7 +1486,7 @@ namespace CppAst
                             collectAttributes.Add(attribute);
                         }
                         break;
-                
+
                     // Don't generate a warning for unsupported cursor
                     default:
                         break;
@@ -1501,17 +1502,17 @@ namespace CppAst
         {
             if (comment == null) return;
 
-            if(comment is CppCommentText ctxt)
+            if (comment is CppCommentText ctxt)
             {
                 var txt = ctxt.Text.Trim();
-                if(txt.StartsWith("[[") && txt.EndsWith("]]"))
+                if (txt.StartsWith("[[") && txt.EndsWith("]]"))
                 {
                     attrContainer.Attributes.Add(new CppAttribute("comment", AttributeKind.CommentAttribute)
                     {
                         Arguments = txt,
                         Scope = "",
                         IsVariadic = false,
-                    }) ;
+                    });
                 }
             }
 
@@ -1545,16 +1546,16 @@ namespace CppAst
             }
 
             //Parse attributes contains in cursor
-            if(attrContainer is CppFunction)
+            if (attrContainer is CppFunction)
             {
                 var func = attrContainer as CppFunction;
                 CppTokenUtil.ParseFunctionAttributes(cursor, func.Name, ref tokenAttributes);
-            }   
+            }
             else
             {
                 CppTokenUtil.ParseCursorAttributs(cursor, ref tokenAttributes);
             }
-            
+
             attrContainer.TokenAttributes.AddRange(tokenAttributes);
         }
 
@@ -1572,7 +1573,7 @@ namespace CppAst
             var kind = cursor.Kind;
 
             CXCursor usedCursor = cursor;
-            if(kind == CXCursorKind.CXCursor_TypeAliasTemplateDecl)
+            if (kind == CXCursorKind.CXCursor_TypeAliasTemplateDecl)
             {
                 usedCursor = cursor.TemplatedDecl;
             }
@@ -1644,7 +1645,8 @@ namespace CppAst
         private CppType VisitElaboratedDecl(CXCursor cursor, CXType type, CXCursor parent, void* data)
         {
             var fulltypeDefName = clang.getCursorUSR(cursor).CString;
-            if (_typedefs.TryGetValue(fulltypeDefName, out var typeRef)) {
+            if (_typedefs.TryGetValue(fulltypeDefName, out var typeRef))
+            {
                 return typeRef;
             }
 
@@ -1724,7 +1726,7 @@ namespace CppAst
                     return CppPrimitiveType.UnsignedInt;
 
                 case CXTypeKind.CXType_ULong:
-                    return CppPrimitiveType.UnsignedInt;
+                    return type.SizeOf == 8 ? CppPrimitiveType.UnsignedLongLong : CppPrimitiveType.UnsignedInt;
 
                 case CXTypeKind.CXType_ULongLong:
                     return CppPrimitiveType.UnsignedLongLong;
@@ -1895,7 +1897,7 @@ namespace CppAst
             for (var templateIndex = 0; templateIndex < numTemplateArguments; ++templateIndex)
             {
                 var templateArg = type.GetTemplateArgument((uint)templateIndex);
-                
+
                 switch (templateArg.kind)
                 {
                     case CXTemplateArgumentKind.CXTemplateArgumentKind_Type:
