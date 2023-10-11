@@ -10,7 +10,7 @@ namespace CppAst.Tests
         {
             if (assertCompilation == null) throw new ArgumentNullException(nameof(assertCompilation));
 
-            options = options ?? new CppParserOptions();
+            options ??= new CppParserOptions();
             var currentDirectory = Environment.CurrentDirectory;
             var headerFilename = $"{TestContext.CurrentContext.Test.FullName}-{TestContext.CurrentContext.Test.ID}.h";
             var headerFile = Path.Combine(currentDirectory, headerFilename);
