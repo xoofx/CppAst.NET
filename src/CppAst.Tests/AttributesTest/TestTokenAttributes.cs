@@ -152,6 +152,34 @@ struct [[deprecated(""old"")]] TestMessage{
         }
 
         [Test]
+        public void TestCpp11StructAttributesWithMacro()
+        {
+            ParseAssert(@"
+#define CLASS_ATTRIBUTE [[complex_attribute::attribute_name(""attribute_argument"")]]
+struct
+CLASS_ATTRIBUTE
+Test{
+    int a;
+    int b;
+};", compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(1, compilation.Classes.Count);
+                    Assert.AreEqual(1, compilation.Classes[0].TokenAttributes.Count);
+                    {
+                        var attr = compilation.Classes[0].TokenAttributes[0];
+                        Assert.AreEqual("complex_attribute", attr.Scope);
+                        Assert.AreEqual("attribute_name", attr.Name);
+                        Assert.AreEqual("\"attribute_argument\"", attr.Arguments);
+                    }
+                },
+                // we are using a C++14 attribute because it can be used everywhere
+                new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseTokenAttributes = true }
+            );
+        }
+
+        [Test]
         public void TestCpp11VariablesAttributes()
         {
             ParseAssert(@"
@@ -202,6 +230,27 @@ struct Test{
             // we are using a C++14 attribute because it can be used everywhere
             new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseTokenAttributes = true }
           );
+        }
+
+        [Test]
+        public void TestCpp11FunctionsAttributesOnNewLine()
+        {
+            ParseAssert(@"
+[[noreturn]]
+void x() {};", compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(1, compilation.Functions.Count);
+                    Assert.AreEqual(1, compilation.Functions[0].TokenAttributes.Count);
+                    {
+                        var attr = compilation.Functions[0].TokenAttributes[0];
+                        Assert.AreEqual("noreturn", attr.Name);
+                    }
+                },
+                // we are using a C++14 attribute because it can be used everywhere
+                new CppParserOptions() { AdditionalArguments = { "-std=c++14" }, ParseTokenAttributes = true }
+            );
         }
 
         [Test]
