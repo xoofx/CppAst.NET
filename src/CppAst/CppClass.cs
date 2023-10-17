@@ -145,9 +145,9 @@ namespace CppAst
         public List<CppTemplateArgument> TemplateSpecializedArguments { get; } = new List<CppTemplateArgument>();
 
         /// <summary>
-        /// Gets the specialized class template of this instance.
+        /// The primary, unspecialized class template of this instance.
         /// </summary>
-        public CppClass SpecializedTemplate { get; set; }
+        public CppClass PrimaryTemplate { get; set; }
 
 
         public bool IsEmbeded => Parent is CppClass;

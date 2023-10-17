@@ -46,7 +46,7 @@ namespace CppAst
                         }
                         p = ns.Parent;
                     }
-                    else if (p is CppCompilation)
+                    else if (p is CppGlobalDeclarationContainer)
                     {
                         // root namespace here, just ignore~
                         p = null;

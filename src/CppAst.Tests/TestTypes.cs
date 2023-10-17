@@ -87,7 +87,7 @@ TemplateStruct<int, Struct2> unexposed;
                     Assert.AreEqual(CppPrimitiveKind.Int, (exposed.TemplateSpecializedArguments[0]?.ArgAsType as CppPrimitiveType).Kind);
                     Assert.AreEqual("Struct2", (exposed.TemplateSpecializedArguments[1].ArgAsType as CppClass)?.Name);
 
-                    var specialized = exposed.SpecializedTemplate;
+                    var specialized = exposed.PrimaryTemplate;
                     Assert.AreEqual("TemplateStruct", specialized.Name);
                     Assert.AreEqual(2, specialized.Fields.Count);
                     Assert.AreEqual("field0", specialized.Fields[0].Name);
@@ -142,7 +142,7 @@ class Derived : public ::BaseTemplate<::Derived>
 
                     //Here change to argument as a template deduce instance, not as a Template Parameters~~
                     Assert.AreEqual(derived, baseClassSpecialized.TemplateSpecializedArguments[0].ArgAsType);
-                    Assert.AreEqual(baseTemplate, baseClassSpecialized.SpecializedTemplate);
+                    Assert.AreEqual(baseTemplate, baseClassSpecialized.PrimaryTemplate);
                 }
             );
         }
@@ -179,7 +179,7 @@ foo<int, int> foobar;
                     Assert.AreEqual(partialSpecializedTemplate.TemplateKind, CppAst.CppTemplateKind.PartialTemplateClass);
 
                     //Need be a specialized for partial template here
-                    Assert.AreEqual(fullSpecializedClass.SpecializedTemplate, partialSpecializedTemplate);
+                    Assert.AreEqual(fullSpecializedClass.PrimaryTemplate, partialSpecializedTemplate);
 
                     //Need be a full specialized class for this field
                     Assert.AreEqual(field.Type, fullSpecializedClass);
@@ -232,6 +232,189 @@ class TmpClass {
                     Assert.AreEqual("volatile TmpClass*", tmpClass2.Type.GetDisplayName());
                 }
             );
+        }
+
+        [Test]
+        public void TestStdVariadicTemplate()
+        {
+            ParseAssert(@"
+#include <tuple>
+
+void function1(std::tuple<double, double, double> input);
+",
+            compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+                Assert.AreEqual(compilation.Functions.Count, 1);
+                var function1 = compilation.Functions[0];
+                Assert.AreEqual(function1.Parameters.Count, 1);
+                var parameter = function1.Parameters[0];
+                Assert.True(parameter.Type is CppClass);
+                Assert.AreEqual(parameter.Name, "input");
+                var parameterClass = parameter.Type as CppClass;
+                Assert.AreEqual(parameterClass.TemplateKind, CppTemplateKind.TemplateSpecializedClass);
+                Assert.AreEqual(parameterClass.Name, "tuple");
+                Assert.AreEqual(parameterClass.TemplateSpecializedArguments.Count, 3);
+                Assert.AreEqual(parameterClass.TemplateSpecializedArguments[0].ArgAsType.FullName, "double");
+                Assert.AreEqual(parameterClass.TemplateSpecializedArguments[1].ArgAsType.FullName, "double");
+                Assert.AreEqual(parameterClass.TemplateSpecializedArguments[2].ArgAsType.FullName, "double");
+            });
+        }
+
+        [Test]
+        public void TestTemplateTypeDef()
+        {
+            ParseAssert(@"
+template <typename T>
+class TemplatedClass
+{
+public:
+  TemplatedClass(T value)
+      : value_{value}
+  {
+  }
+
+  [[nodiscard]] T Value() const noexcept { return value_; }
+
+  void Value(T value) { value_ = value; }
+
+private:
+  T value_ {};
+};
+
+using TemplatedClassDouble = TemplatedClass<double>;
+using TemplatedClassInt = TemplatedClass<int>;
+
+", 
+        compilation =>
+        {
+            Assert.False(compilation.HasErrors);
+            Assert.AreEqual(compilation.Classes.Count, 3);
+            Assert.AreEqual(compilation.Typedefs.Count, 2);
+
+            var primaryTemplate = compilation.Classes[0];
+            var specializedTemplate1 = compilation.Classes[1];
+            var specializedTemplate2 = compilation.Classes[2];
+
+            Assert.AreEqual(primaryTemplate.Name, "TemplatedClass");
+            Assert.AreEqual(specializedTemplate1.Name, "TemplatedClass");
+            Assert.AreEqual(specializedTemplate1.FullName, "TemplatedClass<double>");
+            Assert.AreEqual(specializedTemplate2.Name, "TemplatedClass");
+            Assert.AreEqual(specializedTemplate2.FullName, "TemplatedClass<int>");
+
+            Assert.AreEqual(primaryTemplate.TemplateKind, CppTemplateKind.TemplateClass);
+            Assert.AreEqual(primaryTemplate.TemplateParameters.Count, 1);
+
+            // Specialized tempaltes should contain the information of their primary template.
+            Assert.AreEqual(primaryTemplate.Constructors.Count, specializedTemplate1.PrimaryTemplate.Constructors.Count);
+            Assert.AreEqual(primaryTemplate.Constructors.Count, specializedTemplate2.PrimaryTemplate.Constructors.Count);
+            Assert.AreEqual(primaryTemplate.Functions.Count, specializedTemplate1.PrimaryTemplate.Functions.Count);
+            Assert.AreEqual(primaryTemplate.Functions.Count, specializedTemplate2.PrimaryTemplate.Functions.Count);
+
+            Assert.AreEqual(specializedTemplate1.TemplateKind, CppTemplateKind.TemplateSpecializedClass);
+            Assert.AreEqual(specializedTemplate1.TemplateSpecializedArguments.Count, 1);
+            Assert.AreEqual(specializedTemplate1.TemplateSpecializedArguments[0].ArgAsType.FullName, "double");
+
+            Assert.AreEqual(specializedTemplate2.TemplateKind, CppTemplateKind.TemplateSpecializedClass);
+            Assert.AreEqual(specializedTemplate2.TemplateSpecializedArguments.Count, 1);
+            Assert.AreEqual(specializedTemplate2.TemplateSpecializedArguments[0].ArgAsType.FullName, "int");
+        });
+        }
+
+        [Test]
+        public void TestNestedTemplate()
+        {
+            ParseAssert(@"
+#include <array>
+#include <vector>
+
+template <typename T, std::size_t N>
+class Vector {
+    std::array<T, N> elements;
+
+public:
+    // Constructor
+    Vector(const std::array<T, N>& elems) : elements(elems) {}
+
+    // Multiply vectors
+    Vector operator*(const Vector& other) const {
+        std::array<T, N> result;
+        VectorMultiplier<T, N>::multiply(result, this->elements, other.elements);
+        return Vector(result);
+    }
+
+    // Access elements
+    T& operator[](int idx) { return elements[idx]; }
+    const T& operator[](int idx) const { return elements[idx]; }
+};
+
+using Vect2 = Vector<double, 2>;
+using Vect2i = Vector<int, 2>;
+using Vect3 = Vector<double, 3>;
+
+void function1(std::vector<Vect2> input);
+
+", compilation =>
+        {
+            Assert.False(compilation.HasErrors);
+            Assert.AreEqual(compilation.Classes.Count, 4);
+            Assert.AreEqual(compilation.Typedefs.Count, 3);
+            Assert.AreEqual(compilation.Functions.Count, 1);
+
+            var baseVector = compilation.Classes[0];
+            var vect2 = compilation.Classes[1];
+            var vect2i = compilation.Classes[2];
+            var vect3 = compilation.Classes[3];
+
+            Assert.AreEqual(baseVector.Name, "Vector");
+            Assert.AreEqual(baseVector.Name, vect2.Name);
+            Assert.AreEqual(baseVector.Name, vect2i.Name);
+            Assert.AreEqual(baseVector.Name, vect3.Name);
+
+            Assert.AreEqual(vect2.FullName, "Vector<double, 2>");
+            Assert.AreEqual(vect2i.FullName, "Vector<int, 2>");
+            Assert.AreEqual(vect3.FullName, "Vector<double, 3>");
+
+            Assert.AreEqual(baseVector.TemplateKind, CppTemplateKind.TemplateClass);
+            Assert.AreEqual(baseVector.TemplateParameters.Count, 2);
+
+            Assert.AreEqual(vect2.TemplateKind, CppTemplateKind.TemplateSpecializedClass);
+            Assert.AreEqual(vect2.TemplateSpecializedArguments.Count, 2);
+            Assert.AreEqual(vect2.TemplateSpecializedArguments[0].ArgAsType.FullName, "double");
+            Assert.AreEqual(vect2.TemplateSpecializedArguments[1].ArgAsInteger, 2);
+
+            Assert.AreEqual(vect2i.TemplateKind, CppTemplateKind.TemplateSpecializedClass);
+            Assert.AreEqual(vect2i.TemplateSpecializedArguments.Count, 2);
+            Assert.AreEqual(vect2i.TemplateSpecializedArguments[0].ArgAsType.FullName, "int");
+            Assert.AreEqual(vect2i.TemplateSpecializedArguments[1].ArgAsInteger, 2);
+
+            Assert.AreEqual(vect3.TemplateKind, CppTemplateKind.TemplateSpecializedClass);
+            Assert.AreEqual(vect3.TemplateSpecializedArguments.Count, 2);
+            Assert.AreEqual(vect3.TemplateSpecializedArguments[0].ArgAsType.FullName, "double");
+            Assert.AreEqual(vect3.TemplateSpecializedArguments[1].ArgAsInteger, 3);
+
+
+            var function1 = compilation.Functions[0];
+            Assert.AreEqual(function1.Parameters.Count, 1);
+            var parameter = function1.Parameters[0];
+            Assert.True(parameter.Type is CppClass);
+            Assert.AreEqual(parameter.Name, "input");
+            var parameterClass = parameter.Type as CppClass;
+            Assert.AreEqual(parameterClass.TemplateKind, CppTemplateKind.TemplateSpecializedClass);
+            // The template argument is also a templated type
+            Assert.AreEqual(parameterClass.TemplateSpecializedArguments.Count, 2);
+            Assert.True(parameterClass.TemplateSpecializedArguments[0].ArgAsType is CppClass);
+            var argAsClass = parameterClass.TemplateSpecializedArguments[0].ArgAsType as CppClass;
+            // The argument should be just the same as Vect2
+            Assert.AreEqual(argAsClass.FullName, vect2.FullName);
+            Assert.AreEqual(argAsClass.TemplateKind, vect2.TemplateKind);
+            Assert.AreEqual(argAsClass.TemplateSpecializedArguments.Count, vect2.TemplateSpecializedArguments.Count);
+            Assert.AreEqual(argAsClass.TemplateSpecializedArguments[0].ArgAsType.FullName,
+                            vect2.TemplateSpecializedArguments[0].ArgAsType.FullName);
+            Assert.AreEqual(argAsClass.TemplateSpecializedArguments[1].ArgAsInteger,
+                            vect2.TemplateSpecializedArguments[1].ArgAsInteger);
+
+        });
         }
     }
 }
