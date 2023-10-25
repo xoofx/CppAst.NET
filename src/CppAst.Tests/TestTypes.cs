@@ -262,6 +262,44 @@ void function1(std::tuple<double, double, double> input);
         }
 
         [Test]
+        public void TestTemplateParameterType()
+        {
+            ParseAssert(@"
+template <typename T>
+void function1(T input);
+
+template <typename T>
+class TemplatedClass
+{
+public:
+  TemplatedClass(T value);
+};",
+        compilation =>
+        {
+            Assert.False(compilation.HasErrors);
+            Assert.AreEqual(compilation.Classes.Count, 1);
+            Assert.AreEqual(compilation.Functions.Count, 1);
+
+            var function1 = compilation.Functions[0];
+            Assert.AreEqual(function1.Parameters.Count, 1);
+            var input = function1.Parameters[0];
+            Assert.AreEqual(input.Name, "input");
+            Assert.AreEqual(input.Type.GetDisplayName(), "T");
+            Assert.AreEqual(input.Type.TypeKind, CppTypeKind.TemplateParameterType);
+
+            var templatedClass = compilation.Classes[0];
+            Assert.AreEqual(templatedClass.Name, "TemplatedClass");
+            Assert.AreEqual(templatedClass.Constructors.Count, 1);
+            var constructor = templatedClass.Constructors[0];
+            Assert.AreEqual(constructor.Parameters.Count, 1);
+            var value = constructor.Parameters[0];
+            Assert.AreEqual(value.Name, "value");
+            Assert.AreEqual(value.Type.GetDisplayName(), "T");
+            Assert.AreEqual(value.Type.TypeKind, CppTypeKind.TemplateParameterType);
+        });
+        }
+
+        [Test]
         public void TestTemplateTypeDef()
         {
             ParseAssert(@"
@@ -285,7 +323,7 @@ private:
 using TemplatedClassDouble = TemplatedClass<double>;
 using TemplatedClassInt = TemplatedClass<int>;
 
-", 
+",
         compilation =>
         {
             Assert.False(compilation.HasErrors);
@@ -305,7 +343,7 @@ using TemplatedClassInt = TemplatedClass<int>;
             Assert.AreEqual(primaryTemplate.TemplateKind, CppTemplateKind.TemplateClass);
             Assert.AreEqual(primaryTemplate.TemplateParameters.Count, 1);
 
-            // Specialized tempaltes should contain the information of their primary template.
+            // Specialized templates should contain the information of their primary template.
             Assert.AreEqual(primaryTemplate.Constructors.Count, specializedTemplate1.PrimaryTemplate.Constructors.Count);
             Assert.AreEqual(primaryTemplate.Constructors.Count, specializedTemplate2.PrimaryTemplate.Constructors.Count);
             Assert.AreEqual(primaryTemplate.Functions.Count, specializedTemplate1.PrimaryTemplate.Functions.Count);

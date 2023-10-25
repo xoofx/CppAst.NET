@@ -1820,7 +1820,11 @@ namespace CppAst
                         {
                             return GetCppType(type.Declaration, type.Declaration.Type, parent, data);
                         }
-
+                        var templateParameterType = TryToCreateTemplateParameters(cursor, data);
+                        if (templateParameterType != null)
+                        {
+                            return templateParameterType;
+                        }
                         var cppUnexposedType = new CppUnexposedType(type.ToString()) { SizeOf = (int)type.SizeOf };
                         var templateParameters = ParseTemplateSpecializedArguments(cursor, type, new CXClientData((IntPtr)data));
                         if (templateParameters != null)
