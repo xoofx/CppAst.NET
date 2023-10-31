@@ -1825,6 +1825,15 @@ namespace CppAst
                         {
                             return templateParameterType;
                         }
+                        while (type.InjectedSpecializationType.kind != CXTypeKind.CXType_Invalid)
+                        {
+                            type = type.InjectedSpecializationType;
+                        }
+                        if (type.Declaration.Kind == CXCursorKind.CXCursor_ClassTemplate
+                        || type.Declaration.Kind == CXCursorKind.CXCursor_ClassTemplatePartialSpecialization)
+                        {
+                            return VisitClassDecl(type.Declaration, data);
+                        }
                         var cppUnexposedType = new CppUnexposedType(type.ToString()) { SizeOf = (int)type.SizeOf };
                         var templateParameters = ParseTemplateSpecializedArguments(cursor, type, new CXClientData((IntPtr)data));
                         if (templateParameters != null)

@@ -262,6 +262,22 @@ void function1(std::tuple<double, double, double> input);
         }
 
         [Test]
+        public void TestOptional()
+        {
+            var options = new CppParserOptions();
+            options.AdditionalArguments.Add("-std=c++17");
+            ParseAssert(@"
+#include <optional>
+
+void function1(const std::optional<double>& input);
+",
+        compilation =>
+        {
+            Assert.False(compilation.HasErrors);
+        }, options);
+        }
+
+        [Test]
         public void TestTemplateParameterType()
         {
             ParseAssert(@"
@@ -297,6 +313,174 @@ public:
             Assert.AreEqual(value.Type.GetDisplayName(), "T");
             Assert.AreEqual(value.Type.TypeKind, CppTypeKind.TemplateParameterType);
         });
+        }
+
+        [Test]
+        public void TestPrimaryTemplateType()
+        {
+            ParseAssert(@"
+template <typename T, unsigned N>
+class TemplatedClass
+{
+public:
+  TemplatedClass(T value);
+
+  TemplatedClass<T, N> operator+(const TemplatedClass<T, N>& other) const;
+
+  TemplatedClass operator-(const TemplatedClass& other) const;
+
+private:
+    T value_;
+};
+
+template <typename T>
+class TemplatedClass2D : public virtual TemplatedClass<T, 2>
+{
+public:
+  TemplatedClass2D(T value);
+
+  TemplatedClass2D<T> operator+(const TemplatedClass2D<T>& other) const;
+
+  TemplatedClass2D operator-(const TemplatedClass2D& other) const;
+};
+
+",
+            compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+                Assert.AreEqual(compilation.Classes.Count, 2);
+                {
+                    var templatedClass = compilation.Classes[0];
+                    Assert.AreEqual(templatedClass.Name, "TemplatedClass");
+                    Assert.AreEqual(templatedClass.Constructors.Count, 1);
+                    Assert.AreEqual(templatedClass.Functions.Count, 2);
+                    Assert.AreEqual(templatedClass.TemplateKind, CppTemplateKind.TemplateClass);
+                    Assert.AreEqual(templatedClass.TemplateParameters.Count, 2);
+                    Assert.AreEqual(templatedClass.TemplateSpecializedArguments.Count, 0);
+
+                    var T = templatedClass.TemplateParameters[0];
+                    Assert.True(T is CppTemplateParameterType);
+                    Assert.AreEqual((T as CppTemplateParameterType).Name, "T");
+
+                    var N = templatedClass.TemplateParameters[1];
+                    Assert.True(N is CppTemplateParameterNonType);
+                    Assert.AreEqual((N as CppTemplateParameterNonType).Name, "N");
+                    Assert.AreEqual((N as CppTemplateParameterNonType).NoneTemplateType.GetDisplayName(), "unsigned int");
+
+                    var operatorPlus = templatedClass.Functions[0];
+                    Assert.AreEqual(operatorPlus.Name, "operator+");
+
+                    var operatorPlusReturnType = operatorPlus.ReturnType as CppClass;
+                    Assert.AreEqual(operatorPlusReturnType.TemplateKind, CppTemplateKind.TemplateClass);
+                    Assert.AreEqual(operatorPlusReturnType.TemplateParameters.Count, 2);
+                    Assert.AreEqual(operatorPlusReturnType.GetDisplayName(), "TemplatedClass");
+
+                    Assert.AreEqual(operatorPlus.Parameters.Count, 1);
+                    var other = operatorPlus.Parameters[0];
+                    Assert.AreEqual(other.Name, "other");
+                    Assert.AreEqual(other.Type.TypeKind, CppTypeKind.Reference); // ref
+                    Assert.AreEqual((other.Type as CppReferenceType).ElementType.TypeKind, CppTypeKind.Qualified); // const
+                    var otherType = ((other.Type as CppReferenceType).ElementType as CppQualifiedType).ElementType as CppClass;
+                    Assert.AreEqual(otherType.TemplateKind, CppTemplateKind.TemplateClass);
+                    Assert.AreEqual(otherType.TemplateParameters.Count, 2);
+                    Assert.AreEqual(otherType.TemplateSpecializedArguments.Count, 0);
+                    Assert.AreEqual(otherType.Name, "TemplatedClass");
+
+                    T = otherType.TemplateParameters[0];
+                    Assert.True(T is CppTemplateParameterType);
+                    Assert.AreEqual((T as CppTemplateParameterType).Name, "T");
+
+                    N = otherType.TemplateParameters[1];
+                    Assert.True(N is CppTemplateParameterNonType);
+                    Assert.AreEqual((N as CppTemplateParameterNonType).Name, "N");
+                    Assert.AreEqual((N as CppTemplateParameterNonType).NoneTemplateType.GetDisplayName(), "unsigned int");
+
+                    var operatorMinus = templatedClass.Functions[1];
+                    Assert.AreEqual(operatorMinus.Name, "operator-");
+
+                    var operatorMinusReturnType = operatorMinus.ReturnType as CppClass;
+                    Assert.AreEqual(operatorMinusReturnType.TemplateKind, CppTemplateKind.TemplateClass);
+                    Assert.AreEqual(operatorMinusReturnType.TemplateParameters.Count, 2);
+                    Assert.AreEqual(operatorMinusReturnType.GetDisplayName(), "TemplatedClass");
+
+                    Assert.AreEqual(operatorMinus.Parameters.Count, 1);
+                    var other2 = operatorMinus.Parameters[0];
+                    Assert.AreEqual(other2.Name, "other");
+                    Assert.AreEqual(other2.Type.TypeKind, CppTypeKind.Reference); // ref
+                    Assert.AreEqual((other2.Type as CppReferenceType).ElementType.TypeKind, CppTypeKind.Qualified); // const
+                    var other2Type = ((other2.Type as CppReferenceType).ElementType as CppQualifiedType).ElementType as CppClass;
+                    Assert.AreEqual(other2Type.TemplateKind, CppTemplateKind.TemplateClass);
+                    Assert.AreEqual(other2Type.TemplateParameters.Count, 2);
+                    Assert.AreEqual(otherType.TemplateSpecializedArguments.Count, 0);
+                    Assert.AreEqual(other2Type.Name, "TemplatedClass");
+
+                    T = other2Type.TemplateParameters[0];
+                    Assert.True(T is CppTemplateParameterType);
+                    Assert.AreEqual((T as CppTemplateParameterType).Name, "T");
+
+                    N = other2Type.TemplateParameters[1];
+                    Assert.True(N is CppTemplateParameterNonType);
+                    Assert.AreEqual((N as CppTemplateParameterNonType).Name, "N");
+                    Assert.AreEqual((N as CppTemplateParameterNonType).NoneTemplateType.GetDisplayName(), "unsigned int");
+                }
+
+                {
+                    var templatedClass2D = compilation.Classes[1];
+                    Assert.AreEqual(templatedClass2D.Name, "TemplatedClass2D");
+                    Assert.AreEqual(templatedClass2D.Constructors.Count, 1);
+                    Assert.AreEqual(templatedClass2D.Functions.Count, 2);
+                    Assert.AreEqual(templatedClass2D.TemplateKind, CppTemplateKind.TemplateClass);
+                    Assert.AreEqual(templatedClass2D.TemplateParameters.Count, 1);
+                    Assert.AreEqual(templatedClass2D.TemplateSpecializedArguments.Count, 0);
+
+
+                    var T = templatedClass2D.TemplateParameters[0];
+                    Assert.True(T is CppTemplateParameterType);
+                    Assert.AreEqual((T as CppTemplateParameterType).Name, "T");
+
+                    var baseClass = templatedClass2D.BaseTypes[0].Type as CppClass;
+                    Assert.AreEqual(baseClass, compilation.Classes[0]);
+
+                    var operatorPlus = templatedClass2D.Functions[0];
+                    Assert.AreEqual(operatorPlus.Name, "operator+");
+
+                    Assert.AreEqual(operatorPlus.Parameters.Count, 1);
+                    var other = operatorPlus.Parameters[0];
+                    Assert.AreEqual(other.Name, "other");
+                    Assert.AreEqual(other.Type.TypeKind, CppTypeKind.Reference); // ref
+                    Assert.AreEqual((other.Type as CppReferenceType).ElementType.TypeKind, CppTypeKind.Qualified); // const
+                    var otherType = ((other.Type as CppReferenceType).ElementType as CppQualifiedType).ElementType as CppClass;
+                    Assert.AreEqual(otherType.TemplateKind, CppTemplateKind.TemplateClass);
+                    Assert.AreEqual(otherType.TemplateParameters.Count, 1);
+                    Assert.AreEqual(otherType.TemplateSpecializedArguments.Count, 0);
+                    Assert.AreEqual(otherType.Name, "TemplatedClass2D");
+
+                    T = otherType.TemplateParameters[0];
+                    Assert.True(T is CppTemplateParameterType);
+                    Assert.AreEqual((T as CppTemplateParameterType).Name, "T");
+
+                    var operatorMinus = templatedClass2D.Functions[1];
+                    Assert.AreEqual(operatorMinus.Name, "operator-");
+
+                    Assert.AreEqual(operatorMinus.Parameters.Count, 1);
+                    var other2 = operatorMinus.Parameters[0];
+                    Assert.AreEqual(other2.Name, "other");
+                    Assert.AreEqual(other2.Type.TypeKind, CppTypeKind.Reference); // ref
+                    Assert.AreEqual((other2.Type as CppReferenceType).ElementType.TypeKind, CppTypeKind.Qualified); // const
+                    var other2Type = ((other2.Type as CppReferenceType).ElementType as CppQualifiedType).ElementType as CppClass;
+                    Assert.AreEqual(other2Type.TemplateKind, CppTemplateKind.TemplateClass);
+                    Assert.AreEqual(other2Type.TemplateParameters.Count, 1);
+                    Assert.AreEqual(otherType.TemplateSpecializedArguments.Count, 0);
+                    Assert.AreEqual(other2Type.Name, "TemplatedClass2D");
+
+                    T = other2Type.TemplateParameters[0];
+                    Assert.True(T is CppTemplateParameterType);
+                    Assert.AreEqual((T as CppTemplateParameterType).Name, "T");
+
+                }
+            });
+
+
         }
 
         [Test]
