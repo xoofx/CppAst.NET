@@ -1187,7 +1187,9 @@ namespace CppAst
             if (expression is CppRawExpression tokensExpr)
             {
                 var tokenizer = new CppTokenUtil.Tokenizer(cursor);
-                for (int i = 0; i < tokenizer.Count; i++)
+                // We don't need the first = character, if there is one
+                var startIndex = tokenizer.Count > 0 && tokenizer[0].Text == "=" ? 1 : 0;
+                for (int i = startIndex; i < tokenizer.Count; i++)
                 {
                     tokensExpr.Tokens.Add(tokenizer[i]);
                 }

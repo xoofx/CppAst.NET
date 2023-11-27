@@ -405,9 +405,9 @@ void functionX(Test<int,2> a = aa, Test<double,3> b = bb);
                         Assert.AreEqual(0, compilation.Functions[1].DefaultParamCount);
                         Assert.AreEqual(2, compilation.Functions[2].DefaultParamCount);
                         Assert.True(compilation.Functions[2].Parameters[0].InitExpression is CppRawExpression);
-                        Assert.AreEqual("=aa", (compilation.Functions[2].Parameters[0].InitExpression as CppRawExpression).Text);
+                        Assert.AreEqual("aa", (compilation.Functions[2].Parameters[0].InitExpression as CppRawExpression).Text);
                         Assert.True(compilation.Functions[2].Parameters[1].InitExpression is CppRawExpression);
-                        Assert.AreEqual("=bb", (compilation.Functions[2].Parameters[1].InitExpression as CppRawExpression).Text);
+                        Assert.AreEqual("bb", (compilation.Functions[2].Parameters[1].InitExpression as CppRawExpression).Text);
                     }
 
                 }
