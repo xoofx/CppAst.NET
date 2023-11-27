@@ -891,15 +891,28 @@ namespace CppAst
             CppExpression localExpression = null;
             CppValue localValue = null;
 
-            cursor.VisitChildren((initCursor, varCursor, clientData) =>
+            // We have a safer and easier way to extract the "InitExpression", e.g. default
+            // arguments for a parameter
+            if (cursor.Kind == CXCursorKind.CXCursor_ParmDecl)
             {
-                if (IsExpression(initCursor))
+                var defaultArg = cursor.DefaultArg;
+                if (IsExpression(defaultArg))
                 {
-                    localExpression = VisitExpression(initCursor, clientData);
-                    return CXChildVisitResult.CXChildVisit_Break;
+                    localExpression = VisitExpression(defaultArg, data);
                 }
-                return CXChildVisitResult.CXChildVisit_Continue;
-            }, new CXClientData((IntPtr)data));
+            }
+            else
+            {
+                cursor.VisitChildren((initCursor, varCursor, clientData) =>
+                {
+                    if (IsExpression(initCursor))
+                    {
+                        localExpression = VisitExpression(initCursor, clientData);
+                        return CXChildVisitResult.CXChildVisit_Break;
+                    }
+                    return CXChildVisitResult.CXChildVisit_Continue;
+                }, new CXClientData((IntPtr)data));
+            }
 
             // Still tries to extract the compiled value
             var resultEval = new CXEvalResult((IntPtr)clang.Cursor_Evaluate(cursor));
