@@ -297,11 +297,44 @@ namespace CppAst
             return cppStruct;
         }
 
+        private CppFunction VisitUsing(CXCursor cursor, CXCursor parent, void* data)
+        {
+            var contextContainer = GetOrCreateDeclarationContainer(cursor.SemanticParent, data);
+            var container = contextContainer.DeclarationContainer;
+
+            if (container == null)
+            {
+                WarningUnhandled(cursor, parent);
+                return null;
+            }
+
+            cursor.VisitChildren((childCursor, funcCursor, clientData) =>
+            {
+                // Please note that this is not the complete using implementation,
+                // it only works with constructors
+                if (childCursor.Kind == CXCursorKind.CXCursor_OverloadedDeclRef)
+                {
+                    // We simply copy the overloaded functions into the current class 
+                    for (uint i=0;i< childCursor.NumOverloadedDecls; i++)
+                    {
+                        VisitFunctionDecl(cursor, childCursor.GetOverloadedDecl(i), parent, clientData);
+                    }
+                    return CXChildVisitResult.CXChildVisit_Break;
+                }
+                return CXChildVisitResult.CXChildVisit_Continue;
+            }, new CXClientData((IntPtr)data));
+
+            return null;
+        }
+
         private CXChildVisitResult VisitMember(CXCursor cursor, CXCursor parent, void* data)
         {
             CppElement element = null;
             switch (cursor.Kind)
             {
+                case CXCursorKind.CXCursor_UsingDeclaration:
+                    element = VisitUsing(cursor, parent, data);
+                    break;
                 case CXCursorKind.CXCursor_FieldDecl:
                 case CXCursorKind.CXCursor_VarDecl:
                     {
@@ -390,7 +423,7 @@ namespace CppAst
                 case CXCursorKind.CXCursor_FunctionDecl:
                 case CXCursorKind.CXCursor_Constructor:
                 case CXCursorKind.CXCursor_CXXMethod:
-                    element = VisitFunctionDecl(cursor, parent, data);
+                    element = VisitFunctionDecl(cursor, cursor, parent, data);
                     break;
 
                 case CXCursorKind.CXCursor_UsingDirective:
@@ -1212,43 +1245,47 @@ namespace CppAst
             return CppStorageQualifier.None;
         }
 
-        private CppFunction VisitFunctionDecl(CXCursor cursor, CXCursor parent, void* data)
+private CppFunction VisitFunctionDecl(CXCursor destinationCursor, CXCursor cursor, CXCursor parent, void* data)
         {
+            var destinationContextContainer = GetOrCreateDeclarationContainer(destinationCursor.SemanticParent, data);
+            var destinationContainer = destinationContextContainer.DeclarationContainer;
             var contextContainer = GetOrCreateDeclarationContainer(cursor.SemanticParent, data);
             var container = contextContainer.DeclarationContainer;
 
-            if (container == null)
+            if (destinationContainer == null || container == null)
             {
                 WarningUnhandled(cursor, parent);
                 return null;
             }
 
-            var functionName = GetCursorSpelling(cursor);
+            // This (not using 'cursor', but 'destinationCursor') is only used when we pulling in constructors from Foo, into Bar
+            // We are renaming effectively the pulled in 'Foo' constructor into 'Bar'
+            var functionName = GetCursorSpelling(destinationCursor);
 
             //We need ignore the function define out in the class definition here(Otherwise it will has two same functions here~)!
-            var semKind = cursor.SemanticParent.Kind;
+            var semKind = destinationCursor.SemanticParent.Kind;
             if ((semKind == CXCursorKind.CXCursor_StructDecl || semKind == CXCursorKind.CXCursor_ClassDecl)
-                && cursor.LexicalParent != cursor.SemanticParent)
+                && destinationCursor.LexicalParent != destinationCursor.SemanticParent)
             {
                 return null;
             }
 
             var cppFunction = new CppFunction(functionName)
             {
-                Visibility = contextContainer.CurrentVisibility,
+                Visibility = destinationContextContainer.CurrentVisibility,
                 StorageQualifier = GetStorageQualifier(cursor),
                 LinkageKind = GetLinkage(cursor.Linkage),
             };
 
             if (cursor.Kind == CXCursorKind.CXCursor_Constructor)
             {
-                var cppClass = (CppClass)container;
+                var cppClass = (CppClass)destinationContainer;
                 cppFunction.IsConstructor = true;
                 cppClass.Constructors.Add(cppFunction);
             }
             else
             {
-                container.Functions.Add(cppFunction);
+                destinationContainer.Functions.Add(cppFunction);
             }
 
             if (cursor.kind == CXCursorKind.CXCursor_FunctionTemplate)
