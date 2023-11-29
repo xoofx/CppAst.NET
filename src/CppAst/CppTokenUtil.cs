@@ -889,12 +889,16 @@ namespace CppAst
             {
                 if (iter.Skip("template"))
                 {
-                    iter.Next(); // skip the first >
+                    iter.Next(); // skip the first <
                     int parentCount = 1;
                     while (parentCount > 0 && iter.CanPeek)
                     {
                         var text = iter.PeekText();
-                        if (text == ">")
+                        if (text == "<")
+                        {
+                            parentCount++;
+                        }
+                        else if (text == ">")
                         {
                             parentCount--;
                         }
