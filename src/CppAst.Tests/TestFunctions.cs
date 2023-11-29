@@ -368,5 +368,51 @@ void function0(T t);
             );
         }
 
+
+        [Test]
+        public void TestFunctionTemplateClass()
+        {
+            ParseAssert(@"
+
+template<typename T, int S>
+class Test
+{
+public:
+  Test(T t) : t_{t} {}
+private:
+  T t_;
+};
+
+static Test<int,2> aa{4};
+static Test<double,3> bb{6.0};
+
+void functionZ(int a = 5, double b = 6.5);
+void functionY(Test<int,2> a, Test<double,3> b);
+void functionX(Test<int,2> a = aa, Test<double,3> b = bb);
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(3, compilation.Functions.Count);
+
+                    {
+                        Assert.AreEqual(2, compilation.Functions[0].DefaultParamCount);
+                        Assert.True(compilation.Functions[0].Parameters[0].InitExpression is CppLiteralExpression);
+                        Assert.AreEqual("5", (compilation.Functions[0].Parameters[0].InitExpression as CppLiteralExpression).Value);
+                        Assert.True(compilation.Functions[0].Parameters[1].InitExpression is CppLiteralExpression);
+                        Assert.AreEqual("6.5", (compilation.Functions[0].Parameters[1].InitExpression as CppLiteralExpression).Value);
+                        Assert.AreEqual(0, compilation.Functions[1].DefaultParamCount);
+                        Assert.AreEqual(2, compilation.Functions[2].DefaultParamCount);
+                        Assert.True(compilation.Functions[2].Parameters[0].InitExpression is CppRawExpression);
+                        Assert.AreEqual("aa", (compilation.Functions[2].Parameters[0].InitExpression as CppRawExpression).Text);
+                        Assert.True(compilation.Functions[2].Parameters[1].InitExpression is CppRawExpression);
+                        Assert.AreEqual("bb", (compilation.Functions[2].Parameters[1].InitExpression as CppRawExpression).Text);
+                    }
+
+                }
+            );
+        }
+
     }
 }
