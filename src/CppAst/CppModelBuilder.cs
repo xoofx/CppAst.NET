@@ -1260,7 +1260,7 @@ namespace CppAst
             return CppStorageQualifier.None;
         }
 
-private CppFunction VisitFunctionDecl(CXCursor destinationCursor, CXCursor cursor, CXCursor parent, void* data)
+        private CppFunction VisitFunctionDecl(CXCursor destinationCursor, CXCursor cursor, CXCursor parent, void* data)
         {
             var destinationContextContainer = GetOrCreateDeclarationContainer(destinationCursor.SemanticParent, data);
             var destinationContainer = destinationContextContainer.DeclarationContainer;
@@ -1294,13 +1294,7 @@ private CppFunction VisitFunctionDecl(CXCursor destinationCursor, CXCursor curso
 
             if (cursor.Kind == CXCursorKind.CXCursor_Constructor)
             {
-                var cppClass = (CppClass)destinationContainer;
                 cppFunction.IsConstructor = true;
-                cppClass.Constructors.Add(cppFunction);
-            }
-            else
-            {
-                destinationContainer.Functions.Add(cppFunction);
             }
 
             if (cursor.kind == CXCursorKind.CXCursor_FunctionTemplate)
@@ -1400,6 +1394,19 @@ private CppFunction VisitFunctionDecl(CXCursor destinationCursor, CXCursor curso
                 return CXChildVisitResult.CXChildVisit_Continue;
 
             }, new CXClientData((IntPtr)data));
+
+            if (cursor.Kind == CXCursorKind.CXCursor_Constructor)
+            {
+                var cppClass = (CppClass)destinationContainer;
+                if (!cppClass.Constructors.Contains(cppFunction))
+                {
+                    cppClass.Constructors.Add(cppFunction);
+                }
+            }
+            else if (!destinationContainer.Functions.Contains(cppFunction))
+            {
+                destinationContainer.Functions.Add(cppFunction);
+            }
 
             return cppFunction;
         }
