@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace CppAst
@@ -85,6 +86,69 @@ namespace CppAst
                 return default_count;
             }
         }
+
+        /// <summary>
+        /// Checks whether the two functions are the same or not
+        /// </summary>
+        public bool Equals(CppFunction other)
+        {
+            return Visibility.Equals(other.Visibility) &&
+              Attributes.SequenceEqual(other.Attributes) &&
+              TokenAttributes.SequenceEqual(other.TokenAttributes) &&
+              StorageQualifier.Equals(other.StorageQualifier) &&
+              LinkageKind.Equals(other.LinkageKind) &&
+              IsConstructor.Equals(other.IsConstructor) &&
+              Name.Equals(other.Name) &&
+              Parameters.SequenceEqual(other.Parameters) &&
+              TemplateParameters.SequenceEqual(other.TemplateParameters) &&
+              CallingConvention.Equals(other.CallingConvention) &&
+              Visibility.Equals(other.Visibility) &&
+              Flags.Equals(other.Flags) &&
+              ReturnType.Equals(other.ReturnType);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return ReferenceEquals(this, obj) || obj is CppFunction other && Equals(other);
+        }
+
+        /// <inheritdoc />
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ Visibility.GetHashCode();
+                hashCode = (hashCode * 397) ^ StorageQualifier.GetHashCode();
+                hashCode = (hashCode * 397) ^ LinkageKind.GetHashCode();
+                hashCode = (hashCode * 397) ^ IsConstructor.GetHashCode();
+                hashCode = (hashCode * 397) ^ Name.GetHashCode();
+                hashCode = (hashCode * 397) ^ CallingConvention.GetHashCode();
+                hashCode = (hashCode * 397) ^ Visibility.GetHashCode();
+                hashCode = (hashCode * 397) ^ Flags.GetHashCode();
+                hashCode = (hashCode * 397) ^ ReturnType.GetHashCode();
+
+                foreach (var templateParameter in TemplateParameters)
+                {
+                    hashCode = (hashCode * 397) ^ templateParameter.GetHashCode();
+                }
+                foreach (var parameter in Parameters)
+                {
+                    hashCode = (hashCode * 397) ^ parameter.GetHashCode();
+                }
+                foreach (var attribute in Attributes)
+                {
+                    hashCode = (hashCode * 397) ^ attribute.GetHashCode();
+                }
+                foreach (var attribute in TokenAttributes)
+                {
+                    hashCode = (hashCode * 397) ^ attribute.GetHashCode();
+                }
+
+                return hashCode;
+            }
+        }
+
 
         /// <summary>
         /// Gets or sets the flags of this function.

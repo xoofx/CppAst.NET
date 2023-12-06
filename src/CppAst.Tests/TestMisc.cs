@@ -23,17 +23,30 @@ class Bar : public Foo
 public:
   using Foo::Foo;
 };
+
+class Baz : public Bar
+{
+public:
+  using Bar::Bar;
+  Baz(double y) : y_{y} {}
+private:
+  double y_{0};
+};
 ",
                 compilation =>
                 {
                     Assert.False(compilation.HasErrors);
-                    Assert.AreEqual(2, compilation.Classes.Count);
+                    Assert.AreEqual(3, compilation.Classes.Count);
                     Assert.AreEqual(1, compilation.Classes[0].Constructors.Count);
-                    // Bar will get 3 constructors
-                    Assert.AreEqual(3, compilation.Classes[1].Constructors.Count);
+                    Assert.AreEqual(2, compilation.Classes[1].Constructors.Count);
                     Assert.AreEqual(CppVisibility.Public, compilation.Classes[1].Constructors[0].Visibility);
                     Assert.AreEqual(CppVisibility.Public, compilation.Classes[1].Constructors[1].Visibility);
-                    Assert.AreEqual(CppVisibility.Public, compilation.Classes[1].Constructors[2].Visibility);
+
+                    Assert.AreEqual(3, compilation.Classes[2].Constructors.Count);
+                    Assert.AreEqual(CppVisibility.Public, compilation.Classes[2].Constructors[0].Visibility);
+                    Assert.AreEqual(CppVisibility.Public, compilation.Classes[2].Constructors[1].Visibility);
+                    Assert.AreEqual(CppVisibility.Public, compilation.Classes[2].Constructors[2].Visibility);
+
                 }
             );
         }
