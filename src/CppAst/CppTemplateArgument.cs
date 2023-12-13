@@ -22,15 +22,15 @@ namespace CppAst
 
         public CppTemplateArgument(CppType sourceParam, long intArg) : base(CppTypeKind.TemplateArgumentType)
         {
-			SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
+            SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
             ArgAsInteger = intArg;
             ArgKind = CppTemplateArgumentKind.AsInteger;
             IsSpecializedArgument = true;
         }
 
-		public CppTemplateArgument(CppType sourceParam, string unknownStr) : base(CppTypeKind.TemplateArgumentType)
+        public CppTemplateArgument(CppType sourceParam, string unknownStr) : base(CppTypeKind.TemplateArgumentType)
         {
-			SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
+            SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
             ArgAsUnknown = unknownStr;
             ArgKind = CppTemplateArgumentKind.Unknown;
             IsSpecializedArgument = true;
@@ -76,6 +76,43 @@ namespace CppAst
             get => 0;
             set => throw new InvalidOperationException("This type does not support SizeOf");
         }
+
+        /// <summary>
+        /// Checks whether the two template arguments are the same or not
+        /// </summary>
+        public bool Equals(CppTemplateArgument other)
+        {
+            if (ArgKind != other.ArgKind)
+            {
+                return false;
+            }
+
+            if (ArgKind == CppTemplateArgumentKind.AsType)
+            {
+                if (!ArgAsType.Equals(other.ArgAsType))
+                {
+                    return false;
+                }
+            }
+            else if (ArgKind == CppTemplateArgumentKind.AsInteger)
+            {
+                if (ArgAsInteger != other.ArgAsInteger)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                if (!ArgAsUnknown.Equals(other.ArgAsUnknown))
+                {
+                    return false;
+                }
+            }
+
+            return SourceParam.Equals(other.SourceParam) &&
+              IsSpecializedArgument.Equals(other.IsSpecializedArgument);
+        }
+
 
         /// <inheritdoc />
         public override bool Equals(object obj)

@@ -344,11 +344,22 @@ public:
   TemplatedClass2D operator-(const TemplatedClass2D& other) const;
 };
 
+template <typename T>
+class TemplatedClass3D : public virtual TemplatedClass<T, 3>
+{
+public:
+  TemplatedClass3D(T value);
+
+  TemplatedClass3D<T> operator+(const TemplatedClass3D<T>& other) const;
+
+  TemplatedClass3D operator-(const TemplatedClass3D& other) const;
+};
+
 ",
             compilation =>
             {
                 Assert.False(compilation.HasErrors);
-                Assert.AreEqual(compilation.Classes.Count, 2);
+                Assert.AreEqual(compilation.Classes.Count, 3);
                 {
                     var templatedClass = compilation.Classes[0];
                     Assert.AreEqual(templatedClass.Name, "TemplatedClass");
@@ -411,7 +422,7 @@ public:
                     var other2Type = ((other2.Type as CppReferenceType).ElementType as CppQualifiedType).ElementType as CppClass;
                     Assert.AreEqual(other2Type.TemplateKind, CppTemplateKind.TemplateClass);
                     Assert.AreEqual(other2Type.TemplateParameters.Count, 2);
-                    Assert.AreEqual(otherType.TemplateSpecializedArguments.Count, 0);
+                    Assert.AreEqual(other2Type.TemplateSpecializedArguments.Count, 0);
                     Assert.AreEqual(other2Type.Name, "TemplatedClass");
 
                     T = other2Type.TemplateParameters[0];
@@ -429,14 +440,18 @@ public:
                     Assert.AreEqual(templatedClass2D.Name, "TemplatedClass2D");
                     Assert.AreEqual(templatedClass2D.Constructors.Count, 1);
                     Assert.AreEqual(templatedClass2D.Functions.Count, 2);
-                    Assert.AreEqual(templatedClass2D.TemplateKind, CppTemplateKind.TemplateClass);
+                    Assert.AreEqual(templatedClass2D.TemplateKind, CppTemplateKind.PartialTemplateClass);
                     Assert.AreEqual(templatedClass2D.TemplateParameters.Count, 1);
-                    Assert.AreEqual(templatedClass2D.TemplateSpecializedArguments.Count, 0);
+                    Assert.AreEqual(templatedClass2D.TemplateSpecializedArguments.Count, 1);
 
 
                     var T = templatedClass2D.TemplateParameters[0];
                     Assert.True(T is CppTemplateParameterType);
                     Assert.AreEqual((T as CppTemplateParameterType).Name, "T");
+
+                    var N = templatedClass2D.TemplateSpecializedArguments[0];
+                    Assert.AreEqual(N.ArgKind, CppTemplateArgumentKind.AsInteger);
+                    Assert.AreEqual(2, N.ArgAsInteger);
 
                     var baseClass = templatedClass2D.BaseTypes[0].Type as CppClass;
                     Assert.AreEqual(baseClass, compilation.Classes[0]);
@@ -450,14 +465,18 @@ public:
                     Assert.AreEqual(other.Type.TypeKind, CppTypeKind.Reference); // ref
                     Assert.AreEqual((other.Type as CppReferenceType).ElementType.TypeKind, CppTypeKind.Qualified); // const
                     var otherType = ((other.Type as CppReferenceType).ElementType as CppQualifiedType).ElementType as CppClass;
-                    Assert.AreEqual(otherType.TemplateKind, CppTemplateKind.TemplateClass);
+                    Assert.AreEqual(otherType.TemplateKind, CppTemplateKind.PartialTemplateClass);
                     Assert.AreEqual(otherType.TemplateParameters.Count, 1);
-                    Assert.AreEqual(otherType.TemplateSpecializedArguments.Count, 0);
+                    Assert.AreEqual(otherType.TemplateSpecializedArguments.Count, 1);
                     Assert.AreEqual(otherType.Name, "TemplatedClass2D");
 
                     T = otherType.TemplateParameters[0];
                     Assert.True(T is CppTemplateParameterType);
                     Assert.AreEqual((T as CppTemplateParameterType).Name, "T");
+
+                    N = otherType.TemplateSpecializedArguments[0];
+                    Assert.AreEqual(N.ArgKind, CppTemplateArgumentKind.AsInteger);
+                    Assert.AreEqual(2, N.ArgAsInteger);
 
                     var operatorMinus = templatedClass2D.Functions[1];
                     Assert.AreEqual(operatorMinus.Name, "operator-");
@@ -468,16 +487,85 @@ public:
                     Assert.AreEqual(other2.Type.TypeKind, CppTypeKind.Reference); // ref
                     Assert.AreEqual((other2.Type as CppReferenceType).ElementType.TypeKind, CppTypeKind.Qualified); // const
                     var other2Type = ((other2.Type as CppReferenceType).ElementType as CppQualifiedType).ElementType as CppClass;
-                    Assert.AreEqual(other2Type.TemplateKind, CppTemplateKind.TemplateClass);
+                    Assert.AreEqual(other2Type.TemplateKind, CppTemplateKind.PartialTemplateClass);
                     Assert.AreEqual(other2Type.TemplateParameters.Count, 1);
-                    Assert.AreEqual(otherType.TemplateSpecializedArguments.Count, 0);
+                    Assert.AreEqual(other2Type.TemplateSpecializedArguments.Count, 1);
                     Assert.AreEqual(other2Type.Name, "TemplatedClass2D");
 
                     T = other2Type.TemplateParameters[0];
                     Assert.True(T is CppTemplateParameterType);
                     Assert.AreEqual((T as CppTemplateParameterType).Name, "T");
 
+                    N = other2Type.TemplateSpecializedArguments[0];
+                    Assert.AreEqual(N.ArgKind, CppTemplateArgumentKind.AsInteger);
+                    Assert.AreEqual(2, N.ArgAsInteger);
                 }
+
+                {
+                    var templatedClass3D = compilation.Classes[2];
+                    Assert.AreEqual(templatedClass3D.Name, "TemplatedClass3D");
+                    Assert.AreEqual(templatedClass3D.Constructors.Count, 1);
+                    Assert.AreEqual(templatedClass3D.Functions.Count, 2);
+                    Assert.AreEqual(templatedClass3D.TemplateKind, CppTemplateKind.PartialTemplateClass);
+                    Assert.AreEqual(templatedClass3D.TemplateParameters.Count, 1);
+                    Assert.AreEqual(templatedClass3D.TemplateSpecializedArguments.Count, 1);
+
+                    var T = templatedClass3D.TemplateParameters[0];
+                    Assert.True(T is CppTemplateParameterType);
+                    Assert.AreEqual((T as CppTemplateParameterType).Name, "T");
+
+                    var N = templatedClass3D.TemplateSpecializedArguments[0];
+                    Assert.AreEqual(N.ArgKind, CppTemplateArgumentKind.AsInteger);
+                    Assert.AreEqual(3, N.ArgAsInteger);
+
+                    var baseClass = templatedClass3D.BaseTypes[0].Type as CppClass;
+                    Assert.AreEqual(baseClass, compilation.Classes[0]);
+
+                    var operatorPlus = templatedClass3D.Functions[0];
+                    Assert.AreEqual(operatorPlus.Name, "operator+");
+
+                    Assert.AreEqual(operatorPlus.Parameters.Count, 1);
+                    var other = operatorPlus.Parameters[0];
+                    Assert.AreEqual(other.Name, "other");
+                    Assert.AreEqual(other.Type.TypeKind, CppTypeKind.Reference); // ref
+                    Assert.AreEqual((other.Type as CppReferenceType).ElementType.TypeKind, CppTypeKind.Qualified); // const
+                    var otherType = ((other.Type as CppReferenceType).ElementType as CppQualifiedType).ElementType as CppClass;
+                    Assert.AreEqual(otherType.TemplateKind, CppTemplateKind.PartialTemplateClass);
+                    Assert.AreEqual(otherType.TemplateParameters.Count, 1);
+                    Assert.AreEqual(otherType.TemplateSpecializedArguments.Count, 1);
+                    Assert.AreEqual(otherType.Name, "TemplatedClass3D");
+
+                    T = otherType.TemplateParameters[0];
+                    Assert.True(T is CppTemplateParameterType);
+                    Assert.AreEqual((T as CppTemplateParameterType).Name, "T");
+
+                    N = otherType.TemplateSpecializedArguments[0];
+                    Assert.AreEqual(N.ArgKind, CppTemplateArgumentKind.AsInteger);
+                    Assert.AreEqual(3, N.ArgAsInteger);
+
+                    var operatorMinus = templatedClass3D.Functions[1];
+                    Assert.AreEqual(operatorMinus.Name, "operator-");
+
+                    Assert.AreEqual(operatorMinus.Parameters.Count, 1);
+                    var other2 = operatorMinus.Parameters[0];
+                    Assert.AreEqual(other2.Name, "other");
+                    Assert.AreEqual(other2.Type.TypeKind, CppTypeKind.Reference); // ref
+                    Assert.AreEqual((other2.Type as CppReferenceType).ElementType.TypeKind, CppTypeKind.Qualified); // const
+                    var other2Type = ((other2.Type as CppReferenceType).ElementType as CppQualifiedType).ElementType as CppClass;
+                    Assert.AreEqual(other2Type.TemplateKind, CppTemplateKind.PartialTemplateClass);
+                    Assert.AreEqual(other2Type.TemplateParameters.Count, 1);
+                    Assert.AreEqual(other2Type.TemplateSpecializedArguments.Count, 1);
+                    Assert.AreEqual(other2Type.Name, "TemplatedClass3D");
+
+                    T = other2Type.TemplateParameters[0];
+                    Assert.True(T is CppTemplateParameterType);
+                    Assert.AreEqual((T as CppTemplateParameterType).Name, "T");
+
+                    N = other2Type.TemplateSpecializedArguments[0];
+                    Assert.AreEqual(N.ArgKind, CppTemplateArgumentKind.AsInteger);
+                    Assert.AreEqual(3, N.ArgAsInteger);
+                }
+
             });
 
 

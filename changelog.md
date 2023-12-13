@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.8.0-alpha-015 (13 Dec 2023)
+- Fixed partial template specialization
+
 ## 0.8.0-alpha-004 (07 Sep 2022)
 - Fix issue with late predeclaration rewrites filespan (#53)
 
