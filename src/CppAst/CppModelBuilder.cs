@@ -118,17 +118,16 @@ namespace CppAst
                     }
                     else
                     {
-                        /* This is quite impossible, just to make sure */
-                        if (existingParams.Count() > 1)
+                        /** Don't really know what to do with the case if we have the same template parameter multiple times */
+                        if (existingParams.Count() == 1)
                         {
-                            throw new InvalidOperationException($"The same template parameter `{p.SourceParam.FullName}` exists more than one times");
-                        }
-                        var existingParam = existingParams[0];
-                        if (!existingParam.IsSpecializedArgument && p.IsSpecializedArgument)
-                        {
-                            /* We need to replace the already existing non-specialized parameter with the new specialized one */
-                            var index = destinationArguments.IndexOf(existingParam);
-                            destinationArguments[index] = p;
+                            var existingParam = existingParams[0];
+                            if (!existingParam.IsSpecializedArgument && p.IsSpecializedArgument)
+                            {
+                                /* We need to replace the already existing non-specialized parameter with the new specialized one */
+                                var index = destinationArguments.IndexOf(existingParam);
+                                destinationArguments[index] = p;
+                            }
                         }
                     }
                 }
@@ -142,6 +141,22 @@ namespace CppAst
             if (cppClass.TemplateKind == CppTemplateKind.TemplateClass && cppClass.TemplateParameters.Count > 0 && cppClass.TemplateSpecializedArguments.Count > 0)
             {
                 cppClass.TemplateKind = CppTemplateKind.PartialTemplateClass;
+                /** We need to set the primary template */
+                if (cppClass.PrimaryTemplate == null && cppClass.BaseTypes.Count > 0)
+                {
+                    foreach (var b in cppClass.BaseTypes)
+                    {
+                        if (b.Type is CppClass)
+                        {
+                            var clz = b.Type as CppClass;
+                            if (clz.TemplateKind == CppTemplateKind.TemplateClass)
+                            {
+                                cppClass.PrimaryTemplate = clz;
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -264,7 +279,6 @@ namespace CppAst
                         {
                             Debug.Assert(cppClass.PrimaryTemplate.TemplateParameters.Count == tempArgsCount);
                         }
-
 
                         for (uint i = 0; i < tempArgsCount; i++)
                         {

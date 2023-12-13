@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.8.0-alpha-016 (13 Dec 2023)
+- Fixed empty template parameter name specialization
+
 ## 0.8.0-alpha-015 (13 Dec 2023)
 - Fixed partial template specialization
 
