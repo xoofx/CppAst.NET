@@ -3,7 +3,6 @@
 // See license.txt file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace CppAst
@@ -36,11 +35,6 @@ namespace CppAst
         /// Gets the C++ type associated.
         /// </summary>
         public CppType Type { get; }
-
-        /// <summary>
-        /// Specialized template parameters for the given instance of the base type
-        /// </summary>
-        public List<CppTemplateArgument> TemplateSpecializedArguments { get; } = new List<CppTemplateArgument>();
 
         /// <inheritdoc />
         public override string ToString()

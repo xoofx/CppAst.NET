@@ -10,7 +10,6 @@ using System.Text;
 using System.Runtime.InteropServices;
 using ClangSharp;
 using ClangSharp.Interop;
-using System.Linq;
 
 namespace CppAst
 {
@@ -85,66 +84,6 @@ namespace CppAst
 
             return null;
         }
-
-
-        /*
-         * Helper function to add specialized template parameters from a given source to a destination parameter list
-         * It also takes care of the fact that libClang can return the same template parameter 'a bit differently' 
-         * depending on where it is being used
-         */
-        private void AddTemplateSpecializedArguments(List<CppTemplateArgument> sourceArguments, List<CppTemplateArgument> destinationArguments)
-        {
-            foreach (var p in sourceArguments)
-            {
-                if (!destinationArguments.Contains(p))
-                {
-                    /** 
-                     * Ok, BaseTypes is a strange beast. 
-                     * We might landed here because we are trying to set the same template
-                     * parameter (e.g. 'N') multiple times. And we are trying to set the 
-                     * same parameter to different value (as we passed contains, which means that
-                     * the parameters are different).
-                     * This might sound strange, but there is an explanation to that.
-                     * libClang might return the same template parameter differently depending on
-                     * what layer it is being parsed at, e.g. once you might receive a "B = int",
-                     * but at the second time you might receive a "B = type-parameter-0-0".
-                     * So we need to make sure that if we are setting the same parameter,
-                     * we are changing a not specialized parameter to a specialized one.
-                     */
-                    var existingParams = destinationArguments.Where(param => param.SourceParam.FullName.Equals(p.SourceParam.FullName)).ToList();
-                    if (existingParams.Count() == 0)
-                    {
-                        destinationArguments.Add(p);
-                    }
-                    else
-                    {
-                        /* This is quite impossible, just to make sure */
-                        if (existingParams.Count() > 1)
-                        {
-                            throw new InvalidOperationException($"The same template parameter `{p.SourceParam.FullName}` exists more than one times");
-                        }
-                        var existingParam = existingParams[0];
-                        if (!existingParam.IsSpecializedArgument && p.IsSpecializedArgument)
-                        {
-                            /* We need to replace the already existing non-specialized parameter with the new specialized one */
-                            var index = destinationArguments.IndexOf(existingParam);
-                            destinationArguments[index] = p;
-                        }
-                    }
-                }
-            }
-        }
-
-
-        private void UpdateTemplateType(CppClass cppClass)
-        {
-            /* If we have both generic and specialized template classes, we are partial */
-            if (cppClass.TemplateKind == CppTemplateKind.TemplateClass && cppClass.TemplateParameters.Count > 0 && cppClass.TemplateSpecializedArguments.Count > 0)
-            {
-                cppClass.TemplateKind = CppTemplateKind.PartialTemplateClass;
-            }
-        }
-
 
         private CppContainerContext GetOrCreateDeclarationContainer(CXCursor cursor, void* data)
         {
@@ -230,12 +169,6 @@ namespace CppAst
                             }
                             return CXChildVisitResult.CXChildVisit_Continue;
                         }, new CXClientData((IntPtr)data));
-
-                        /* Inherit already specialized template parameters, even though this is a template class itself */
-                        foreach (var b in cppClass.BaseTypes)
-                        {
-                            AddTemplateSpecializedArguments(b.TemplateSpecializedArguments, cppClass.TemplateSpecializedArguments);
-                        }
                     }
                     else if (cursor.DeclKind == CX_DeclKind.CX_DeclKind_ClassTemplateSpecialization
                         || cursor.DeclKind == CX_DeclKind.CX_DeclKind_ClassTemplatePartialSpecialization)
@@ -302,25 +235,11 @@ namespace CppAst
                                     break;
                             }
                         }
-
-                        /* We explicitly inherit the specialized arguments as well */
-                        if (cppClass.PrimaryTemplate.TemplateSpecializedArguments.Count > 0)
-                        {
-                            AddTemplateSpecializedArguments(cppClass.PrimaryTemplate.TemplateSpecializedArguments, cppClass.TemplateSpecializedArguments);
-                        }
-
-                        /* Do the same for all base types as well, that might have specialized template arguments */
-                        foreach (var b in cppClass.PrimaryTemplate.BaseTypes)
-                        {
-                            AddTemplateSpecializedArguments(b.TemplateSpecializedArguments, cppClass.TemplateSpecializedArguments);
-                        }
                     }
                     else
                     {
                         cppClass.TemplateKind = CppTemplateKind.NormalClass;
                     }
-
-                    UpdateTemplateType(cppClass);
 
                     defaultContainerVisibility = cursor.Kind == CXCursorKind.CXCursor_ClassDecl ? CppVisibility.Private : CppVisibility.Public;
                     break;
@@ -450,16 +369,9 @@ namespace CppAst
                     {
                         bool isAnonymous = cursor.IsAnonymous;
                         var cppClass = VisitClassDecl(cursor, data);
-                        // Make sure to bubble up the specialized template parameters from all the base types
-                        foreach (var b in cppClass.BaseTypes)
-                        {
-                            AddTemplateSpecializedArguments(b.TemplateSpecializedArguments, cppClass.TemplateSpecializedArguments);
-                        }
-                        UpdateTemplateType(cppClass);
                         // Empty struct/class/union declaration are considered as fields
                         if (isAnonymous)
                         {
-                            cppClass.Name = string.Empty;
                             Debug.Assert(string.IsNullOrEmpty(cppClass.Name));
                             var containerContext = GetOrCreateDeclarationContainer(parent, data);
 
@@ -524,37 +436,11 @@ namespace CppAst
                     {
                         var cppClass = (CppClass)GetOrCreateDeclarationContainer(parent, data).Container;
                         var baseType = GetCppType(cursor.Type.Declaration, cursor.Type, cursor, data);
-
-                        /** This is kind of a hack to get the specialized template arguments */
-                        CXCursor paramCursor;
-                        CXType paramCursorType;
-                        if (cursor.Type.kind == CXTypeKind.CXType_Elaborated)
-                        {
-                            paramCursor = cursor.Type.CanonicalType.Declaration;
-                            paramCursorType = cursor.Type.CanonicalType;
-                        }
-                        else
-                        {
-                            paramCursor = cursor.Type.Declaration;
-                            paramCursorType = cursor.Type;
-                        }
-                        var (_, templateSpecializedArguments) = ParseTemplateArgumentsAndParameters(paramCursor, paramCursorType, new CXClientData((IntPtr)data));
                         var cppBaseType = new CppBaseType(baseType)
                         {
                             Visibility = GetVisibility(cursor.CXXAccessSpecifier),
                             IsVirtual = cursor.IsVirtualBase
                         };
-
-                        /*
-                         * Even though this is a base type, it can be a specialized template one which we
-                         * need to keep track of, so that "consumers" of this type might inherit the
-                         * specialized template parameters automatically.
-                         */
-                        if (templateSpecializedArguments != null && templateSpecializedArguments.Count > 0)
-                        {
-                            cppBaseType.TemplateSpecializedArguments.AddRange(templateSpecializedArguments);
-                        }
-
                         cppClass.BaseTypes.Add(cppBaseType);
                         break;
                     }
@@ -2002,22 +1888,16 @@ namespace CppAst
                         {
                             type = type.InjectedSpecializationType;
                         }
-
                         if (type.Declaration.Kind == CXCursorKind.CXCursor_ClassTemplate
                         || type.Declaration.Kind == CXCursorKind.CXCursor_ClassTemplatePartialSpecialization)
                         {
                             return VisitClassDecl(type.Declaration, data);
                         }
                         var cppUnexposedType = new CppUnexposedType(type.ToString()) { SizeOf = (int)type.SizeOf };
-                        var (templateParameters, templateSpecializedArguments) = ParseTemplateArgumentsAndParameters(cursor, type, new CXClientData((IntPtr)data));
-                        if (templateParameters != null && templateParameters.Count > 0)
+                        var templateParameters = ParseTemplateSpecializedArguments(cursor, type, new CXClientData((IntPtr)data));
+                        if (templateParameters != null)
                         {
                             cppUnexposedType.TemplateParameters.AddRange(templateParameters);
-                        }
-
-                        if (templateSpecializedArguments != null && templateSpecializedArguments.Count > 0)
-                        {
-                            AddTemplateSpecializedArguments(templateSpecializedArguments, cppUnexposedType.TemplateSpecializedArguments);
                         }
                         return cppUnexposedType;
                     }
@@ -2095,89 +1975,41 @@ namespace CppAst
             RootCompilation.Diagnostics.Warning($"Unhandled declaration: {cursor.Kind}/{cursor} in {parent}.", cppLocation);
         }
 
-        private (List<CppType>, List<CppTemplateArgument>) ParseTemplateArgumentsAndParameters(CXCursor cursor, CXType type, CXClientData data)
+        private List<CppType> ParseTemplateSpecializedArguments(CXCursor cursor, CXType type, CXClientData data)
         {
             var numTemplateArguments = type.NumTemplateArguments;
-            if (numTemplateArguments < 0) return (null, null);
- 
-            var templateCppTypes = new List<CppType>();
-            var specializedTemplateCppTypes = new List<CppTemplateArgument>();
+            if (numTemplateArguments < 0) return null;
 
+            var templateCppTypes = new List<CppType>();
             for (var templateIndex = 0; templateIndex < numTemplateArguments; ++templateIndex)
             {
                 var templateArg = type.GetTemplateArgument((uint)templateIndex);
+
                 switch (templateArg.kind)
                 {
                     case CXTemplateArgumentKind.CXTemplateArgumentKind_Type:
-                        {
-                            var templateArgType = templateArg.AsType;
-                            var templateCppType = GetCppType(templateArgType.Declaration, templateArgType, cursor, data);
-                            templateCppTypes.Add(templateCppType);
-                        }
+                        var templateArgType = templateArg.AsType;
+                        //var templateArg = type.GetTemplateArgumentAsType((uint)templateIndex);
+                        var templateCppType = GetCppType(templateArgType.Declaration, templateArgType, cursor, data);
+                        templateCppTypes.Add(templateCppType);
                         break;
-
-                    case CXTemplateArgumentKind.CXTemplateArgumentKind_Integral:
-                        {
-                            var value = templateArg.AsIntegral;
-                            var templateParam = TryToCreateTemplateParameters(cursor.GetTemplateParameter(0, (uint)templateIndex), data) as CppTemplateParameterNonType;
-                            if (templateParam != null)
-                            {
-                                var templateCppType = new CppTemplateParameterType(templateParam.Name);
-                                specializedTemplateCppTypes.Add(new CppTemplateArgument(templateCppType, value));
-                            }
-                        }
-                        break;
-
-                    case CXTemplateArgumentKind.CXTemplateArgumentKind_Expression:
-                        {
-                            var expression = VisitExpression(templateArg.AsExpr, data);
-                            if (expression.Kind == CppExpressionKind.IntegerLiteral)
-                            {
-                                var templateParam = TryToCreateTemplateParameters(cursor.GetTemplateParameter(0, (uint)templateIndex), data) as CppTemplateParameterNonType;
-                                if (templateParam != null)
-                                {
-                                    var templateCppType = new CppTemplateParameterType(templateParam.Name);
-                                    var literal = expression as CppLiteralExpression;
-                                    specializedTemplateCppTypes.Add(new CppTemplateArgument(templateCppType, Int32.Parse(literal.Value)));
-                                }
-                            }
-                            else if (expression.Kind == CppExpressionKind.Unexposed)
-                            {
-                                var templateParam = TryToCreateTemplateParameters(cursor.GetTemplateParameter(0, (uint)templateIndex), data) as CppTemplateParameterNonType;
-                                if (templateParam != null)
-                                {
-                                    var templateCppType = new CppTemplateParameterType(templateParam.Name);
-                                    var raw = expression as CppRawExpression;
-                                    Int32 argument;
-                                    var isInteger = Int32.TryParse(raw.Text, out argument);
-                                    /* 
-                                     * We are only using unexposed template parameters that are integers actually.
-                                     * As raw strings we'd get (again) 'size_t N' or other compile time expressions - which we
-                                     * are not really interested in
-                                     */
-
-                                    if (isInteger)
-                                    {
-                                        specializedTemplateCppTypes.Add(new CppTemplateArgument(templateCppType, argument));
-                                    }
-                                }
-                            }
-                        }
-                        break;
-
                     case CXTemplateArgumentKind.CXTemplateArgumentKind_Null:
                     case CXTemplateArgumentKind.CXTemplateArgumentKind_Declaration:
                     case CXTemplateArgumentKind.CXTemplateArgumentKind_NullPtr:
+                    case CXTemplateArgumentKind.CXTemplateArgumentKind_Integral:
                     case CXTemplateArgumentKind.CXTemplateArgumentKind_Template:
                     case CXTemplateArgumentKind.CXTemplateArgumentKind_TemplateExpansion:
+                    case CXTemplateArgumentKind.CXTemplateArgumentKind_Expression:
                     case CXTemplateArgumentKind.CXTemplateArgumentKind_Pack:
                     case CXTemplateArgumentKind.CXTemplateArgumentKind_Invalid:
                         break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
             }
- 
-            return (templateCppTypes, specializedTemplateCppTypes);
-         }
+
+            return templateCppTypes;
+        }
 
         private class CppContainerContext
         {

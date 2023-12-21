@@ -3,7 +3,7 @@
     <TargetFrameworks>net6.0</TargetFrameworks>
     <VersionPrefix>0.8.0</VersionPrefix>
     <VersionSuffix>alpha</VersionSuffix>
-    <BuildNumber>015</BuildNumber>
+    <BuildNumber>014</BuildNumber>
     <PackageId>CppAst.cgnx</PackageId>
     <Description>CppAst is a .NET library providing a C/C++ parser for header files with access to the full AST, comments and macros</Description>
     <Copyright>Alexandre Mutel</Copyright>
@@ -26,7 +26,7 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>0.8.0-alpha-015</Version>
+    <Version>0.8.0-alpha-014</Version>
   </PropertyGroup>
 
   <ItemGroup>

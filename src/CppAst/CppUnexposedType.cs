@@ -42,9 +42,6 @@ namespace CppAst
         public List<CppType> TemplateParameters { get; }
 
         /// <inheritdoc />
-        public List<CppTemplateArgument> TemplateSpecializedArguments { get; } = new List<CppTemplateArgument>();
-
-        /// <inheritdoc />
         public override bool Equals(object obj)
         {
             return ReferenceEquals(this, obj) || obj is CppTemplateParameterType other && Equals(other);
