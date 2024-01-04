@@ -63,7 +63,7 @@ namespace CppAst
         public bool IsConstructor { get; set; }
         
         /// <summary>
-        /// Gets or sets a boolean indicating whether this method is a constructor method.
+        /// Gets or sets a boolean indicating whether this method is a destructor method.
         /// </summary>
         public bool IsDestructor { get; set; }
 
