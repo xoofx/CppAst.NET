@@ -380,6 +380,7 @@ namespace CppAst
                 case CXCursorKind.CXCursor_FunctionTemplate:
                 case CXCursorKind.CXCursor_FunctionDecl:
                 case CXCursorKind.CXCursor_Constructor:
+                case CXCursorKind.CXCursor_Destructor:
                 case CXCursorKind.CXCursor_CXXMethod:
                     element = VisitFunctionDecl(cursor, parent, data);
                     break;
@@ -420,7 +421,6 @@ namespace CppAst
                     // Don't emit warning for this directive
                     break;
 
-                case CXCursorKind.CXCursor_Destructor:
                 case CXCursorKind.CXCursor_TemplateTypeParameter:
                 case CXCursorKind.CXCursor_AnnotateAttr:
                     // Don't emit warning
@@ -1235,6 +1235,12 @@ namespace CppAst
                 var cppClass = (CppClass)container;
                 cppFunction.IsConstructor = true;
                 cppClass.Constructors.Add(cppFunction);
+            }
+            else if (cursor.Kind == CXCursorKind.CXCursor_Destructor)
+            {
+                var cppClass = (CppClass)container;
+                cppFunction.IsDestructor = true;
+                cppClass.Destructors.Add(cppFunction);
             }
             else
             {
