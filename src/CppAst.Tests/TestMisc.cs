@@ -50,5 +50,39 @@ private:
                 }
             );
         }
+
+        [Test]
+        public void TestAuto()
+        {
+            ParseAssert(@"
+
+class Foo
+{
+public:
+  Foo(int foo) : foo_{foo} {}
+  const auto & foo() const { return foo_; }
+private:
+  int foo_{0};
+};
+
+class Bar
+{
+public:
+  auto Get42() const { return Foo(42); }
+};
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+                    Assert.AreEqual(2, compilation.Classes.Count);
+                    Assert.AreEqual(1, compilation.Classes[0].Functions.Count);
+                    Assert.AreEqual(CppTypeKind.Reference, compilation.Classes[0].Functions[0].ReturnType.TypeKind);
+                    Assert.AreEqual("const int&", (compilation.Classes[0].Functions[0].ReturnType as CppReferenceType).GetCanonicalType().ToString());
+                    Assert.AreEqual(1, compilation.Classes[1].Functions.Count);
+                    Assert.AreEqual(CppTypeKind.StructOrClass, compilation.Classes[1].Functions[0].ReturnType.TypeKind);
+                    Assert.AreEqual("Foo", (compilation.Classes[1].Functions[0].ReturnType as CppClass).Name);
+                }
+            );
+        }
     }
 }
