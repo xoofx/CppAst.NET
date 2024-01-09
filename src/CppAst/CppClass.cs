@@ -23,6 +23,7 @@ namespace CppAst
             BaseTypes = new List<CppBaseType>();
             Fields = new CppContainerList<CppField>(this);
             Constructors = new CppContainerList<CppFunction>(this);
+            Destructors = new CppContainerList<CppFunction>(this);
             Functions = new CppContainerList<CppFunction>(this);
             Enums = new CppContainerList<CppEnum>(this);
             Classes = new CppContainerList<CppClass>(this);
@@ -126,6 +127,11 @@ namespace CppAst
         /// Gets the constructors of this instance.
         /// </summary>
         public CppContainerList<CppFunction> Constructors { get; set; }
+
+        /// <summary>
+        /// Gets the destructors of this instance.
+        /// </summary>
+        public CppContainerList<CppFunction> Destructors { get; set; }
 
         /// <inheritdoc />
         public CppContainerList<CppFunction> Functions { get; }
@@ -272,6 +278,11 @@ namespace CppAst
             }
 
             foreach (var item in Constructors)
+            {
+                yield return item;
+            } 
+
+            foreach (var item in Destructors)
             {
                 yield return item;
             }

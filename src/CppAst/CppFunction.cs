@@ -61,6 +61,11 @@ namespace CppAst
         /// Gets or sets a boolean indicating whether this method is a constructor method.
         /// </summary>
         public bool IsConstructor { get; set; }
+        
+        /// <summary>
+        /// Gets or sets a boolean indicating whether this method is a destructor method.
+        /// </summary>
+        public bool IsDestructor { get; set; }
 
         /// <inheritdoc />
         public string Name { get; set; }
