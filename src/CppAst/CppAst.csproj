@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <PackageId>CppAst</PackageId>
     <Description>CppAst is a .NET library providing a C/C++ parser for header files with access to the full AST, comments and macros</Description>
     <Copyright>Alexandre Mutel</Copyright>
@@ -27,7 +27,7 @@
     <None Include="../../img/cppast.png" Pack="true" PackagePath="/logo.png" />
     <None Include="../../readme.md" Pack="true" PackagePath="/" />
 
-    <PackageReference Include="ClangSharp" Version="16.0.0" />
+    <PackageReference Include="ClangSharp" Version="17.0.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -35,6 +35,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 </Project>
