@@ -1905,6 +1905,18 @@ namespace CppAst
                 case CXTypeKind.CXType_Attributed:
                     return GetCppType(type.ModifiedType.Declaration, type.ModifiedType, parent, data);
 
+                case CXTypeKind.CXType_Auto:
+                    {
+                        // If auto is resolved to auto, disregard it
+                        if (type.CanonicalType.kind != CXTypeKind.CXType_Auto)
+                        {
+                            return VisitElaboratedDecl(cursor, type, parent, data);
+                        }
+
+                        WarningUnhandled(cursor, parent, type);
+                        return new CppUnexposedType(type.ToString()) { SizeOf = (int)type.SizeOf };
+                    }
+
                 default:
                     {
                         WarningUnhandled(cursor, parent, type);
