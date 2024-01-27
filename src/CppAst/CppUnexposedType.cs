@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CppAst
 {
@@ -30,21 +31,26 @@ namespace CppAst
         /// </summary>
         public string Name { get; }
 
-        private bool Equals(CppTemplateParameterType other)
+        private bool Equals(CppUnexposedType other)
         {
-            return base.Equals(other) && Name.Equals(other.Name);
+            return base.Equals(other) && 
+                Name.Equals(other.Name) &&
+                TemplateParameters.SequenceEqual(other.TemplateParameters) &&
+                TemplateArguments.SequenceEqual(other.TemplateArguments);
         }
 
         /// <inheritdoc />
         public override int SizeOf { get; set; }
 
         /// <inheritdoc />
-        public List<CppType> TemplateParameters { get; }
+        public List<CppType> TemplateParameters { get; } = new List<CppType>();
+
+        public List<CppTemplateArgument> TemplateArguments { get; } = new List<CppTemplateArgument>();
 
         /// <inheritdoc />
         public override bool Equals(object obj)
         {
-            return ReferenceEquals(this, obj) || obj is CppTemplateParameterType other && Equals(other);
+            return ReferenceEquals(this, obj) || obj is CppUnexposedType other && Equals(other);
         }
 
         /// <inheritdoc />
@@ -52,7 +58,19 @@ namespace CppAst
         {
             unchecked
             {
-                return (base.GetHashCode() * 397) ^ Name.GetHashCode();
+                var hashCode =(base.GetHashCode() * 397) ^ Name.GetHashCode();
+
+                foreach (var templateParameter in TemplateParameters)
+                {
+                    hashCode = (hashCode * 397) ^ templateParameter.GetHashCode();
+                }
+
+                foreach (var templateArgument in TemplateArguments)
+                {
+                    hashCode = (hashCode * 397) ^ templateArgument.GetHashCode();
+                }
+
+                return hashCode;
             }
         }
 
@@ -61,5 +79,14 @@ namespace CppAst
 
         /// <inheritdoc />
         public override string ToString() => Name;
+
+        public void UpdateTemplateArguments(CppType sourceParam, List<CppTemplateArgument> templateArguments)
+        {
+            // We need to remove all previously registered template arguments corresponding with 'sourceParam'
+            // and update it with the new template arguments. The reason is that we "re-resolved" them 
+            // in another layer (one layer above in the callstack) so we have a "better" resolution of them
+            TemplateArguments.RemoveAll(arg => arg.SourceParam.Equals(sourceParam));
+            TemplateArguments.AddRange(templateArguments);
+        }
     }
 }

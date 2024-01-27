@@ -59,10 +59,10 @@ namespace CppAst
 
                 if (cls.TemplateKind == CppTemplateKind.TemplateSpecializedClass)
                 {
-                    for (var i = 0; i < cls.TemplateSpecializedArguments.Count; i++)
+                    for (var i = 0; i < cls.TemplateArguments.Count; i++)
                     {
                         if (i > 0) builder.Append(", ");
-                        builder.Append(cls.TemplateSpecializedArguments[i].ToString());
+                        builder.Append(cls.TemplateArguments[i].ToString());
                     }
                 }
                 else if (cls.TemplateKind == CppTemplateKind.TemplateClass)

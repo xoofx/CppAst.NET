@@ -3,6 +3,8 @@
 // See license.txt file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CppAst
 {
@@ -18,6 +20,13 @@ namespace CppAst
         public CppTemplateParameterType(string name) : base(CppTypeKind.TemplateParameterType)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
+            TemplateTemplateParameters = new List<CppType>();
+        }
+
+        public CppTemplateParameterType(string name, System.Collections.Generic.List<CppType> templateTemplateParams) : base(CppTypeKind.TemplateParameterType)
+        {
+            Name = name ?? throw new ArgumentNullException(nameof(name));
+            TemplateTemplateParameters = templateTemplateParams;
         }
 
         /// <summary>
@@ -25,9 +34,16 @@ namespace CppAst
         /// </summary>
         public string Name { get; }
 
+        /// <summary>
+        /// Gets a list of the parameters.
+        /// </summary>
+        public List<CppType> TemplateTemplateParameters { get; }
+
         private bool Equals(CppTemplateParameterType other)
         {
-            return base.Equals(other) && Name.Equals(other.Name);
+            return base.Equals(other) && 
+              Name.Equals(other.Name) &&
+              TemplateTemplateParameters.SequenceEqual(other.TemplateTemplateParameters);
         }
 
         /// <inheritdoc />
@@ -48,7 +64,13 @@ namespace CppAst
         {
             unchecked
             {
-                return (base.GetHashCode() * 397) ^ Name.GetHashCode();
+                var hashCode = base.GetHashCode() * 397 ^ Name.GetHashCode();
+                foreach (var templateTemplateParameter in TemplateTemplateParameters)
+                {
+                    hashCode = (hashCode * 397) ^ templateTemplateParameter.GetHashCode();
+                }
+
+                return hashCode;
             }
         }
 

@@ -27,7 +27,8 @@ namespace CppAst
 
         protected bool Equals(CppType other)
         {
-            return TypeKind == other.TypeKind;
+            return TypeKind.Equals(other.TypeKind) &&
+                SizeOf.Equals(other.SizeOf);
         }
 
         public override bool Equals(object obj)
@@ -40,7 +41,9 @@ namespace CppAst
         /// <inheritdoc />
         public override int GetHashCode()
         {
-            return (int)TypeKind;
+            return (base.GetHashCode() * 397) ^
+                TypeKind.GetHashCode() ^
+                SizeOf.GetHashCode();
         }
 
         /// <summary>

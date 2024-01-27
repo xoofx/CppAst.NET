@@ -159,9 +159,9 @@ namespace CppAst
 
         public bool IsPureVirtual => ((int)Flags & (int)CppFunctionFlags.Pure) != 0;
 
-		public bool IsVirtual => ((int)Flags & (int)CppFunctionFlags.Virtual) != 0;
+        public bool IsVirtual => ((int)Flags & (int)CppFunctionFlags.Virtual) != 0;
 
-		public bool IsStatic => StorageQualifier == CppStorageQualifier.Static;
+        public bool IsStatic => StorageQualifier == CppStorageQualifier.Static;
 
         public bool IsConst => ((int)Flags & (int)CppFunctionFlags.Const) != 0;
 
