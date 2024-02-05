@@ -4,7 +4,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Xml.Linq;
 
 namespace CppAst
 {
@@ -75,14 +77,13 @@ namespace CppAst
                 else if (TemplateKind == CppTemplateKind.TemplateSpecializedClass)
                 {
                     sb.Append('<');
-                    for (int i = 0; i < TemplateSpecializedArguments.Count; i++)
+                    for (var i = 0; i < TemplateArguments.Count; i++)
                     {
-                        var ta = TemplateSpecializedArguments[i];
                         if (i != 0)
                         {
                             sb.Append(", ");
                         }
-                        sb.Append(ta.ArgString);
+                        sb.Append(TemplateArguments[i].ArgString);
                     }
                     sb.Append('>');
                 }
@@ -142,7 +143,7 @@ namespace CppAst
         /// <inheritdoc />
         public List<CppType> TemplateParameters { get; }
 
-        public List<CppTemplateArgument> TemplateSpecializedArguments { get; } = new List<CppTemplateArgument>();
+        public List<CppTemplateArgument> TemplateArguments { get; } = new List<CppTemplateArgument>();
 
         /// <summary>
         /// The primary, unspecialized class template of this instance.
@@ -155,7 +156,7 @@ namespace CppAst
         public bool IsAbstract { get; set; }
 
 
-		private bool Equals(CppClass other)
+        private bool Equals(CppClass other)
         {
             return base.Equals(other) && Equals(Parent, other.Parent) && Name.Equals(other.Name);
         }
@@ -186,7 +187,7 @@ namespace CppAst
                 {
                     hashCode = (hashCode * 397) ^ templateParameter.GetHashCode();
                 }
-				foreach (var templateArgument in TemplateSpecializedArguments)
+                foreach (var templateArgument in TemplateArguments)
                 {
                     hashCode = (hashCode * 397) ^ templateArgument.GetHashCode();
                 }
@@ -242,20 +243,20 @@ namespace CppAst
 
                 if(TemplateKind == CppTemplateKind.TemplateSpecializedClass)
                 {
-                    for(var i = 0; i < TemplateSpecializedArguments.Count; i++)
+                    for (var i = 0; i < TemplateArguments.Count; i++)
                     {
                         if(i > 0) builder.Append(", ");
-                        builder.Append(TemplateSpecializedArguments[i].ToString());
+                        builder.Append(TemplateArguments[i].ToString());
                     }
                 }
                 else if(TemplateKind == CppTemplateKind.TemplateClass)
                 {
-					for (var i = 0; i < TemplateParameters.Count; i++)
-					{
-						if (i > 0) builder.Append(", ");
-						builder.Append(TemplateParameters[i].ToString());
-					}
-				}
+                    for (var i = 0; i < TemplateParameters.Count; i++)
+                    {
+                        if (i > 0) builder.Append(", ");
+                        builder.Append(TemplateParameters[i].ToString());
+                    }
+                }
 
                 builder.Append(">");
             }
@@ -275,6 +276,15 @@ namespace CppAst
             {
                 yield return item;
             }
+        }
+
+        public void UpdateTemplateArguments(CppType sourceParam, List<CppTemplateArgument> templateArguments)
+        {
+            // We need to remove all previously registered template arguments corresponding with 'sourceParam'
+            // and update it with the new template arguments. The reason is that we "re-resolved" them 
+            // in another layer (one layer above in the callstack) so we have a "better" resolution of them
+            TemplateArguments.RemoveAll(arg => arg.SourceParam.Equals(sourceParam));
+            TemplateArguments.AddRange(templateArguments);
         }
     }
 }

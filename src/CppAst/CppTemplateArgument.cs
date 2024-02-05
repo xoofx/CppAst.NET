@@ -22,15 +22,23 @@ namespace CppAst
 
         public CppTemplateArgument(CppType sourceParam, long intArg) : base(CppTypeKind.TemplateArgumentType)
         {
-			SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
+            SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
             ArgAsInteger = intArg;
             ArgKind = CppTemplateArgumentKind.AsInteger;
             IsSpecializedArgument = true;
         }
 
-		public CppTemplateArgument(CppType sourceParam, string unknownStr) : base(CppTypeKind.TemplateArgumentType)
+        public CppTemplateArgument(CppType sourceParam, CppExpression typeArg) : base(CppTypeKind.TemplateArgumentType)
         {
-			SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
+            SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
+            ArgAsExpression = typeArg;
+            ArgKind = CppTemplateArgumentKind.AsExpression;
+            IsSpecializedArgument = true;
+        }
+
+        public CppTemplateArgument(CppType sourceParam, string unknownStr) : base(CppTypeKind.TemplateArgumentType)
+        {
+            SourceParam = sourceParam ?? throw new ArgumentNullException(nameof(sourceParam));
             ArgAsUnknown = unknownStr;
             ArgKind = CppTemplateArgumentKind.Unknown;
             IsSpecializedArgument = true;
@@ -39,6 +47,8 @@ namespace CppAst
         public CppTemplateArgumentKind ArgKind { get; }
 
         public CppType ArgAsType { get; }
+
+        public CppExpression ArgAsExpression { get; }
 
         public long ArgAsInteger { get; }
 
@@ -54,6 +64,8 @@ namespace CppAst
                         return ArgAsType.FullName;
                     case CppTemplateArgumentKind.AsInteger:
                         return ArgAsInteger.ToString();
+                    case CppTemplateArgumentKind.AsExpression:
+                        return ArgAsExpression.ToString();
                     case CppTemplateArgumentKind.Unknown:
                         return ArgAsUnknown;
                     default:
@@ -77,6 +89,30 @@ namespace CppAst
             set => throw new InvalidOperationException("This type does not support SizeOf");
         }
 
+        public bool Equals(CppTemplateArgument other)
+        {
+            if (ArgAsType != null && !ArgAsType.Equals(other.ArgAsType))
+            {
+                return false;
+            }
+
+            if (ArgAsExpression != null && !ArgAsExpression.Equals(other.ArgAsExpression))
+            {
+                return false;
+            }
+
+            if (ArgAsUnknown != null && !ArgAsUnknown.Equals(other.ArgAsUnknown))
+            {
+                return false;
+            }
+
+            return base.Equals(other) &&
+                ArgKind.Equals(other.ArgKind) &&
+                ArgAsInteger.Equals(other.ArgAsInteger) &&
+                SourceParam.Equals(other.SourceParam) &&
+                IsSpecializedArgument.Equals(other.IsSpecializedArgument);
+        }
+
         /// <inheritdoc />
         public override bool Equals(object obj)
         {
@@ -88,7 +124,28 @@ namespace CppAst
         {
             unchecked
             {
-                return (base.GetHashCode() * 397) ^ SourceParam.GetHashCode() ^ ArgString.GetHashCode();
+                var result = (base.GetHashCode() * 397) ^
+                    ArgKind.GetHashCode() ^
+                    ArgAsInteger.GetHashCode() ^
+                    SourceParam.GetHashCode() ^
+                    IsSpecializedArgument.GetHashCode();
+
+                if (ArgAsType != null)
+                {
+                    result ^= ArgAsType.GetHashCode();
+                }
+
+                if (ArgAsUnknown != null)
+                {
+                    result ^= ArgAsUnknown.GetHashCode();
+                }
+
+                if (ArgAsExpression != null)
+                {
+                    result ^= ArgAsExpression.GetHashCode();
+                }
+
+                return result;
             }
         }
 

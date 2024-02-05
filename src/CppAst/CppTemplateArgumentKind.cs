@@ -11,6 +11,7 @@ namespace CppAst
     {
         AsType,
         AsInteger,
+        AsExpression,
         Unknown,
     }
 
