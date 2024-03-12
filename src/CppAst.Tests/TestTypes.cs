@@ -212,6 +212,7 @@ class TmpClass;
 namespace ns2 {
 const ns1::TmpClass* tmpClass1;
 volatile ns1::TmpClass* tmpClass2;
+const unsigned int * const dummy_pu32 = (const unsigned int * const)0x12345678;
 }
 
 namespace ns1 {
@@ -225,11 +226,14 @@ class TmpClass {
 
                     var tmpClass1 = compilation.Namespaces[1].Fields[0];
                     var tmpClass2 = compilation.Namespaces[1].Fields[1];
+                    var constDummyPointer = compilation.Namespaces[1].Fields[2];
 
                     var hoge = tmpClass1.Type.GetDisplayName();
                     var hoge2 = tmpClass2.Type.GetDisplayName();
-                    Assert.AreEqual("const TmpClass*", tmpClass1.Type.GetDisplayName());
-                    Assert.AreEqual("volatile TmpClass*", tmpClass2.Type.GetDisplayName());
+                    var hoge3 = tmpClass2.Type.GetDisplayName();
+                    Assert.AreEqual("TmpClass const *", tmpClass1.Type.GetDisplayName());
+                    Assert.AreEqual("TmpClass volatile *", tmpClass2.Type.GetDisplayName());
+                    Assert.AreEqual("unsigned int const * const", constDummyPointer.Type.GetDisplayName());
                 }
             );
         }
