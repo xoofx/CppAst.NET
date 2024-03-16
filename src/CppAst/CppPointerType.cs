@@ -23,7 +23,7 @@ namespace CppAst
         /// <inheritdoc />
         public override string ToString()
         {
-            return $"{ElementType.GetDisplayName()}*";
+            return $"{ElementType.GetDisplayName()} *";
         }
 
         /// <inheritdoc />

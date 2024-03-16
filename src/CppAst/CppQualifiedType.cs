@@ -55,7 +55,7 @@ namespace CppAst
         /// <inheritdoc />
         public override string ToString()
         {
-            return $"{Qualifier.ToString().ToLowerInvariant()} {ElementType.GetDisplayName()}";
+            return $"{ElementType.GetDisplayName()} {Qualifier.ToString().ToLowerInvariant()}";
         }
     }
 }
