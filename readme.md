@@ -105,4 +105,4 @@ The C++ project [cppast](https://github.com/foonathan/cppast) serves similar pur
 
 ## Author
 
-Alexandre Mutel aka [xoofx](http://xoofx.com).
+Alexandre Mutel aka [xoofx](https://xoofx.github.io).
