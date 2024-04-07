@@ -326,12 +326,12 @@ namespace CppAst
                     {
                         bool isAnonymous = cursor.IsAnonymous;
                         var cppClass = VisitClassDecl(cursor, data);
+                        var containerContext = GetOrCreateDeclarationContainer(parent, data);
                         // Empty struct/class/union declaration are considered as fields
                         if (isAnonymous)
                         {
                             cppClass.Name = string.Empty;
                             Debug.Assert(string.IsNullOrEmpty(cppClass.Name));
-                            var containerContext = GetOrCreateDeclarationContainer(parent, data);
 
                             // We try to recover the offset from the previous field
                             // Might not be always correct (with alignment rules),
@@ -358,6 +358,7 @@ namespace CppAst
                         }
                         else
                         {
+                            cppClass.Visibility = containerContext.CurrentVisibility;
                             element = cppClass;
                         }
                         break;
