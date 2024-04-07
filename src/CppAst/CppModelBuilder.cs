@@ -1304,6 +1304,10 @@ namespace CppAst
             {
                 cppFunction.Flags |= CppFunctionFlags.Pure | CppFunctionFlags.Virtual;
             }
+            if (clang.CXXMethod_isDeleted(cursor) != 0)
+            {
+                cppFunction.Flags |= CppFunctionFlags.Deleted;
+            }
 
             // Gets the return type
             var returnType = GetCppType(cursor.ResultType.Declaration, cursor.ResultType, cursor, data);
