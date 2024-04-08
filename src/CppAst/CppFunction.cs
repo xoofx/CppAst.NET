@@ -42,6 +42,8 @@ namespace CppAst
         [Obsolete("TokenAttributes is deprecated. please use system attributes and annotate attributes")]
         public List<CppAttribute> TokenAttributes { get; }
 
+        public MetaAttributeMap MetaAttributes { get;} = new MetaAttributeMap();
+
         /// <summary>
         /// Gets or sets the storage qualifier.
         /// </summary>

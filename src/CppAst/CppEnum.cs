@@ -72,6 +72,8 @@ namespace CppAst
         [Obsolete("TokenAttributes is deprecated. please use system attributes and annotate attributes")]
         public List<CppAttribute> TokenAttributes { get; }
 
+        public MetaAttributeMap MetaAttributes { get; private set; } = new MetaAttributeMap();
+
         private bool Equals(CppEnum other)
         {
             return base.Equals(other) && Equals(Parent, other.Parent) && Equals(Name, other.Name);
