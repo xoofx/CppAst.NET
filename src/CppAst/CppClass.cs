@@ -105,6 +105,8 @@ namespace CppAst
         [Obsolete("TokenAttributes is deprecated. please use system attributes and annotate attributes")]
         public List<CppAttribute> TokenAttributes { get; }
 
+        public MetaAttributeMap MetaAttributes { get; private set; } = new MetaAttributeMap();
+
         /// <summary>
         /// Gets or sets a boolean indicating if this type is a definition. If <c>false</c> the type was only declared but is not defined.
         /// </summary>

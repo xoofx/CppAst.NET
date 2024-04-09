@@ -125,7 +125,8 @@ namespace CppAst
                     Debug.Assert(parent != null);
                     var cppEnum = new CppEnum(GetCursorSpelling(cursor))
                     {
-                        IsAnonymous = cursor.IsAnonymous
+                        IsAnonymous = cursor.IsAnonymous,
+                        Visibility = GetVisibility(cursor.CXXAccessSpecifier)
                     };
                     parentDeclarationContainer.Enums.Add(cppEnum);
                     symbol = cppEnum;
@@ -433,7 +434,10 @@ namespace CppAst
 
             if (element != null)
             {
-                AssignSourceSpan(cursor, element);
+                bool isForwardDeclaration = (element is CppClass || element is CppEnum) && !cursor.IsDefinition;
+                if (!isForwardDeclaration) {
+                    AssignSourceSpan(cursor, element);
+                }
             }
 
             if (element is ICppDeclaration cppDeclaration)
@@ -446,6 +450,11 @@ namespace CppAst
                 {
                     TryToParseAttributesFromComment(cppDeclaration.Comment, attrContainer);
                 }
+            }
+
+            if (element is ICppAttributeContainer container)
+            {
+                TryToConvertAttributesToMetaAttributes(container);
             }
 
             return CXChildVisitResult.CXChildVisit_Continue;
@@ -807,8 +816,10 @@ namespace CppAst
                     return CppVisibility.Protected;
                 case CX_CXXAccessSpecifier.CX_CXXPrivate:
                     return CppVisibility.Private;
-                default:
+                case CX_CXXAccessSpecifier.CX_CXXPublic:
                     return CppVisibility.Public;
+                default:
+                    return CppVisibility.Default;
             }
         }
 
@@ -816,7 +827,8 @@ namespace CppAst
         {
             var start = cursor.Extent.Start;
             var end = cursor.Extent.End;
-            element.Span = new CppSourceSpan(GetSourceLocation(start), GetSourceLocation(end));
+            if (element.Span.Start.File is null)
+                element.Span = new CppSourceSpan(GetSourceLocation(start), GetSourceLocation(end));
         }
 
         public static CppSourceLocation GetSourceLocation(CXSourceLocation start)
@@ -844,7 +856,7 @@ namespace CppAst
             {
                 cppField = new CppField(type, fieldName)
                 {
-                    Visibility = containerContext.CurrentVisibility,
+                    Visibility = GetVisibility(cursor.CXXAccessSpecifier),
                     StorageQualifier = GetStorageQualifier(cursor),
                     IsBitField = cursor.IsBitField,
                     BitFieldWidth = cursor.FieldDeclBitWidth,
@@ -869,7 +881,7 @@ namespace CppAst
             var fieldName = "__anonymous__" + containerContext.DeclarationContainer.Fields.Count;
             var cppField = new CppField(fieldType, fieldName)
             {
-                Visibility = containerContext.CurrentVisibility,
+                Visibility = GetVisibility(cursor.CXXAccessSpecifier),
                 StorageQualifier = GetStorageQualifier(cursor),
                 IsAnonymous = true,
                 Offset = cursor.OffsetOfField / 8,
@@ -1218,7 +1230,9 @@ namespace CppAst
 
             //We need ignore the function define out in the class definition here(Otherwise it will has two same functions here~)!
             var semKind = cursor.SemanticParent.Kind;
-            if ((semKind == CXCursorKind.CXCursor_StructDecl || semKind == CXCursorKind.CXCursor_ClassDecl)
+            if ((semKind == CXCursorKind.CXCursor_StructDecl || 
+                semKind == CXCursorKind.CXCursor_ClassDecl ||
+                semKind == CXCursorKind.CXCursor_ClassTemplate)
                 && cursor.LexicalParent != cursor.SemanticParent)
             {
                 return null;
@@ -1226,7 +1240,7 @@ namespace CppAst
 
             var cppFunction = new CppFunction(functionName)
             {
-                Visibility = contextContainer.CurrentVisibility,
+                Visibility = GetVisibility(cursor.CXXAccessSpecifier),
                 StorageQualifier = GetStorageQualifier(cursor),
                 LinkageKind = GetLinkage(cursor.Linkage),
             };
@@ -1535,6 +1549,53 @@ namespace CppAst
                 }
             }
         }
+        
+        private void AppendToMetaAttributes(List<MetaAttribute> metaList, MetaAttribute metaAttr)
+        {
+            if (metaAttr is null)
+            {
+                return;
+            }
+            
+            foreach (MetaAttribute meta in metaList)
+            {
+                foreach (KeyValuePair<string, object> kvp in meta.ArgumentMap)
+                {
+                    if (metaAttr.ArgumentMap.ContainsKey(kvp.Key))
+                    {
+                        metaAttr.ArgumentMap.Remove(kvp.Key);
+                    }
+                }
+            }
+
+            if (metaAttr.ArgumentMap.Count > 0)
+            {
+                metaList.Add(metaAttr);
+            }
+        }
+        
+        private void TryToConvertAttributesToMetaAttributes(ICppAttributeContainer attrContainer)
+        {
+            foreach (var attr in attrContainer.Attributes)
+            {
+                //Now we only handle for annotate attribute here
+                if (attr.Kind == AttributeKind.AnnotateAttribute)
+                {
+                    MetaAttribute metaAttr = null;
+                    string errorMessage = null;
+                    
+                    metaAttr = CustomAttributeTool.ParseMetaStringFor(attr.Arguments, out errorMessage);
+                    
+                    if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        var element = (CppElement)attrContainer;
+                        throw new Exception($"handle meta not right, detail: `{errorMessage}, location: `{element.Span}`");
+                    }
+
+                    AppendToMetaAttributes(attrContainer.MetaAttributes.MetaList, metaAttr);
+                }
+            }
+        }
 
         private void ParseAttributes(CXCursor cursor, ICppAttributeContainer attrContainer, bool needOnlineSeek = false)
         {
@@ -1570,6 +1631,18 @@ namespace CppAst
             attrContainer.TokenAttributes.AddRange(tokenAttributes);
         }
 
+        private void ParseTypedefAttribute(CXCursor cursor, CppType type, CppType underlyingTypeDefType)
+        {
+            if (type is CppTypedef typedef)
+            {
+                ParseAttributes(cursor, typedef, true);
+                if (underlyingTypeDefType is CppClass targetClass)
+                {
+                    targetClass.Attributes.AddRange(typedef.Attributes);
+                    TryToConvertAttributesToMetaAttributes(targetClass);
+                }
+            }
+        }
 
         private CppType VisitTypeAliasDecl(CXCursor cursor, void* data)
         {
@@ -1599,11 +1672,13 @@ namespace CppAst
             }
             else
             {
-                var typedef = new CppTypedef(GetCursorSpelling(cursor), underlyingTypeDefType) { Visibility = contextContainer.CurrentVisibility };
+                var typedef = new CppTypedef(typedefName, underlyingTypeDefType) { Visibility = contextContainer.CurrentVisibility };
                 contextContainer.DeclarationContainer.Typedefs.Add(typedef);
                 type = typedef;
             }
 
+            ParseTypedefAttribute(cursor, type, underlyingTypeDefType);
+            
             // The type could have been added separately as part of the GetCppType above
             if (_typedefs.TryGetValue(fulltypeDefName, out var cppPreviousCppType))
             {
@@ -1626,7 +1701,7 @@ namespace CppAst
 
             var contextContainer = GetOrCreateDeclarationContainer(cursor.SemanticParent, data);
             var underlyingTypeDefType = GetCppType(cursor.TypedefDeclUnderlyingType.Declaration, cursor.TypedefDeclUnderlyingType, cursor, data);
-
+            
             var typedefName = GetCursorSpelling(cursor);
 
             if (AutoSquashTypedef && underlyingTypeDefType is ICppMember cppMember && (string.IsNullOrEmpty(cppMember.Name) || typedefName == cppMember.Name))
@@ -1636,11 +1711,13 @@ namespace CppAst
             }
             else
             {
-                var typedef = new CppTypedef(GetCursorSpelling(cursor), underlyingTypeDefType) { Visibility = contextContainer.CurrentVisibility };
+                var typedef = new CppTypedef(typedefName, underlyingTypeDefType) { Visibility = contextContainer.CurrentVisibility };
                 contextContainer.DeclarationContainer.Typedefs.Add(typedef);
                 type = typedef;
             }
 
+            ParseTypedefAttribute(cursor, type, underlyingTypeDefType);
+            
             // The type could have been added separately as part of the GetCppType above
             if (_typedefs.TryGetValue(fulltypeDefName, out var cppPreviousCppType))
             {
@@ -1656,8 +1733,7 @@ namespace CppAst
         private CppType VisitElaboratedDecl(CXCursor cursor, CXType type, CXCursor parent, void* data)
         {
             var fulltypeDefName = clang.getCursorUSR(cursor).CString;
-            if (_typedefs.TryGetValue(fulltypeDefName, out var typeRef))
-            {
+            if (_typedefs.TryGetValue(fulltypeDefName, out var typeRef)) {
                 return typeRef;
             }
 
@@ -1696,7 +1772,7 @@ namespace CppAst
             if (type.IsConstQualified)
             {
                 // Skip if it is already qualified.
-                if (cppType is CppQualifiedType q && q.Qualifier == CppTypeQualifier.Const)
+                if (cppType is CppUnexposedType || (cppType is CppQualifiedType q && q.Qualifier == CppTypeQualifier.Const))
                 {
                     return cppType;
                 }
@@ -1828,6 +1904,9 @@ namespace CppAst
 
                 case CXTypeKind.CXType_Attributed:
                     return GetCppType(type.ModifiedType.Declaration, type.ModifiedType, parent, data);
+
+                case CXTypeKind.CXType_Auto:
+                    return GetCppType(type.Declaration, type.Declaration.Type, parent, data);
 
                 default:
                     {

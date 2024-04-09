@@ -3,13 +3,14 @@
 // See license.txt file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 
 namespace CppAst
 {
     /// <summary>
     /// A C++ typedef (e.g `typedef int XXX`)
     /// </summary>
-    public sealed class CppTypedef : CppTypeDeclaration, ICppMemberWithVisibility
+    public sealed class CppTypedef : CppTypeDeclaration, ICppMemberWithVisibility, ICppAttributeContainer
     {
         /// <summary>
         /// Creates a new instance of a typedef.
@@ -20,8 +21,18 @@ namespace CppAst
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             ElementType = type;
+            Attributes = new List<CppAttribute>();
+            TokenAttributes = new List<CppAttribute>();
+            MetaAttributes = new MetaAttributeMap();
         }
 
+        public List<CppAttribute> Attributes { get; }
+
+        [Obsolete("TokenAttributes is deprecated. please use system attributes and annotate attributes")]
+        public List<CppAttribute> TokenAttributes { get; }
+
+        public MetaAttributeMap MetaAttributes { get; private set; }
+        
         public CppType ElementType { get; }
 
         /// <summary>
