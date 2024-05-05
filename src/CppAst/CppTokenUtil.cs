@@ -439,21 +439,20 @@ namespace CppAst
         [DebuggerTypeProxy(typeof(TokenizerDebuggerType))]
         internal class Tokenizer
         {
-            private readonly CXToken[] _tokens;
+            private readonly CXSourceRange _range;
             private CppToken[] _cppTokens;
             protected readonly CXTranslationUnit _tu;
 
             public Tokenizer(CXCursor cursor)
             {
                 _tu = cursor.TranslationUnit;
-                var range = GetRange(cursor);
-                _tokens = _tu.Tokenize(range).ToArray();
+                _range = GetRange(cursor);
             }
 
             public Tokenizer(CXTranslationUnit tu, CXSourceRange range)
             {
                 _tu = tu;
-                _tokens = _tu.Tokenize(range).ToArray();
+                _range = range;
             }
 
             public virtual CXSourceRange GetRange(CXCursor cursor)
@@ -461,7 +460,16 @@ namespace CppAst
                 return cursor.Extent;
             }
 
-            public int Count => _tokens?.Length ?? 0;
+            public int Count
+            {
+                get
+                {
+                    var tokens = _tu.Tokenize(_range);
+                    int length = tokens.Length;
+                    _tu.DisposeTokens(tokens);
+                    return length;
+                }
+            }
 
             public CppToken this[int i]
             {
@@ -470,7 +478,7 @@ namespace CppAst
                     // Only create a tokenizer if necessary
                     if (_cppTokens == null)
                     {
-                        _cppTokens = new CppToken[_tokens.Length];
+                        _cppTokens = new CppToken[Count];
                     }
 
                     ref var cppToken = ref _cppTokens[i];
@@ -478,8 +486,9 @@ namespace CppAst
                     {
                         return cppToken;
                     }
+                    var tokens = _tu.Tokenize(_range);
+                    var token = tokens[i];
 
-                    var token = _tokens[i];
                     CppTokenKind cppTokenKind = 0;
                     switch (token.Kind)
                     {
@@ -502,7 +511,7 @@ namespace CppAst
                             break;
                     }
 
-                    var tokenStr = token.GetSpelling(_tu).CString;
+                    var tokenStr = CXUtil.GetTokenSpelling(token, _tu);
                     var tokenLocation = token.GetLocation(_tu);
 
                     var tokenRange = token.GetExtent(_tu);
@@ -510,26 +519,30 @@ namespace CppAst
                     {
                         Span = new CppSourceSpan(CppModelBuilder.GetSourceLocation(tokenRange.Start), CppModelBuilder.GetSourceLocation(tokenRange.End))
                     };
+                    _tu.DisposeTokens(tokens);
                     return cppToken;
                 }
             }
 
             public string GetString(int i)
             {
-                var token = _tokens[i];
-                return token.GetSpelling(_tu).CString;
+                var tokens = _tu.Tokenize(_range);
+                var TokenSpelling = CXUtil.GetTokenSpelling(tokens[i], _tu);
+                _tu.DisposeTokens(tokens);
+                return TokenSpelling;
             }
 
             public string TokensToString()
             {
-                if (_tokens == null)
+                int length = Count;
+                if (length <= 0)
                 {
                     return null;
                 }
 
-                var tokens = new List<CppToken>(_tokens.Length);
+                var tokens = new List<CppToken>(length);
 
-                for (int i = 0; i < _tokens.Length; i++)
+                for (int i = 0; i < length; i++)
                 {
                     tokens.Add(this[i]);
                 }

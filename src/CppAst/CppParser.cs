@@ -164,71 +164,63 @@ namespace CppAst
                 // TODO: Add debug
                 rootFileContent = tempBuilder.ToString();
 
-                var rootFileContentUTF8 = Encoding.UTF8.GetBytes(rootFileContent);
                 compilation.InputText = rootFileContent;
 
-                fixed (void* rootFileContentUTF8Ptr = rootFileContentUTF8)
+                CXTranslationUnit translationUnit;
+                using (CXUnsavedFile unsavedFile = CXUnsavedFile.Create(rootFileName, rootFileContent))
                 {
-                    CXTranslationUnit translationUnit;
+                    ReadOnlySpan<CXUnsavedFile> unsavedFiles = stackalloc CXUnsavedFile[] { unsavedFile };
 
-                    var rootFileNameUTF8 = Marshal.StringToHGlobalAnsi(rootFileName);
+                    translationUnit = CXTranslationUnit.Parse(createIndex
+                        , rootFileName
+                        , argumentsArray
+                        , unsavedFiles
+                        , translationFlags);
+                }
 
-                    translationUnit = CXTranslationUnit.Parse(createIndex, rootFileName, argumentsArray,new CXUnsavedFile[]
+                bool skipProcessing = false;
+
+                if (translationUnit.NumDiagnostics != 0)
+                {
+                    for (uint i = 0; i < translationUnit.NumDiagnostics; ++i)
                     {
-                        new CXUnsavedFile()
+                        using (var diagnostic = translationUnit.GetDiagnostic(i))
                         {
-                            Contents = (sbyte*) rootFileContentUTF8Ptr,
-                            Filename = (sbyte*) rootFileNameUTF8,
-                            Length = new UIntPtr((uint)rootFileContentUTF8.Length)
+                            var message = GetMessageAndLocation(rootFileContent, diagnostic, out var location);
 
-                        }
-                    }, translationFlags);
-
-                    bool skipProcessing = false;
-
-                    if (translationUnit.NumDiagnostics != 0)
-                    {
-                        for (uint i = 0; i < translationUnit.NumDiagnostics; ++i)
-                        {
-                            using (var diagnostic = translationUnit.GetDiagnostic(i))
+                            switch (diagnostic.Severity)
                             {
-                                var message = GetMessageAndLocation(rootFileContent, diagnostic, out var location);
-
-                                switch (diagnostic.Severity)
-                                {
-                                    case CXDiagnosticSeverity.CXDiagnostic_Ignored:
-                                    case CXDiagnosticSeverity.CXDiagnostic_Note:
-                                        compilation.Diagnostics.Info(message, location);
-                                        break;
-                                    case CXDiagnosticSeverity.CXDiagnostic_Warning:
-                                        // Avoid warning from clang (0, 0): warning: argument unused during compilation: '-fsyntax-only'
-                                        if (!message.Contains("-fsyntax-only"))
-                                        {
-                                            compilation.Diagnostics.Warning(message, location);
-                                        }
-                                        break;
-                                    case CXDiagnosticSeverity.CXDiagnostic_Error:
-                                    case CXDiagnosticSeverity.CXDiagnostic_Fatal:
-                                        compilation.Diagnostics.Error(message, location);
-                                        skipProcessing = true;
-                                        break;
-                                }
+                                case CXDiagnosticSeverity.CXDiagnostic_Ignored:
+                                case CXDiagnosticSeverity.CXDiagnostic_Note:
+                                    compilation.Diagnostics.Info(message, location);
+                                    break;
+                                case CXDiagnosticSeverity.CXDiagnostic_Warning:
+                                    // Avoid warning from clang (0, 0): warning: argument unused during compilation: '-fsyntax-only'
+                                    if (!message.Contains("-fsyntax-only"))
+                                    {
+                                        compilation.Diagnostics.Warning(message, location);
+                                    }
+                                    break;
+                                case CXDiagnosticSeverity.CXDiagnostic_Error:
+                                case CXDiagnosticSeverity.CXDiagnostic_Fatal:
+                                    compilation.Diagnostics.Error(message, location);
+                                    skipProcessing = true;
+                                    break;
                             }
                         }
                     }
-
-                    if (skipProcessing)
-                    {
-                        compilation.Diagnostics.Warning($"Compilation aborted due to one or more errors listed above.", new CppSourceLocation(rootFileName, 0, 1, 1));
-                    }
-                    else
-                    {
-                        using (translationUnit)
-                        {
-                            translationUnit.Cursor.VisitChildren(builder.VisitTranslationUnit, clientData: default);
-                        }
-                    }
                 }
+
+                if (skipProcessing)
+                {
+                    compilation.Diagnostics.Warning($"Compilation aborted due to one or more errors listed above.", new CppSourceLocation(rootFileName, 0, 1, 1));
+                }
+                else
+                {
+                    translationUnit.Cursor.VisitChildren(builder.VisitTranslationUnit, clientData: default);
+                }
+
+                translationUnit.Dispose();
 
                 return compilation;
             }
@@ -263,6 +255,7 @@ namespace CppAst
                 }
             }
 
+            diagnostic.Dispose();
             return builder.ToString();
         }
 
