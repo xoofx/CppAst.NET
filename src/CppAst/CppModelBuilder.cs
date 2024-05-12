@@ -1816,7 +1816,7 @@ namespace CppAst
                     return CppPrimitiveType.UnsignedInt;
 
                 case CXTypeKind.CXType_ULong:
-                    return type.SizeOf == 8 ? CppPrimitiveType.UnsignedLongLong : CppPrimitiveType.UnsignedInt;
+                    return CppPrimitiveType.UnsignedLong;
 
                 case CXTypeKind.CXType_ULongLong:
                     return CppPrimitiveType.UnsignedLongLong;
@@ -1837,7 +1837,7 @@ namespace CppAst
                     return CppPrimitiveType.Int;
 
                 case CXTypeKind.CXType_Long:
-                    return CppPrimitiveType.Int;
+                    return CppPrimitiveType.Long;
 
                 case CXTypeKind.CXType_LongLong:
                     return CppPrimitiveType.LongLong;
