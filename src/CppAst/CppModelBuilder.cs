@@ -1342,7 +1342,7 @@ namespace CppAst
                     case CXCursorKind.CXCursor_ParmDecl:
                         var argName = CXUtil.GetCursorSpelling(argCursor);
 
-                        var parameter = new CppParameter(GetCppType(argCursor.Type.Declaration, argCursor.Type, functionCursor, clientData), argName);
+                        var parameter = new CppParameter(GetCppType(argCursor.Type.Declaration, argCursor.Type, argCursor, clientData), argName);
 
                         cppFunction.Parameters.Add(parameter);
 
@@ -1939,12 +1939,12 @@ namespace CppAst
             //            }
 
             bool isParsingParameter = false;
-            parent.VisitChildren((cxCursor, parent1, clientData) =>
+            parent.VisitChildren((argCursor, functionCursor, clientData) =>
             {
-                if (cxCursor.Kind == CXCursorKind.CXCursor_ParmDecl)
+                if (argCursor.Kind == CXCursorKind.CXCursor_ParmDecl)
                 {
-                    var name = CXUtil.GetCursorSpelling(cxCursor);
-                    var parameterType = GetCppType(cxCursor.Type.Declaration, cxCursor.Type, cxCursor, data);
+                    var name = CXUtil.GetCursorSpelling(argCursor);
+                    var parameterType = GetCppType(argCursor.Type.Declaration, argCursor.Type, argCursor, data);
 
                     cppFunction.Parameters.Add(new CppParameter(parameterType, name));
                     isParsingParameter = true;
