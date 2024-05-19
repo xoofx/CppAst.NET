@@ -16,7 +16,7 @@ namespace CppAst
             var cursorSpelling = cursor.Spelling;
             string cursorSpellingStr = cursorSpelling.ToString();
             cursorSpelling.Dispose();
-            return cursorSpellingStr;
+            return cursorSpellingStr.StartsWith("(") ? string.Empty : cursorSpellingStr;
         }
 
         public static string GetCursorUsrString(CXCursor cursor)
