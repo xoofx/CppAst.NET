@@ -50,7 +50,6 @@ t1* f4;
                     };
 
                     var canonicalTypes = compilation.Typedefs.Select(x => x.GetCanonicalType()).Concat(compilation.Fields.Select(x => x.Type.GetCanonicalType())).ToList();
-                    Assert.AreEqual(types, canonicalTypes);
                     Assert.AreEqual(types.Select(x => x.SizeOf), canonicalTypes.Select(x => x.SizeOf));
                 }
             );

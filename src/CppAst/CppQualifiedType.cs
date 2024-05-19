@@ -25,26 +25,6 @@ namespace CppAst
         /// </summary>
         public CppTypeQualifier Qualifier { get; }
 
-        private bool Equals(CppQualifiedType other)
-        {
-            return base.Equals(other) && Qualifier == other.Qualifier;
-        }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppQualifiedType other && Equals(other);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return (base.GetHashCode() * 397) ^ (int)Qualifier;
-            }
-        }
-
         /// <inheritdoc />
         public override CppType GetCanonicalType()
         {

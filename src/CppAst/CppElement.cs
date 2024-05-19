@@ -3,6 +3,7 @@
 // See license.txt file in the project root for full license information.
 
 using System;
+using System.Runtime.CompilerServices;
 
 namespace CppAst
 {
@@ -20,6 +21,10 @@ namespace CppAst
         /// Gets or sets the parent container of this element. Might be null.
         /// </summary>
         public ICppContainer Parent { get; internal set; }
+
+        public sealed override bool Equals(object obj) => ReferenceEquals(this, obj);
+
+        public sealed override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
 
         public string FullParentName
         {

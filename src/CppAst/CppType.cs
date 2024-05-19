@@ -25,24 +25,6 @@ namespace CppAst
 
         public abstract int SizeOf { get; set; }
 
-        protected bool Equals(CppType other)
-        {
-            return TypeKind == other.TypeKind;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            return obj is CppType type && Equals(type);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            return (int)TypeKind;
-        }
-
         /// <summary>
         /// Gets the canonical type of this type instance.
         /// </summary>

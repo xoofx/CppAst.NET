@@ -38,21 +38,6 @@ namespace CppAst
         }
 
         /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppTemplateParameterType other && Equals(other);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return (base.GetHashCode() * 397) ^ Name.GetHashCode();
-            }
-        }
-
-        /// <inheritdoc />
         public override CppType GetCanonicalType() => this;
 
         /// <inheritdoc />

@@ -163,11 +163,6 @@ namespace CppAst
         public bool IsAbstract { get; set; }
 
 
-		private bool Equals(CppClass other)
-        {
-            return base.Equals(other) && Equals(Parent, other.Parent) && Name.Equals(other.Name);
-        }
-
         /// <inheritdoc />
         public override int SizeOf { get; set; }
 
@@ -175,32 +170,6 @@ namespace CppAst
         /// Gets the alignment of this instance.
         /// </summary>
         public int AlignOf { get; set; }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppClass other && Equals(other);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                int hashCode = base.GetHashCode();
-                hashCode = (hashCode * 397) ^ (Parent != null ? Parent.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ Name.GetHashCode();
-                foreach (var templateParameter in TemplateParameters)
-                {
-                    hashCode = (hashCode * 397) ^ templateParameter.GetHashCode();
-                }
-				foreach (var templateArgument in TemplateSpecializedArguments)
-                {
-                    hashCode = (hashCode * 397) ^ templateArgument.GetHashCode();
-                }
-                return hashCode;
-            }
-        }
 
         /// <inheritdoc />
         public override CppType GetCanonicalType()

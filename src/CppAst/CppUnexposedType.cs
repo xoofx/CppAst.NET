@@ -30,31 +30,11 @@ namespace CppAst
         /// </summary>
         public string Name { get; }
 
-        private bool Equals(CppTemplateParameterType other)
-        {
-            return base.Equals(other) && Name.Equals(other.Name);
-        }
-
         /// <inheritdoc />
         public override int SizeOf { get; set; }
 
         /// <inheritdoc />
         public List<CppType> TemplateParameters { get; }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppTemplateParameterType other && Equals(other);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return (base.GetHashCode() * 397) ^ Name.GetHashCode();
-            }
-        }
 
         /// <inheritdoc />
         public override CppType GetCanonicalType() => this;

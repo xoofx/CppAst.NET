@@ -214,21 +214,6 @@ namespace CppAst
         }
 
         /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppPrimitiveType other && Equals(other);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return (base.GetHashCode() * 397) ^ (int)Kind;
-            }
-        }
-
-        /// <inheritdoc />
         public override CppType GetCanonicalType()
         {
             return this;

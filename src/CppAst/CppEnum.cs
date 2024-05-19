@@ -74,34 +74,11 @@ namespace CppAst
 
         public MetaAttributeMap MetaAttributes { get; private set; } = new MetaAttributeMap();
 
-        private bool Equals(CppEnum other)
-        {
-            return base.Equals(other) && Equals(Parent, other.Parent) && Equals(Name, other.Name);
-        }
-
         /// <inheritdoc />
         public override int SizeOf
         {
             get => IntegerType?.SizeOf ?? 0;
             set => throw new InvalidOperationException("Cannot set the SizeOf an enum as it is determined only by the SizeOf of its underlying IntegerType");
-        }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppEnum other && Equals(other);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                int hashCode = base.GetHashCode();
-                hashCode = (hashCode * 397) ^ (Parent != null ? Parent.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Name != null ? Name.GetHashCode() : 0);
-                return hashCode;
-            }
         }
 
         /// <inheritdoc />

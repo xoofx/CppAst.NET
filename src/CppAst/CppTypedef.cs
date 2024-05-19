@@ -61,31 +61,11 @@ namespace CppAst
             }
         }
 
-        private bool Equals(CppTypedef other)
-        {
-            return base.Equals(other) && string.Equals(Name, other.Name);
-        }
-
         /// <inheritdoc />
         public override int SizeOf
         {
             get => ElementType.SizeOf;
             set => throw new InvalidOperationException("Cannot set the SizeOf a TypeDef. The SizeOf is determined by the underlying ElementType");
-        }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppTypedef other && Equals(other);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return (base.GetHashCode() * 397) ^ Name.GetHashCode();
-            }
         }
 
         /// <inheritdoc />

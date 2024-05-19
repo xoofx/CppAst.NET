@@ -42,24 +42,6 @@ namespace CppAst
         /// </summary>
         public CppExpression InitExpression { get; set; }
 
-        private bool Equals(CppParameter other)
-        {
-            return Equals(Type, other.Type) && Equals(Name, other.Name);
-        }
-
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppParameter other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return ((Type != null ? Type.GetHashCode() : 0) * 397) ^ (Name != null ? Name.GetHashCode() : 0);
-            }
-        }
-
         public override string ToString()
         {
             if (string.IsNullOrEmpty(Name))
