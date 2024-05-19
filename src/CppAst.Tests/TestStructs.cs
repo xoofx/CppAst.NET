@@ -206,6 +206,45 @@ struct HelloWorld
             );
         }
 
+        [Test]
+        public void TestAnonymousUnionWithField2()
+        {
+            ParseAssert(@"
+struct HelloWorld
+{
+    int a;
+    union {
+        int c;
+        int d;
+    } e[4];
+};
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
 
+                    Assert.AreEqual(1, compilation.Classes.Count);
+
+                    {
+                        var cppStruct = compilation.Classes[0];
+
+                        // Only one union
+                        Assert.AreEqual(1, cppStruct.Classes.Count);
+
+                        // Only 2 fields
+                        Assert.AreEqual(2, cppStruct.Fields.Count);
+
+                        // Check the union
+                        Assert.AreEqual("e", cppStruct.Fields[1].Name);
+                        Assert.IsInstanceOf<CppArrayType>(cppStruct.Fields[1].Type);
+                        var cppArrayType = ((CppArrayType)cppStruct.Fields[1].Type);
+                        Assert.IsInstanceOf<CppClass>(cppArrayType.ElementType);
+                        var cppUnion = ((CppClass)cppArrayType.ElementType);
+                        Assert.AreEqual(CppClassKind.Union, cppUnion.ClassKind);
+                        Assert.AreEqual(2, cppUnion.Fields.Count);
+                    }
+                }
+            );
+        }
     }
 }

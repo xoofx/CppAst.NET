@@ -840,6 +840,25 @@ namespace CppAst
             return new CppSourceLocation(fileNameStr, (int)offset, (int)line, (int)column);
         }
 
+        private static bool IsAnonymousTypeUsed(CppType type, CppType anonymousType)
+        {
+            return IsAnonymousTypeUsed(type, anonymousType, new HashSet<CppType>());
+        }
+
+        private static bool IsAnonymousTypeUsed(CppType type, CppType anonymousType, HashSet<CppType> visited)
+        {
+            if (!visited.Add(type)) return false;
+
+            if (ReferenceEquals(type, anonymousType)) return true;
+
+            if (type is CppTypeWithElementType typeWithElementType)
+            {
+                return IsAnonymousTypeUsed(typeWithElementType.ElementType, anonymousType);
+            }
+
+            return false;
+        }
+
         private CppField VisitFieldOrVariable(CppContainerContext containerContext, CXCursor cursor, void* data)
         {
             var fieldName = CXUtil.GetCursorSpelling(cursor);
@@ -849,10 +868,11 @@ namespace CppAst
             CppField cppField;
             // This happen in the type is anonymous, we create implicitly a field for it, but if type is the same
             // we should reuse the anonymous field we created just before
-            if (previousField != null && previousField.IsAnonymous && ReferenceEquals(previousField.Type, type))
+            if (previousField != null && previousField.IsAnonymous && IsAnonymousTypeUsed(type, previousField.Type))
             {
                 cppField = previousField;
                 cppField.Name = fieldName;
+                cppField.Type = type;
                 cppField.Offset = cursor.OffsetOfField / 8;
             }
             else
