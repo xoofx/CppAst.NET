@@ -178,6 +178,10 @@ namespace CppAst
                     return "short";
                 case CppPrimitiveKind.Int:
                     return "int";
+                case CppPrimitiveKind.Long:
+                    return "long";
+                case CppPrimitiveKind.UnsignedLong:
+                    return "unsigned long";
                 case CppPrimitiveKind.LongLong:
                     return "long long";
                 case CppPrimitiveKind.UnsignedChar:
