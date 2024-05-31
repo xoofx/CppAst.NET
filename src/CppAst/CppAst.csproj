@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <TargetFrameworks>net6.0</TargetFrameworks>
     <VersionPrefix>0.8.0</VersionPrefix>
     <VersionSuffix>alpha</VersionSuffix>
     <BuildNumber>014</BuildNumber>
@@ -33,7 +33,7 @@
     <None Include="../../img/cppast.png" Pack="true" PackagePath="/logo.png" />
     <None Include="../../readme.md" Pack="true" PackagePath="/" />
 
-    <PackageReference Include="ClangSharp" Version="17.0.1" />
+    <PackageReference Include="ClangSharp" Version="15.0.1" />
   </ItemGroup>
 
   <ItemGroup>
