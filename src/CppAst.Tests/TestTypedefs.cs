@@ -102,7 +102,7 @@ typedef struct {
 
                     Assert.AreEqual(1, compilation.Classes.Count);
                     Assert.AreEqual(1, compilation.Typedefs.Count);
-                    Assert.AreEqual("", compilation.Classes[0].Name);
+                    Assert.AreEqual("MyStruct", compilation.Classes[0].Name);
                     Assert.AreEqual("MyStruct", compilation.Typedefs[0].Name);
                 },
                 new CppParserOptions() { AutoSquashTypedef = false }

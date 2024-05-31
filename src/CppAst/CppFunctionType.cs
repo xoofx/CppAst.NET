@@ -38,58 +38,12 @@ namespace CppAst
         /// </summary>
         public CppContainerList<CppParameter> Parameters { get; }
 
-        private bool Equals(CppFunctionType other)
-        {
-            if (base.Equals(other) && ReturnType.Equals(other.ReturnType))
-            {
-                if (Parameters.Count != other.Parameters.Count)
-                {
-                    return false;
-                }
-
-                for (int i = 0; i < Parameters.Count; i++)
-                {
-                    var fromType = Parameters[i].Type;
-                    var otherType = other.Parameters[i].Type;
-                    if (!fromType.Equals(otherType))
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-
         /// <inheritdoc />
         public override int SizeOf
         {
             get => 0;
 
             set => throw new InvalidOperationException("This type does not support SizeOf");
-        }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppFunctionType other && Equals(other);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                int hashCode = base.GetHashCode();
-                hashCode = (hashCode * 397) ^ ReturnType.GetHashCode();
-                foreach (var parameter in Parameters)
-                {
-                    hashCode = (hashCode * 397) ^ parameter.Type.GetHashCode();
-                }
-                return hashCode;
-            }
         }
 
         /// <inheritdoc />

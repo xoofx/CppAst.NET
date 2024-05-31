@@ -42,6 +42,11 @@ namespace CppAst
         public static readonly CppPrimitiveType Int = new CppPrimitiveType(CppPrimitiveKind.Int);
 
         /// <summary>
+        /// Singleton instance of the `long` type.
+        /// </summary>
+        public static readonly CppPrimitiveType Long = new CppPrimitiveType(CppPrimitiveKind.Long);
+
+        /// <summary>
         /// Singleton instance of the `long long` type.
         /// </summary>
         public static readonly CppPrimitiveType LongLong = new CppPrimitiveType(CppPrimitiveKind.LongLong);
@@ -61,6 +66,11 @@ namespace CppAst
         /// </summary>
         public static readonly CppPrimitiveType UnsignedInt = new CppPrimitiveType(CppPrimitiveKind.UnsignedInt);
 
+        /// <summary>
+        /// Singleton instance of the `unsigned long` type.
+        /// </summary>
+        public static readonly CppPrimitiveType UnsignedLong = new CppPrimitiveType(CppPrimitiveKind.UnsignedLong);
+        
         /// <summary>
         /// Singleton instance of the `unsigned long long` type.
         /// </summary>
@@ -120,6 +130,10 @@ namespace CppAst
                 case CppPrimitiveKind.Int:
                     sizeOf = 4;
                     break;
+                case CppPrimitiveKind.Long:
+                case CppPrimitiveKind.UnsignedLong:
+                    sizeOf = 4; // This is incorrect
+                    break;
                 case CppPrimitiveKind.LongLong:
                     sizeOf = 8;
                     break;
@@ -164,6 +178,10 @@ namespace CppAst
                     return "short";
                 case CppPrimitiveKind.Int:
                     return "int";
+                case CppPrimitiveKind.Long:
+                    return "long";
+                case CppPrimitiveKind.UnsignedLong:
+                    return "unsigned long";
                 case CppPrimitiveKind.LongLong:
                     return "long long";
                 case CppPrimitiveKind.UnsignedChar:
@@ -197,21 +215,6 @@ namespace CppAst
         {
             get => _sizeOf;
             set => throw new InvalidOperationException("Cannot set the SizeOf of a primitive type");
-        }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppPrimitiveType other && Equals(other);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return (base.GetHashCode() * 397) ^ (int)Kind;
-            }
         }
 
         /// <inheritdoc />

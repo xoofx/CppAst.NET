@@ -11,38 +11,11 @@ on:
     paths-ignore:
     - 'doc/**'
     - 'img/**'
-    - 'changelog.md'
     - 'readme.md'
   pull_request:
 
 jobs:
   build:
-    runs-on: windows-2019
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-        fetch-depth: 0
-
-    - name: Install .NET 6.0
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '6.0.x'
-
-    - name: Build & test (Release)
-      run: |
-        dotnet test src -c Release
-
-    - name: Pack
-      run: dotnet pack src -c Release
-
-    - name: Publish
-      if: github.event_name == 'push'
-      run: |      
-          if ( "${{github.ref}}" -match "^refs/tags/[0-9]+\.[0-9]+\.[0-9]+" ) {
-              dotnet nuget push src\${{env.PROJECT_NAME}}\bin\Release\*.nupkg -s nuget.org -k ${{secrets.NUGET_TOKEN}}
-          } else {
-              echo "publish is only enabled by tagging with a release tag"
-          }
+    uses: xoofx/.github/.github/workflows/dotnet.yml@main
+    secrets:
+      NUGET_TOKEN: ${{ secrets.NUGET_TOKEN }}

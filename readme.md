@@ -10,8 +10,9 @@ CppAst provides a C/C++ parser for header files with access to the full AST, com
 
 ## Features
 
-- Compatible with `.NET Standard 2.0+`
-- Using `Clang/libclang 15.0.2`
+- Compatible with `net8.0`
+    - For `netstandard2.0` use `0.14.0` version.
+- Using `Clang/libclang 17.0.1`
 - Allow to parse *in-memory* C/C++ text and C/C++ files from the disk
 - Simple AST model
 - Full type system
@@ -104,4 +105,4 @@ The C++ project [cppast](https://github.com/foonathan/cppast) serves similar pur
 
 ## Author
 
-Alexandre Mutel aka [xoofx](http://xoofx.com).
+Alexandre Mutel aka [xoofx](https://xoofx.github.io).

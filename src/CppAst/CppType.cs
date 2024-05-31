@@ -1,4 +1,4 @@
-﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
@@ -24,27 +24,6 @@ namespace CppAst
         public CppTypeKind TypeKind { get; }
 
         public abstract int SizeOf { get; set; }
-
-        protected bool Equals(CppType other)
-        {
-            return TypeKind.Equals(other.TypeKind) &&
-                SizeOf.Equals(other.SizeOf);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            return obj is CppType type && Equals(type);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            return (base.GetHashCode() * 397) ^
-                TypeKind.GetHashCode() ^
-                SizeOf.GetHashCode();
-        }
 
         /// <summary>
         /// Gets the canonical type of this type instance.

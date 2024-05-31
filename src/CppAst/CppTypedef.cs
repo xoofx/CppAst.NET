@@ -3,13 +3,14 @@
 // See license.txt file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 
 namespace CppAst
 {
     /// <summary>
     /// A C++ typedef (e.g `typedef int XXX`)
     /// </summary>
-    public sealed class CppTypedef : CppTypeDeclaration, ICppMemberWithVisibility
+    public sealed class CppTypedef : CppTypeDeclaration, ICppMemberWithVisibility, ICppAttributeContainer
     {
         /// <summary>
         /// Creates a new instance of a typedef.
@@ -20,8 +21,18 @@ namespace CppAst
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             ElementType = type;
+            Attributes = new List<CppAttribute>();
+            TokenAttributes = new List<CppAttribute>();
+            MetaAttributes = new MetaAttributeMap();
         }
 
+        public List<CppAttribute> Attributes { get; }
+
+        [Obsolete("TokenAttributes is deprecated. please use system attributes and annotate attributes")]
+        public List<CppAttribute> TokenAttributes { get; }
+
+        public MetaAttributeMap MetaAttributes { get; private set; }
+        
         public CppType ElementType { get; }
 
         /// <summary>
@@ -50,31 +61,11 @@ namespace CppAst
             }
         }
 
-        private bool Equals(CppTypedef other)
-        {
-            return base.Equals(other) && string.Equals(Name, other.Name);
-        }
-
         /// <inheritdoc />
         public override int SizeOf
         {
             get => ElementType.SizeOf;
             set => throw new InvalidOperationException("Cannot set the SizeOf a TypeDef. The SizeOf is determined by the underlying ElementType");
-        }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppTypedef other && Equals(other);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return (base.GetHashCode() * 397) ^ Name.GetHashCode();
-            }
         }
 
         /// <inheritdoc />

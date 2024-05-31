@@ -9,7 +9,7 @@ namespace CppAst
     /// <summary>
     /// A C++ array (e.g int[5] or int[])
     /// </summary>
-    public sealed class CppArrayType : CppTypeWithElementType, IEquatable<CppArrayType>
+    public sealed class CppArrayType : CppTypeWithElementType
     {
         /// <summary>
         /// Constructor of a C++ array.
@@ -30,26 +30,6 @@ namespace CppAst
         {
             get => Size * ElementType.SizeOf;
             set => throw new InvalidOperationException("Cannot set the SizeOf an array type. The SizeOf is calculated by the SizeOf its ElementType and the number of elements in the fixed array");
-        }
-
-        public bool Equals(CppArrayType other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return base.Equals(other) && Size == other.Size;
-        }
-
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppArrayType other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return (base.GetHashCode() * 397) ^ Size;
-            }
         }
 
         public override CppType GetCanonicalType()
