@@ -18,5 +18,7 @@ namespace CppAst
 
         [Obsolete("TokenAttributes is deprecated. please use system attributes and annotate attributes")]
         List<CppAttribute> TokenAttributes { get; }
+
+        MetaAttributeMap MetaAttributes { get; }
     }
 }

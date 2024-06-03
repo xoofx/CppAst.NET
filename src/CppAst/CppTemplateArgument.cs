@@ -1,4 +1,4 @@
-﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
@@ -112,43 +112,6 @@ namespace CppAst
                 SourceParam.Equals(other.SourceParam) &&
                 IsSpecializedArgument.Equals(other.IsSpecializedArgument);
         }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppTemplateArgument other && Equals(other);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                var result = (base.GetHashCode() * 397) ^
-                    ArgKind.GetHashCode() ^
-                    ArgAsInteger.GetHashCode() ^
-                    SourceParam.GetHashCode() ^
-                    IsSpecializedArgument.GetHashCode();
-
-                if (ArgAsType != null)
-                {
-                    result ^= ArgAsType.GetHashCode();
-                }
-
-                if (ArgAsUnknown != null)
-                {
-                    result ^= ArgAsUnknown.GetHashCode();
-                }
-
-                if (ArgAsExpression != null)
-                {
-                    result ^= ArgAsExpression.GetHashCode();
-                }
-
-                return result;
-            }
-        }
-
 
         /// <inheritdoc />
         public override CppType GetCanonicalType() => this;

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
@@ -31,14 +31,6 @@ namespace CppAst
         /// </summary>
         public string Name { get; }
 
-        private bool Equals(CppUnexposedType other)
-        {
-            return base.Equals(other) && 
-                Name.Equals(other.Name) &&
-                TemplateParameters.SequenceEqual(other.TemplateParameters) &&
-                TemplateArguments.SequenceEqual(other.TemplateArguments);
-        }
-
         /// <inheritdoc />
         public override int SizeOf { get; set; }
 
@@ -46,33 +38,6 @@ namespace CppAst
         public List<CppType> TemplateParameters { get; } = new List<CppType>();
 
         public List<CppTemplateArgument> TemplateArguments { get; } = new List<CppTemplateArgument>();
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppUnexposedType other && Equals(other);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                var hashCode =(base.GetHashCode() * 397) ^ Name.GetHashCode();
-
-                foreach (var templateParameter in TemplateParameters)
-                {
-                    hashCode = (hashCode * 397) ^ templateParameter.GetHashCode();
-                }
-
-                foreach (var templateArgument in TemplateArguments)
-                {
-                    hashCode = (hashCode * 397) ^ templateArgument.GetHashCode();
-                }
-
-                return hashCode;
-            }
-        }
 
         /// <inheritdoc />
         public override CppType GetCanonicalType() => this;

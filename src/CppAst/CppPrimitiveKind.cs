@@ -40,6 +40,11 @@ namespace CppAst
         Int,
 
         /// <summary>
+        /// C++ `long`
+        /// </summary>
+        Long,
+        
+        /// <summary>
         /// C++ `long long` (64bits)
         /// </summary>
         LongLong,
@@ -58,6 +63,11 @@ namespace CppAst
         /// C++ `unsigned int`
         /// </summary>
         UnsignedInt,
+
+        /// <summary>
+        /// C++ `unsigned long`
+        /// </summary>
+        UnsignedLong,
 
         /// <summary>
         /// C++ `unsigned long long` (64 bits)

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
@@ -51,27 +51,6 @@ namespace CppAst
         {
             get => 0;
             set => throw new InvalidOperationException("This type does not support SizeOf");
-        }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppTemplateParameterType other && Equals(other);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                var hashCode = base.GetHashCode() * 397 ^ Name.GetHashCode();
-                foreach (var templateTemplateParameter in TemplateTemplateParameters)
-                {
-                    hashCode = (hashCode * 397) ^ templateTemplateParameter.GetHashCode();
-                }
-
-                return hashCode;
-            }
         }
 
         /// <inheritdoc />

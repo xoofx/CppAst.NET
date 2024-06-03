@@ -414,5 +414,44 @@ void functionX(Test<int,2> a = aa, Test<double,3> b = bb);
             );
         }
 
+
+        [Test]
+        public void TestFunctionPointersByParam()
+        {
+            ParseAssert(@"
+void function0(int a, int b, float (*callback)(void*, double));
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(1, compilation.Functions.Count);
+
+                    {
+                        var cppFunction = compilation.Functions[0];
+                        Assert.AreEqual("function0", cppFunction.Name);
+                        Assert.AreEqual(3, cppFunction.Parameters.Count);
+
+                        Assert.IsInstanceOf<CppPointerType>(cppFunction.Parameters[2].Type);
+                        var pointerType = (CppPointerType)cppFunction.Parameters[2].Type;
+                        Assert.IsInstanceOf<CppFunctionType>(pointerType.ElementType);
+                        var functionType = (CppFunctionType)pointerType.ElementType;
+                        Assert.AreEqual(2, functionType.Parameters.Count);
+                        Assert.AreEqual("float", functionType.ReturnType.ToString());
+                        Assert.AreEqual("void *", functionType.Parameters[0].Type.ToString());
+                        Assert.AreEqual("double", functionType.Parameters[1].Type.ToString());
+
+
+                        Assert.AreEqual("void", cppFunction.ReturnType.ToString());
+
+                        var cppFunction1 = compilation.FindByName<CppFunction>("function0");
+                        Assert.AreEqual(cppFunction, cppFunction1);
+                    }
+                }
+            );
+        }
+
+
+
     }
 }

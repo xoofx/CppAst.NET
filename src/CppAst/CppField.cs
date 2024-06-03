@@ -11,7 +11,7 @@ namespace CppAst
     /// <summary>
     /// A C++ field (of a struct/class) or global variable.
     /// </summary>
-    public sealed class CppField : CppDeclaration, ICppMemberWithVisibility , ICppAttributeContainer
+    public sealed class CppField : CppDeclaration, ICppMemberWithVisibility, ICppAttributeContainer
     {
         public CppField(CppType type, string name)
         {
@@ -36,6 +36,8 @@ namespace CppAst
 
         [Obsolete("TokenAttributes is deprecated. please use system attributes and annotate attributes")]
         public List<CppAttribute> TokenAttributes { get; }
+
+        public MetaAttributeMap MetaAttributes { get; private set; } = new MetaAttributeMap();
 
         /// <summary>
         /// Gets the type of this field/variable.

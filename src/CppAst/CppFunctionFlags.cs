@@ -66,5 +66,10 @@ namespace CppAst
         /// This is a function template (has template params in function)
         /// </summary>
         FunctionTemplate = 1 << 9,
+
+        /// <summary>
+        /// This is a deleted function
+        /// </summary>
+        Deleted = 1 << 10,
     }
 }

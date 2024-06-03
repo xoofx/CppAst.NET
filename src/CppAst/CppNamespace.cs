@@ -62,27 +62,7 @@ namespace CppAst
         [Obsolete("TokenAttributes is deprecated. please use system attributes and annotate attributes")]
         public List<CppAttribute> TokenAttributes { get; }
 
-
-        protected bool Equals(CppNamespace other)
-        {
-            return Equals(Parent, other.Parent) && Name.Equals(other.Name);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((CppNamespace)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return ((Parent != null ? Parent.GetHashCode() : 0) * 397) ^ (Name != null ? Name.GetHashCode() : 0);
-            }
-        }
+        public MetaAttributeMap MetaAttributes { get; private set; } = new MetaAttributeMap();
 
         public override string ToString()
         {

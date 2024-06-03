@@ -1,4 +1,4 @@
-﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
@@ -25,6 +25,7 @@ namespace CppAst
             BaseTypes = new List<CppBaseType>();
             Fields = new CppContainerList<CppField>(this);
             Constructors = new CppContainerList<CppFunction>(this);
+            Destructors = new CppContainerList<CppFunction>(this);
             Functions = new CppContainerList<CppFunction>(this);
             Enums = new CppContainerList<CppEnum>(this);
             Classes = new CppContainerList<CppClass>(this);
@@ -105,6 +106,8 @@ namespace CppAst
         [Obsolete("TokenAttributes is deprecated. please use system attributes and annotate attributes")]
         public List<CppAttribute> TokenAttributes { get; }
 
+        public MetaAttributeMap MetaAttributes { get; private set; } = new MetaAttributeMap();
+
         /// <summary>
         /// Gets or sets a boolean indicating if this type is a definition. If <c>false</c> the type was only declared but is not defined.
         /// </summary>
@@ -127,6 +130,11 @@ namespace CppAst
         /// Gets the constructors of this instance.
         /// </summary>
         public CppContainerList<CppFunction> Constructors { get; set; }
+
+        /// <summary>
+        /// Gets the destructors of this instance.
+        /// </summary>
+        public CppContainerList<CppFunction> Destructors { get; set; }
 
         /// <inheritdoc />
         public CppContainerList<CppFunction> Functions { get; }
@@ -156,11 +164,6 @@ namespace CppAst
         public bool IsAbstract { get; set; }
 
 
-        private bool Equals(CppClass other)
-        {
-            return base.Equals(other) && Equals(Parent, other.Parent) && Name.Equals(other.Name);
-        }
-
         /// <inheritdoc />
         public override int SizeOf { get; set; }
 
@@ -168,32 +171,6 @@ namespace CppAst
         /// Gets the alignment of this instance.
         /// </summary>
         public int AlignOf { get; set; }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppClass other && Equals(other);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                int hashCode = base.GetHashCode();
-                hashCode = (hashCode * 397) ^ (Parent != null ? Parent.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ Name.GetHashCode();
-                foreach (var templateParameter in TemplateParameters)
-                {
-                    hashCode = (hashCode * 397) ^ templateParameter.GetHashCode();
-                }
-                foreach (var templateArgument in TemplateArguments)
-                {
-                    hashCode = (hashCode * 397) ^ templateArgument.GetHashCode();
-                }
-                return hashCode;
-            }
-        }
 
         /// <inheritdoc />
         public override CppType GetCanonicalType()
@@ -273,6 +250,11 @@ namespace CppAst
             }
 
             foreach (var item in Constructors)
+            {
+                yield return item;
+            } 
+
+            foreach (var item in Destructors)
             {
                 yield return item;
             }
