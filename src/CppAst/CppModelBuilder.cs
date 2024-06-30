@@ -435,7 +435,7 @@ namespace CppAst
             if (element != null)
             {
                 AssignSourceSpan(cursor, element);
-			}
+            }
 
             if (element is ICppDeclaration cppDeclaration)
             {
@@ -828,7 +828,7 @@ namespace CppAst
             var end = cursor.Extent.End;
 
             element.Span = new CppSourceSpan(GetSourceLocation(start), GetSourceLocation(end));
-		}
+        }
 
         public static CppSourceLocation GetSourceLocation(CXSourceLocation start)
         {
