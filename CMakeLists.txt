@@ -1,3 +1,7 @@
+# This file is not used for compiling but used
+# when generating project using CMake generator.
+# If you are not using CMake then just open .sln file
+
 cmake_minimum_required(VERSION 3.22)
 
 project(CppAst.NET CSharp)
