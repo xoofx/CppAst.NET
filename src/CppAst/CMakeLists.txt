@@ -1,5 +1,7 @@
 file(GLOB_RECURSE SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cs)
 
+set(CMAKE_CSharp_FLAGS "${CMAKE_CSharp_FLAGS} /langversion:7.3")
+
 add_library(CppAst SHARED ${SOURCE_FILES})
 
 set_target_properties(CppAst PROPERTIES
