@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
 
-# For now it is needed to have separate solution for C# projects as CMake has limited mixed C++/C# support
-# Maybe in the feature it will be possible to have one solution for C++/C#
 project(CppAst.NET CSharp)
 
 set(CMAKE_CSharp_FLAGS "${CMAKE_CSharp_FLAGS} /langversion:latest")
