@@ -220,7 +220,7 @@ namespace CppAst
                                     break;
                                 default:
                                     {
-                                        Debug.WriteLine($"[Warning]template argument in class:{cppClass.FullName} with type: {arg.kind} do not handle right now!");
+                                        RootCompilation.Diagnostics.Warning($"Unhandled template argument with type {arg.kind}: {cursor.Kind}/{CXUtil.GetCursorSpelling(cursor)}", GetSourceLocation(cursor.Location));
                                         cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(tempParams[(int)i], arg.ToString()));
                                     }
                                     break;
