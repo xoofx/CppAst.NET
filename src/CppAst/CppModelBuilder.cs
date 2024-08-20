@@ -75,7 +75,7 @@ namespace CppAst
                 case CXCursorKind.CXCursor_TemplateTemplateParameter:
                     {
                         //ToDo: add template template parameter support here~~
-                        Debug.WriteLine("[Warning] template template parameter maybe not handle right here!");
+                        RootCompilation.Diagnostics.Warning($"Unhandled template parameter: {cursor.Kind}/{CXUtil.GetCursorSpelling(cursor)}", GetSourceLocation(cursor.Location));
                         var tmplparam = new CppTemplateParameterType(CXUtil.GetCursorSpelling(cursor));
                         return tmplparam;
                     }
