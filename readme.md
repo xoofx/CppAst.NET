@@ -12,7 +12,7 @@ CppAst provides a C/C++ parser for header files with access to the full AST, com
 
 - Compatible with `net8.0`
     - For `netstandard2.0` use `0.14.0` version.
-- Using `Clang/libclang 17.0.1`
+- Using `Clang/libclang 18.1.0`
 - Allow to parse *in-memory* C/C++ text and C/C++ files from the disk
 - Simple AST model
 - Full type system

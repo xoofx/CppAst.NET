@@ -27,12 +27,12 @@
     <None Include="../../img/cppast.png" Pack="true" PackagePath="/logo.png" />
     <None Include="../../readme.md" Pack="true" PackagePath="/" />
 
-    <PackageReference Include="ClangSharp" Version="17.0.1" />
+    <PackageReference Include="ClangSharp" Version="18.1.0.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Irony" Version="1.2.0" />
-    <PackageReference Include="MinVer" Version="4.3.0">
+    <PackageReference Include="Irony" Version="1.5.3" />
+    <PackageReference Include="MinVer" Version="6.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

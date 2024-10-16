@@ -86,6 +86,11 @@ namespace CppAst
 
         private CppContainerContext GetOrCreateDeclarationContainer(CXCursor cursor, void* data)
         {
+            while (cursor.Kind == CXCursorKind.CXCursor_LinkageSpec)
+            {
+                cursor = cursor.SemanticParent;
+            }
+
             var typeAsCString = CXUtil.GetCursorUsrString(cursor);
             if (string.IsNullOrEmpty(typeAsCString))
             {
@@ -427,6 +432,11 @@ namespace CppAst
                 case CXCursorKind.CXCursor_AnnotateAttr:
                     // Don't emit warning
                     break;
+
+                case CXCursorKind.CXCursor_LinkageSpec:
+                    cursor.VisitChildren(VisitMember, new CXClientData((IntPtr)data));
+                    break;
+
                 default:
                     WarningUnhandled(cursor, parent);
                     break;
