@@ -12,7 +12,7 @@ typedef void Type_void;
 
 typedef bool Type_bool;
 
-typedef wchar_t Type_wchar;
+typedef wchar_t Type_wchar_t;
 
 typedef char Type_char;
 typedef unsigned char Type_unsigned_char;
