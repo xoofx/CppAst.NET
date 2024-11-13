@@ -56,6 +56,11 @@ namespace CppAst
                         // root namespace here, just ignore~
                         p = null;
                     }
+                    else if (p is CppGlobalDeclarationContainer)
+                    {
+                       // root container here, just ignore~
+                       p = null;
+                    }
                     else
                     {
                         throw new NotImplementedException("Can not be here, not support type here!");
