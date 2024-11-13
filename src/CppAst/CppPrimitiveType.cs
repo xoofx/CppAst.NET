@@ -171,7 +171,7 @@ namespace CppAst
                 case CppPrimitiveKind.Void:
                     return "void";
                 case CppPrimitiveKind.WChar:
-                    return "wchar";
+                    return "wchar_t";
                 case CppPrimitiveKind.Char:
                     return "char";
                 case CppPrimitiveKind.Short:

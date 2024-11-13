@@ -12,7 +12,7 @@ using Type_void = void;
 
 using Type_bool = bool;
 
-using Type_wchar = wchar_t ;
+using Type_wchar_t = wchar_t ;
 
 using Type_char = char;
 using Type_unsigned_char = unsigned char;
