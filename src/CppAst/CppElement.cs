@@ -1,4 +1,4 @@
-﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
@@ -51,14 +51,10 @@ namespace CppAst
                         }
                         p = ns.Parent;
                     }
-                    else if (p is CppCompilation)
-                    {
-                        // root namespace here, just ignore~
-                        p = null;
-                    }
                     else
                     {
-                        throw new NotImplementedException("Can not be here, not support type here!");
+                        // root namespace here, or no known parent, just ignore~ 
+                        p = null;
                     }
                 }
 
