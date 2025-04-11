@@ -1,4 +1,4 @@
-# CppAst.NET [![Build Status](https://github.com/xoofx/CppAst/workflows/ci/badge.svg?branch=main)](https://github.com/xoofx/CppAst/actions) [![Coverage Status](https://coveralls.io/repos/github/xoofx/CppAst.NET/badge.svg?branch=main)](https://coveralls.io/github/xoofx/CppAst.NET?branch=main) [![NuGet](https://img.shields.io/nuget/v/CppAst.svg)](https://www.nuget.org/packages/CppAst/)
+# CppAst.NET [![ci](https://github.com/xoofx/CppAst.NET/actions/workflows/ci.yml/badge.svg)](https://github.com/xoofx/CppAst.NET/actions/workflows/ci.yml) [![Coverage Status](https://coveralls.io/repos/github/xoofx/CppAst.NET/badge.svg?branch=main)](https://coveralls.io/github/xoofx/CppAst.NET?branch=main) [![NuGet](https://img.shields.io/nuget/v/CppAst.svg)](https://www.nuget.org/packages/CppAst/)
 
 <img align="right" width="160px" height="160px" src="https://raw.githubusercontent.com/xoofx/CppAst.NET/main/img/cppast.png">
 
@@ -12,7 +12,7 @@ CppAst provides a C/C++ parser for header files with access to the full AST, com
 
 - Compatible with `net8.0`
     - For `netstandard2.0` use `0.14.0` version.
-- Using `Clang/libclang 18.1.0`
+- Using `Clang/libclang 18.1.0.4`
 - Allow to parse *in-memory* C/C++ text and C/C++ files from the disk
 - Simple AST model
 - Full type system

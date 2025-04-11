@@ -27,7 +27,7 @@
     <None Include="../../img/cppast.png" Pack="true" PackagePath="/logo.png" />
     <None Include="../../readme.md" Pack="true" PackagePath="/" />
 
-    <PackageReference Include="ClangSharp" Version="18.1.0.2" />
+    <PackageReference Include="ClangSharp" Version="18.1.0.4" />
   </ItemGroup>
 
   <ItemGroup>
