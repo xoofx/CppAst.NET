@@ -1,4 +1,4 @@
-﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
@@ -84,7 +84,7 @@ namespace CppAst
             return null;
         }
 
-        private CppContainerContext GetOrCreateDeclarationContainer(CXCursor cursor, void* data)
+        private bool TryGetDeclarationContainer(CXCursor cursor, void* data, out string typeKey, out CppContainerContext containerContext)
         {
             while (cursor.Kind == CXCursorKind.CXCursor_LinkageSpec)
             {
@@ -97,8 +97,13 @@ namespace CppAst
                 typeAsCString = CXUtil.GetCursorDisplayName(cursor);
             }
             // Try to workaround anonymous types
-            var typeKey = $"{cursor.Kind}:{typeAsCString}{(cursor.IsAnonymous ? "/" + cursor.Hash : string.Empty)}";
-            if (_containers.TryGetValue(typeKey, out var containerContext))
+            typeKey = $"{cursor.Kind}:{typeAsCString}{(cursor.IsAnonymous ? "/" + cursor.Hash : string.Empty)}";
+            return _containers.TryGetValue(typeKey, out containerContext);
+        }
+
+        private CppContainerContext GetOrCreateDeclarationContainer(CXCursor cursor, void* data)
+        {
+            if (TryGetDeclarationContainer(cursor, data, out string typeKey, out var containerContext))
             {
                 return containerContext;
             }
@@ -127,7 +132,6 @@ namespace CppAst
                     break;
 
                 case CXCursorKind.CXCursor_EnumDecl:
-                    Debug.Assert(parent != null);
                     var cppEnum = new CppEnum(CXUtil.GetCursorSpelling(cursor))
                     {
                         IsAnonymous = cursor.IsAnonymous,
@@ -142,7 +146,6 @@ namespace CppAst
                 case CXCursorKind.CXCursor_ClassDecl:
                 case CXCursorKind.CXCursor_StructDecl:
                 case CXCursorKind.CXCursor_UnionDecl:
-                    Debug.Assert(parent != null);
                     var cppClass = new CppClass(CXUtil.GetCursorSpelling(cursor));
                     parentDeclarationContainer.Classes.Add(cppClass);
                     symbol = cppClass;
@@ -243,10 +246,15 @@ namespace CppAst
                 case CXCursorKind.CXCursor_TranslationUnit:
                 case CXCursorKind.CXCursor_UnexposedDecl:
                 case CXCursorKind.CXCursor_FirstInvalid:
+                    if (!_containers.ContainsKey(typeKey))
+                    {
+                        _containers.Add(typeKey, _rootContainerContext);
+                    }
                     return _rootContainerContext;
                 default:
                     Unhandled(cursor);
-                    break;
+                    // TODO: Workaround for now, as the container below would have an empty symbol
+                    goto case CXCursorKind.CXCursor_TranslationUnit;
             }
 
             containerContext = new CppContainerContext(symbol) { CurrentVisibility = defaultContainerVisibility };
@@ -1772,6 +1780,13 @@ namespace CppAst
                 return typeRef;
             }
 
+            // If the type has been already declared, return it immediately.
+            if (TryGetDeclarationContainer(cursor, data, out _, out var containerContext))
+            {
+                return (CppType)containerContext.Container;
+            }
+
+            // TODO: Pseudo fix, we are not supposed to land here, as the TryGet before should resolve an existing type already declared (but not necessarily defined)
             return GetCppType(type.CanonicalType.Declaration, type.CanonicalType, parent, data);
         }
 

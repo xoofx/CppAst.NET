@@ -161,6 +161,39 @@ typedef struct struct0 {
 
 
         [Test]
+        public void TestFunctionTypedefFields()
+        {
+            ParseAssert(@"
+typedef struct struct0 struct0;
+typedef void (*function0_t)(int a, float b);
+typedef void (*function1_t)(char, int);
+struct struct0
+{
+    function0_t function0;
+    function1_t function1;
+};
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    var cls = compilation.Classes[0];
+                    Assert.AreEqual(2, cls.Fields.Count);
+
+                    {
+                        var cppType = cls.Fields[0].Type;
+                        Assert.AreEqual(CppTypeKind.Typedef, cppType.TypeKind);
+                    }
+
+                    {
+                        var cppType = cls.Fields[1].Type;
+                        Assert.AreEqual(CppTypeKind.Typedef, cppType.TypeKind);
+                    }
+                }
+            );
+        }
+
+        [Test]
         public void TestFunctionExport()
         {
             var text = @"
