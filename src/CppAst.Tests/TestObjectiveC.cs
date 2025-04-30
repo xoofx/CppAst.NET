@@ -23,6 +23,7 @@ public class TestObjectiveC : InlineTestBase
             compilation =>
             {
                 Assert.False(compilation.HasErrors);
+                Assert.AreEqual(0, compilation.Diagnostics.Messages.Count, "Parsing foundation headers should not generate warnings"); // No warnings
                 Assert.IsTrue(compilation.System.Classes.Count > 1000);
             }, new()
             {
