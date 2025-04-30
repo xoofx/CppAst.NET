@@ -17,7 +17,9 @@ namespace CppAst
     /// </summary>
     internal unsafe class CppModelBuilder
     {
-        private readonly CppContainerContext _rootContainerContext;
+        private readonly CppContainerContext _userRootContainerContext;
+        private readonly CppContainerContext _systemRootContainerContext;
+        private CppContainerContext _rootContainerContext;
         private readonly Dictionary<string, CppContainerContext> _containers;
         private readonly Dictionary<string, CppType> _typedefs;
         private CppClass _currentClassBeingVisited;
@@ -27,7 +29,14 @@ namespace CppAst
             _containers = new Dictionary<string, CppContainerContext>();
             RootCompilation = new CppCompilation();
             _typedefs = new Dictionary<string, CppType>();
-            _rootContainerContext = new CppContainerContext(RootCompilation);
+            _userRootContainerContext = new CppContainerContext(RootCompilation)
+            {
+                NameContext = "user"
+            };
+            _systemRootContainerContext = new CppContainerContext(RootCompilation.System)
+            {
+                NameContext = "system"
+            };
         }
 
         public bool AutoSquashTypedef { get; set; }
@@ -42,15 +51,6 @@ namespace CppAst
 
         public CXChildVisitResult VisitTranslationUnit(CXCursor cursor, CXCursor parent, void* data)
         {
-            _rootContainerContext.Container = RootCompilation;
-
-
-            if (cursor.Location.IsInSystemHeader)
-            {
-                if (!ParseSystemIncludes) return CXChildVisitResult.CXChildVisit_Continue;
-
-                _rootContainerContext.Container = RootCompilation.System;
-            }
             return VisitMember(cursor, parent, data);
         }
 
@@ -98,7 +98,7 @@ namespace CppAst
                 typeAsCString = CXUtil.GetCursorDisplayName(cursor);
             }
             // Try to workaround anonymous types
-            typeKey = $"{typeAsCString}{(cursor.IsAnonymous ? "/" + cursor.Hash : string.Empty)}";
+            typeKey = $"{_rootContainerContext.NameContext}/{typeAsCString}{(cursor.IsAnonymous ? "/" + cursor.Hash : string.Empty)}";
             return _containers.TryGetValue(typeKey, out containerContext);
         }
 
@@ -116,6 +116,11 @@ namespace CppAst
 
         private CppContainerContext GetOrCreateDeclarationContainer(CXCursor cursor, void* data)
         {
+            while (cursor.Kind == CXCursorKind.CXCursor_LinkageSpec)
+            {
+                cursor = cursor.SemanticParent;
+            }
+
             if (TryGetDeclarationContainer(cursor, data, out string typeKey, out var containerContext))
             {
                 return containerContext;
@@ -383,30 +388,54 @@ namespace CppAst
         private CXChildVisitResult VisitMember(CXCursor cursor, CXCursor parent, void* data)
         {
             CppElement element = null;
+
+            // Only set the root container when we know the location
+            // Otherwise assume that it hasn't changed
+            // We expect it to be always set
+            if (cursor.Location != CXSourceLocation.Null)
+            {
+                if (cursor.Location.IsInSystemHeader)
+                {
+                    if (!ParseSystemIncludes) return CXChildVisitResult.CXChildVisit_Continue;
+
+                    _rootContainerContext = _systemRootContainerContext;
+                }
+                else
+                {
+                    _rootContainerContext = _userRootContainerContext;
+                }
+            }
+
+            if (_rootContainerContext is null)
+            {
+                RootCompilation.Diagnostics.Error($"Unexpected error with cursor location. Cannot determine Root Compilation context.");
+                return CXChildVisitResult.CXChildVisit_Continue;
+            }
+
             switch (cursor.Kind)
             {
                 case CXCursorKind.CXCursor_FieldDecl:
                 case CXCursorKind.CXCursor_VarDecl:
-                    {
-                        var containerContext = GetOrCreateDeclarationContainer(parent, data);
-                        element = VisitFieldOrVariable(containerContext, cursor, data);
-                        break;
-                    }
+                {
+                    var containerContext = GetOrCreateDeclarationContainer(parent, data);
+                    element = VisitFieldOrVariable(containerContext, cursor, data);
+                    break;
+                }
 
                 case CXCursorKind.CXCursor_EnumConstantDecl:
-                    {
-                        var containerContext = GetOrCreateDeclarationContainer(parent, data);
-                        var cppEnum = (CppEnum)containerContext.Container;
-                        var enumItem = new CppEnumItem(CXUtil.GetCursorSpelling(cursor), cursor.EnumConstantDeclValue);
-                        ParseAttributes(cursor, enumItem, true);
+                {
+                    var containerContext = GetOrCreateDeclarationContainer(parent, data);
+                    var cppEnum = (CppEnum)containerContext.Container;
+                    var enumItem = new CppEnumItem(CXUtil.GetCursorSpelling(cursor), cursor.EnumConstantDeclValue);
+                    ParseAttributes(cursor, enumItem, true);
 
-                        VisitInitValue(cursor, data, out var enumItemExpression, out var enumValue);
-                        enumItem.ValueExpression = enumItemExpression;
+                    VisitInitValue(cursor, data, out var enumItemExpression, out var enumValue);
+                    enumItem.ValueExpression = enumItemExpression;
 
-                        cppEnum.Items.Add(enumItem);
-                        element = enumItem;
-                        break;
-                    }
+                    cppEnum.Items.Add(enumItem);
+                    element = enumItem;
+                    break;
+                }
 
                 case CXCursorKind.CXCursor_Namespace:
                     element = VisitNamespace(cursor, data);
@@ -419,46 +448,47 @@ namespace CppAst
                 case CXCursorKind.CXCursor_ObjCInterfaceDecl:
                 case CXCursorKind.CXCursor_ObjCProtocolDecl:
                 case CXCursorKind.CXCursor_ObjCCategoryDecl:
+                {
+                    bool isAnonymous = cursor.IsAnonymous;
+                    var cppClass = VisitClassDecl(cursor, data);
+                    var containerContext = GetOrCreateDeclarationContainer(parent, data);
+                    // Empty struct/class/union declaration are considered as fields
+                    if (isAnonymous)
                     {
-                        bool isAnonymous = cursor.IsAnonymous;
-                        var cppClass = VisitClassDecl(cursor, data);
-                        var containerContext = GetOrCreateDeclarationContainer(parent, data);
-                        // Empty struct/class/union declaration are considered as fields
-                        if (isAnonymous)
-                        {
-                            cppClass.Name = string.Empty;
-                            Debug.Assert(string.IsNullOrEmpty(cppClass.Name));
+                        cppClass.Name = string.Empty;
+                        Debug.Assert(string.IsNullOrEmpty(cppClass.Name));
 
-                            // We try to recover the offset from the previous field
-                            // Might not be always correct (with alignment rules),
-                            // but not sure how to recover the offset without recalculating the entire offsets
-                            var offset = 0;
-                            var cppClassContainer = containerContext.Container as CppClass;
-                            if (cppClassContainer is object && cppClassContainer.Fields.Count > 0)
-                            {
-                                var lastField = cppClassContainer.Fields[cppClassContainer.Fields.Count - 1];
-                                offset = (int)lastField.Offset + lastField.Type.SizeOf;
-                            }
-
-                            // Create an anonymous field for the type
-                            var cppField = new CppField(cppClass, string.Empty)
-                            {
-                                Visibility = containerContext.CurrentVisibility,
-                                StorageQualifier = GetStorageQualifier(cursor),
-                                IsAnonymous = true,
-                                Offset = offset,
-                            };
-                            ParseAttributes(cursor, cppField, true);
-                            containerContext.DeclarationContainer.Fields.Add(cppField);
-                            element = cppField;
-                        }
-                        else
+                        // We try to recover the offset from the previous field
+                        // Might not be always correct (with alignment rules),
+                        // but not sure how to recover the offset without recalculating the entire offsets
+                        var offset = 0;
+                        var cppClassContainer = containerContext.Container as CppClass;
+                        if (cppClassContainer is object && cppClassContainer.Fields.Count > 0)
                         {
-                            cppClass.Visibility = containerContext.CurrentVisibility;
-                            element = cppClass;
+                            var lastField = cppClassContainer.Fields[cppClassContainer.Fields.Count - 1];
+                            offset = (int)lastField.Offset + lastField.Type.SizeOf;
                         }
-                        break;
+
+                        // Create an anonymous field for the type
+                        var cppField = new CppField(cppClass, string.Empty)
+                        {
+                            Visibility = containerContext.CurrentVisibility,
+                            StorageQualifier = GetStorageQualifier(cursor),
+                            IsAnonymous = true,
+                            Offset = offset,
+                        };
+                        ParseAttributes(cursor, cppField, true);
+                        containerContext.DeclarationContainer.Fields.Add(cppField);
+                        element = cppField;
                     }
+                    else
+                    {
+                        cppClass.Visibility = containerContext.CurrentVisibility;
+                        element = cppClass;
+                    }
+
+                    break;
+                }
 
                 case CXCursorKind.CXCursor_EnumDecl:
                     element = VisitEnumDecl(cursor, data);
@@ -495,7 +525,7 @@ namespace CppAst
                     break;
                 case CXCursorKind.CXCursor_UnexposedDecl:
                     return CXChildVisitResult.CXChildVisit_Recurse;
-                
+
                 case CXCursorKind.CXCursor_ObjCClassRef:
                 case CXCursorKind.CXCursor_ObjCProtocolRef:
                 {
@@ -513,6 +543,7 @@ namespace CppAst
                             cppClass.ObjCImplementedProtocols.Add(referencedType);
                         }
                     }
+
                     break;
                 }
                 case CXCursorKind.CXCursor_TypeRef:
@@ -523,43 +554,40 @@ namespace CppAst
                         var type = GetCppType(cursor.Referenced, cursor.Type, cursor, data);
                         genericType.GenericArguments.Add(type);
                     }
+
                     break;
-                    
-                    
+
+
                 case CXCursorKind.CXCursor_CXXBaseSpecifier:
+                {
+                    var cppClass = (CppClass)GetOrCreateDeclarationContainer(parent, data).Container;
+                    var baseType = GetCppType(cursor.Type.Declaration, cursor.Type, cursor, data);
+                    var cppBaseType = new CppBaseType(baseType)
                     {
-                        var cppClass = (CppClass)GetOrCreateDeclarationContainer(parent, data).Container;
-                        var baseType = GetCppType(cursor.Type.Declaration, cursor.Type, cursor, data);
-                        var cppBaseType = new CppBaseType(baseType)
-                        {
-                            Visibility = GetVisibility(cursor.CXXAccessSpecifier),
-                            IsVirtual = cursor.IsVirtualBase
-                        };
-                        cppClass.BaseTypes.Add(cppBaseType);
-                        break;
-                    }
+                        Visibility = GetVisibility(cursor.CXXAccessSpecifier),
+                        IsVirtual = cursor.IsVirtualBase
+                    };
+                    cppClass.BaseTypes.Add(cppBaseType);
+                    break;
+                }
 
                 case CXCursorKind.CXCursor_CXXAccessSpecifier:
-                    {
-                        var containerContext = GetOrCreateDeclarationContainer(parent, data);
-                        containerContext.CurrentVisibility = GetVisibility(cursor.CXXAccessSpecifier);
-                    }
+                {
+                    var containerContext = GetOrCreateDeclarationContainer(parent, data);
+                    containerContext.CurrentVisibility = GetVisibility(cursor.CXXAccessSpecifier);
+                }
 
                     break;
 
                 case CXCursorKind.CXCursor_MacroDefinition:
                     element = ParseMacro(cursor);
                     break;
-                
+
                 case CXCursorKind.CXCursor_MacroExpansion:
                 case CXCursorKind.CXCursor_InclusionDirective:
-                case CXCursorKind.CXCursor_FirstRef: 
+                case CXCursorKind.CXCursor_FirstRef:
                 case CXCursorKind.CXCursor_ObjCIvarDecl:
                 case CXCursorKind.CXCursor_TemplateTypeParameter:
-                    if (cursor.IsAttribute)
-                    {
-                        System.Diagnostics.Debugger.Break();
-                    }
                     break;
 
                 case CXCursorKind.CXCursor_LinkageSpec:
@@ -572,19 +600,21 @@ namespace CppAst
                     element = VisitProperty(containerContext, cursor, data);
                     break;
                 }
-                
+
                 default:
                     if (!cursor.IsAttribute)
                     {
                         WarningUnhandled(cursor, parent);
                     }
+
                     break;
             }
 
             if (element != null)
             {
                 bool isForwardDeclaration = (element is CppClass || element is CppEnum) && !cursor.IsDefinition;
-                if (!isForwardDeclaration) {
+                if (!isForwardDeclaration)
+                {
                     AssignSourceSpan(cursor, element);
                 }
             }
@@ -2270,6 +2300,11 @@ namespace CppAst
             public ICppDeclarationContainer DeclarationContainer => Container as ICppDeclarationContainer;
 
             public CppVisibility CurrentVisibility;
+
+            /// <summary>
+            /// Either "system" (include) or user.
+            /// </summary>
+            public string? NameContext { get; init; }
 
             public bool IsChildrenVisited;
         }
