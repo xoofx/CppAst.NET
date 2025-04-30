@@ -91,6 +91,48 @@ namespace CppAst
         /// </summary>
         public static readonly CppPrimitiveType LongDouble = new CppPrimitiveType(CppPrimitiveKind.LongDouble);
 
+        /// <summary>
+        /// ObjC `id` type.
+        /// </summary>
+        public static readonly CppPrimitiveType ObjCId = new CppPrimitiveType(CppPrimitiveKind.ObjCId);
+
+        /// <summary>
+        /// ObjC `SEL` type.
+        /// </summary>
+        public static readonly CppPrimitiveType ObjCSel = new CppPrimitiveType(CppPrimitiveKind.ObjCSel);
+
+        /// <summary>
+        /// ObjC `Class` type.
+        /// </summary>
+        public static readonly CppPrimitiveType ObjCClass = new CppPrimitiveType(CppPrimitiveKind.ObjCClass);
+
+        /// <summary>
+        /// ObjC `Object` type.
+        /// </summary>
+        public static readonly CppPrimitiveType ObjCObject = new CppPrimitiveType(CppPrimitiveKind.ObjCObject);
+
+        /// <summary>
+        /// Unsigned 128 bits integer type.
+        /// </summary>
+        public static readonly CppPrimitiveType UInt128 = new CppPrimitiveType(CppPrimitiveKind.UInt128);
+        
+        /// <summary>
+        /// 128 bits integer type.
+        /// </summary>
+        public static readonly CppPrimitiveType Int128 = new CppPrimitiveType(CppPrimitiveKind.Int128);
+        
+        /// <summary>
+        /// Float16 type.
+        /// </summary>
+        public static readonly CppPrimitiveType Float16 = new CppPrimitiveType(CppPrimitiveKind.Float16);
+        
+        /// <summary>
+        /// BFloat16 type.
+        /// </summary>
+        public static readonly CppPrimitiveType BFloat16 = new CppPrimitiveType(CppPrimitiveKind.BFloat16);
+        
+
+        
         private readonly int _sizeOf;
 
         /// <summary>
@@ -157,6 +199,20 @@ namespace CppAst
                     break;
                 case CppPrimitiveKind.LongDouble:
                     sizeOf = 8;
+                    break;
+                case CppPrimitiveKind.ObjCId:
+                case CppPrimitiveKind.ObjCSel:
+                case CppPrimitiveKind.ObjCClass:
+                case CppPrimitiveKind.ObjCObject:
+                    sizeOf = 8; // Valid only for 64 bits
+                    break;
+                case CppPrimitiveKind.UInt128:
+                case CppPrimitiveKind.Int128:
+                    sizeOf = 16;
+                    break;
+                case CppPrimitiveKind.Float16:
+                case CppPrimitiveKind.BFloat16:
+                    sizeOf = 2;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();

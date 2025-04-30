@@ -31,6 +31,9 @@ namespace CppAst
             TemplateParameters = new List<CppType>();
             Attributes = new List<CppAttribute>();
             TokenAttributes = new List<CppAttribute>();
+            ObjCImplementedProtocols = new List<CppClass>();
+            Properties = new CppContainerList<CppProperty>(this);
+            ObjCCategories = new List<CppObjCCategory>();
         }
 
         /// <summary>
@@ -121,9 +124,17 @@ namespace CppAst
         /// Get the base types of this type.
         /// </summary>
         public List<CppBaseType> BaseTypes { get; }
-
+        
+        /// <summary>
+        /// Get the Objective-C implemented protocols.
+        /// </summary>
+        public List<CppClass> ObjCImplementedProtocols { get; }
+        
         /// <inheritdoc />
         public CppContainerList<CppField> Fields { get; }
+
+        /// <inheritdoc />
+        public CppContainerList<CppProperty> Properties { get; }
 
         /// <summary>
         /// Gets the constructors of this instance.
@@ -146,6 +157,11 @@ namespace CppAst
 
         /// <inheritdoc />
         public CppContainerList<CppTypedef> Typedefs { get; }
+        
+        /// <summary>
+        /// Gets the Objective-C categories of this instance.
+        /// </summary>
+        public List<CppObjCCategory> ObjCCategories { get; }
 
         /// <inheritdoc />
         public List<CppType> TemplateParameters { get; }
@@ -192,6 +208,12 @@ namespace CppAst
                 case CppClassKind.Union:
                     builder.Append("union ");
                     break;
+                case CppClassKind.ObjCInterface:
+                    builder.Append("@interface ");
+                    break;
+                case CppClassKind.ObjCProtocol:
+                    builder.Append("@protocol ");
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -200,18 +222,7 @@ namespace CppAst
             {
                 builder.Append(Name);
             }
-
-            if (BaseTypes.Count > 0)
-            {
-                builder.Append(" : ");
-                for (var i = 0; i < BaseTypes.Count; i++)
-                {
-                    var baseType = BaseTypes[i];
-                    if (i > 0) builder.Append(", ");
-                    builder.Append(baseType);
-                }
-            }
-
+            
             //Add template arguments here
             if(TemplateKind != CppTemplateKind.NormalClass)
             {
@@ -227,17 +238,39 @@ namespace CppAst
                 }
                 else if(TemplateKind == CppTemplateKind.TemplateClass)
                 {
-					for (var i = 0; i < TemplateParameters.Count; i++)
-					{
-						if (i > 0) builder.Append(", ");
-						builder.Append(TemplateParameters[i].ToString());
-					}
-				}
+                    for (var i = 0; i < TemplateParameters.Count; i++)
+                    {
+                        if (i > 0) builder.Append(", ");
+                        builder.Append(TemplateParameters[i].ToString());
+                    }
+                }
 
                 builder.Append(">");
             }
 
-            builder.Append(" { ... }");
+            if (BaseTypes.Count > 0)
+            {
+                builder.Append(" : ");
+                for (var i = 0; i < BaseTypes.Count; i++)
+                {
+                    var baseType = BaseTypes[i];
+                    if (i > 0) builder.Append(", ");
+                    builder.Append(baseType);
+                }
+            }
+
+            if (ObjCImplementedProtocols.Count > 0)
+            {
+                builder.Append(" <");
+                for (var i = 0; i < ObjCImplementedProtocols.Count; i++)
+                {
+                    var protocol = ObjCImplementedProtocols[i];
+                    if (i > 0) builder.Append(", ");
+                    builder.Append(protocol.Name);
+                }
+                builder.Append(">");
+            }
+            
             return builder.ToString();
         }
 

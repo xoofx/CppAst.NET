@@ -21,5 +21,13 @@ namespace CppAst
         /// A C++ `union`
         /// </summary>
         Union,
+        /// <summary>
+        /// An Objective-C `@interface`
+        /// </summary>
+        ObjCInterface,
+        /// <summary>
+        /// An Objective-C `@protocol`
+        /// </summary>
+        ObjCProtocol,
     }
 }

@@ -61,5 +61,13 @@ namespace CppAst
 		/// An unexposed type.
 		/// </summary>
 		Unexposed,
+		/// <summary>
+		/// An Objective-C block function type.
+		/// </summary>
+		ObjCBlockFunction,
+		/// <summary>
+		/// A generic type (e.g. Objective-C `MyType&lt;TArg&gt;`)
+		/// </summary>
+		GenericType,
     }
 }
