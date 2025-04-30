@@ -6,10 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Runtime.InteropServices;
 using System.Text;
-using ClangSharp;
 using ClangSharp.Interop;
 
 namespace CppAst
@@ -156,29 +154,6 @@ namespace CppAst
                     symbol = cppEnum;
                     break;
 
-                case CXCursorKind.CXCursor_ObjCCategoryDecl:
-                {
-                    // Fetch the target class for the category
-                    CXCursor parentCursor = default;
-                    cursor.VisitChildren((cxCursor, parent, clientData) =>
-                    {
-                        if (cxCursor.Kind == CXCursorKind.CXCursor_ObjCClassRef)
-                        {
-                            parentCursor = cxCursor.Referenced;
-                            return CXChildVisitResult.CXChildVisit_Break;
-                        }
-
-                        return CXChildVisitResult.CXChildVisit_Continue;
-                    }, default);
-            
-                    var parentContainer = GetOrCreateDeclarationContainer(parentCursor, data).Container;
-                    var targetClass = (CppClass)parentContainer;
-                    
-                    var category = new CppObjCCategory(targetClass, CXUtil.GetCursorSpelling(cursor));
-                    targetClass.ObjCCategories.Add(category);
-                    symbol = category;
-                    break;
-                }
 
                 case CXCursorKind.CXCursor_ClassTemplate:
                 case CXCursorKind.CXCursor_ClassTemplatePartialSpecialization:
@@ -187,6 +162,7 @@ namespace CppAst
                 case CXCursorKind.CXCursor_UnionDecl:
                 case CXCursorKind.CXCursor_ObjCInterfaceDecl:
                 case CXCursorKind.CXCursor_ObjCProtocolDecl:
+                case CXCursorKind.CXCursor_ObjCCategoryDecl:
                     var cppClass = new CppClass(CXUtil.GetCursorSpelling(cursor));
                     parentDeclarationContainer.Classes.Add(cppClass);
                     symbol = cppClass;
@@ -210,6 +186,33 @@ namespace CppAst
                         case CXCursorKind.CXCursor_ObjCProtocolDecl:
                             cppClass.ClassKind = CppClassKind.ObjCProtocol;
                             break;
+                        case CXCursorKind.CXCursor_ObjCCategoryDecl:
+                        {
+                            cppClass.ClassKind = CppClassKind.ObjCInterfaceCategory;
+
+                            // Fetch the target class for the category
+                                CXCursor parentCursor = default;
+                            cursor.VisitChildren((cxCursor, parent, clientData) =>
+                            {
+                                if (cxCursor.Kind == CXCursorKind.CXCursor_ObjCClassRef)
+                                {
+                                    parentCursor = cxCursor.Referenced;
+                                    return CXChildVisitResult.CXChildVisit_Break;
+                                }
+
+                                return CXChildVisitResult.CXChildVisit_Continue;
+                            }, default);
+
+                            var parentContainer = GetOrCreateDeclarationContainer(parentCursor, data).Container;
+                            var targetClass = (CppClass)parentContainer;
+                            cppClass.ObjCCategoryName = cppClass.Name;
+                            cppClass.Name = targetClass.Name;
+                            cppClass.ObjCCategoryTargetClass = targetClass;
+
+                            // Link back
+                            targetClass.ObjCCategories.Add(cppClass);
+                            break;
+                        }
                     }
 
                     cppClass.IsAbstract = cursor.CXXRecord_IsAbstract;
@@ -274,24 +277,7 @@ namespace CppAst
                     }
                     else
                     {
-                        cursor.VisitChildren((childCursor, classCursor, clientData) =>
-                        {
-                            var tmplParam = TryToCreateTemplateParameters(childCursor, clientData);
-                            if (tmplParam != null)
-                            {
-                                cppClass.TemplateParameters.Add(tmplParam);
-                                if (cppClass.ClassKind == CppClassKind.ObjCInterface ||
-                                    cppClass.ClassKind == CppClassKind.ObjCProtocol)
-                                {
-                                    cppClass.TemplateKind = CppTemplateKind.ObjCGenericClass;
-                                }
-                                else
-                                {
-                                    cppClass.TemplateKind = CppTemplateKind.TemplateClass;
-                                }
-                            }
-                            return CXChildVisitResult.CXChildVisit_Continue;
-                        }, new CXClientData((IntPtr)data));
+                        AddTemplateParameters(cursor, cppClass);
                     }
 
                     defaultContainerVisibility = cursor.Kind == CXCursorKind.CXCursor_ClassDecl ? CppVisibility.Private : CppVisibility.Public;
@@ -320,6 +306,32 @@ namespace CppAst
             return containerContext;
         }
 
+        private void AddTemplateParameters(CXCursor cursor, ICppTemplateOwner templateOwner)
+        {
+            cursor.VisitChildren((childCursor, classCursor, clientData) =>
+            {
+                var tmplParam = TryToCreateTemplateParameters(childCursor, clientData);
+                if (tmplParam != null)
+                {
+                    templateOwner.TemplateParameters.Add(tmplParam);
+                    if (templateOwner is CppClass cppClass)
+                    {
+                        if (cppClass.ClassKind == CppClassKind.ObjCInterface ||
+                            cppClass.ClassKind == CppClassKind.ObjCProtocol)
+                        {
+                            cppClass.TemplateKind = CppTemplateKind.ObjCGenericClass;
+                        }
+                        else
+                        {
+                            cppClass.TemplateKind = CppTemplateKind.TemplateClass;
+                        }
+                    }
+                }
+
+                return CXChildVisitResult.CXChildVisit_Continue;
+            }, default);
+        }
+        
         private TCppElement GetOrCreateDeclarationContainer<TCppElement>(CXCursor cursor, void* data, out CppContainerContext context) where TCppElement : CppElement, ICppContainer
         {
             context = GetOrCreateDeclarationContainer(cursor, data);
@@ -406,6 +418,7 @@ namespace CppAst
                 case CXCursorKind.CXCursor_UnionDecl:
                 case CXCursorKind.CXCursor_ObjCInterfaceDecl:
                 case CXCursorKind.CXCursor_ObjCProtocolDecl:
+                case CXCursorKind.CXCursor_ObjCCategoryDecl:
                     {
                         bool isAnonymous = cursor.IsAnonymous;
                         var cppClass = VisitClassDecl(cursor, data);
@@ -553,9 +566,6 @@ namespace CppAst
                     cursor.VisitChildren(VisitMember, new CXClientData((IntPtr)data));
                     break;
 
-                case CXCursorKind.CXCursor_ObjCCategoryDecl:
-                    element = VisitObjCCategory(cursor, data);
-                    break;
                 case CXCursorKind.CXCursor_ObjCPropertyDecl:
                 {
                     var containerContext = GetOrCreateDeclarationContainer(parent, data);
@@ -597,16 +607,6 @@ namespace CppAst
             }
 
             return CXChildVisitResult.CXChildVisit_Continue;
-        }
-
-        private CppElement VisitObjCCategory(CXCursor cursor, void* data)
-        {
-            var categoryContainer = GetOrCreateDeclarationContainer(cursor, data).Container;
-            var cppCategory = (CppObjCCategory)categoryContainer;
-            _currentClassBeingVisited = cppCategory.TargetClass;
-            cursor.VisitChildren(VisitMember, new CXClientData((IntPtr)data));
-            _currentClassBeingVisited = null;
-            return cppCategory;
         }
 
         private CppComment GetComment(CXCursor cursor)

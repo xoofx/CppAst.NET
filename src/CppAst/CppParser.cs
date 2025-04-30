@@ -1,4 +1,4 @@
-﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
@@ -94,9 +94,21 @@ namespace CppAst
             arguments.Add("-dM");
             arguments.Add("-E");
 
-            if (options.ParseAsCpp && !arguments.Contains("-xc++"))
+            switch (options.ParserKind)
             {
-                arguments.Add("-xc++");
+                case CppParserKind.None:
+                    break;
+                case CppParserKind.Cpp:
+                    arguments.Add("-xc++");
+                    break;
+                case CppParserKind.C:
+                    arguments.Add("-xc");
+                    break;
+                case CppParserKind.ObjC:
+                    arguments.Add("-xobjective-c");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
 
             if (!arguments.Any(x => x.StartsWith("--target=")))

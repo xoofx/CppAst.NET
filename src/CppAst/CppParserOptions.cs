@@ -1,4 +1,4 @@
-﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
@@ -17,7 +17,7 @@ namespace CppAst
         /// </summary>
         public CppParserOptions()
         {
-            ParseAsCpp = true;
+            ParserKind = CppParserKind.Cpp;
             SystemIncludeFolders = new List<string>();
             IncludeFolders = new List<string>();
 
@@ -67,10 +67,10 @@ namespace CppAst
         public List<string> AdditionalArguments { get; private set; }
 
         /// <summary>
-        /// Gets or sets a boolean indicating whether the files will be parser as C++. Default is <c>true</c>. Otherwise parse as C.
+        /// Gets or sets the parser kind. Default is <see cref="CppParserKind.Cpp"/>. This is used to select the parser to use.
         /// </summary>
-        public bool ParseAsCpp { get; set; }
-
+        public CppParserKind ParserKind { get; set; } = CppParserKind.Cpp;
+        
         /// <summary>
         /// Gets or sets a boolean indicating whether to parser non-Doxygen comments in addition to Doxygen comments. Default is <c>true</c>
         /// </summary>

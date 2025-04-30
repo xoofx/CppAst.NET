@@ -1,4 +1,4 @@
-﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
@@ -69,5 +69,9 @@ namespace CppAst
 		/// A generic type (e.g. Objective-C `MyType&lt;TArg&gt;`)
 		/// </summary>
 		GenericType,
+        /// <summary>
+        /// An Objective-C interface with a category.
+        /// </summary>
+        ObjCInterfaceWithCategory,
     }
 }
