@@ -88,5 +88,45 @@ namespace CppAst
         /// C++ `long double`
         /// </summary>
         LongDouble,
+        
+        /// <summary>
+        /// An Objective-C `id` type.
+        /// </summary>
+        ObjCId,
+        
+        /// <summary>
+        /// An Objective-C `SEL` type.
+        /// </summary>
+        ObjCSel,
+        
+        /// <summary>
+        /// An Objective-C `Class` type.
+        /// </summary>
+        ObjCClass,
+        
+        /// <summary>
+        /// An Objective-C `NSObject` type.
+        /// </summary>
+        ObjCObject,
+        
+        /// <summary>
+        /// Unsigned 128 bits integer type.
+        /// </summary>
+        Int128,
+        
+        /// <summary>
+        /// 128 bits integer type.
+        /// </summary>
+        UInt128,
+        
+        /// <summary>
+        /// A 16 bits floating point type.
+        /// </summary>
+        Float16,
+        
+        /// <summary>
+        /// A 16 bits brain float type.
+        /// </summary>
+        BFloat16,
     }
 }

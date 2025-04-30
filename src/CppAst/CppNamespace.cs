@@ -27,6 +27,7 @@ namespace CppAst
             Namespaces = new CppContainerList<CppNamespace>(this);
             Attributes = new List<CppAttribute>();
             TokenAttributes = new List<CppAttribute>();
+            Properties = new CppContainerList<CppProperty>(this);
         }
 
         /// <summary>
@@ -41,6 +42,9 @@ namespace CppAst
 
         /// <inheritdoc />
         public CppContainerList<CppField> Fields { get; }
+
+        /// <inheritdoc />
+        public CppContainerList<CppProperty> Properties { get; }
 
         /// <inheritdoc />
         public CppContainerList<CppFunction> Functions { get; }

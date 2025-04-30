@@ -16,6 +16,11 @@ namespace CppAst
         CppContainerList<CppField> Fields { get; }
 
         /// <summary>
+        /// Gets the properties.
+        /// </summary>
+        CppContainerList<CppProperty> Properties { get; }
+
+        /// <summary>
         /// Gets the functions/methods.
         /// </summary>
         CppContainerList<CppFunction> Functions { get; }
