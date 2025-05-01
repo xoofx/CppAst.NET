@@ -1,4 +1,4 @@
-﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
@@ -222,43 +222,34 @@ namespace CppAst
         /// <inheritdoc />
         public override string ToString()
         {
-            switch (Kind)
+            return Kind switch
             {
-                case CppPrimitiveKind.Void:
-                    return "void";
-                case CppPrimitiveKind.WChar:
-                    return "wchar_t";
-                case CppPrimitiveKind.Char:
-                    return "char";
-                case CppPrimitiveKind.Short:
-                    return "short";
-                case CppPrimitiveKind.Int:
-                    return "int";
-                case CppPrimitiveKind.Long:
-                    return "long";
-                case CppPrimitiveKind.UnsignedLong:
-                    return "unsigned long";
-                case CppPrimitiveKind.LongLong:
-                    return "long long";
-                case CppPrimitiveKind.UnsignedChar:
-                    return "unsigned char";
-                case CppPrimitiveKind.UnsignedShort:
-                    return "unsigned short";
-                case CppPrimitiveKind.UnsignedInt:
-                    return "unsigned int";
-                case CppPrimitiveKind.UnsignedLongLong:
-                    return "unsigned long long";
-                case CppPrimitiveKind.Float:
-                    return "float";
-                case CppPrimitiveKind.Double:
-                    return "double";
-                case CppPrimitiveKind.LongDouble:
-                    return "long double";
-                case CppPrimitiveKind.Bool:
-                    return "bool";
-                default:
-                    throw new InvalidOperationException($"Unhandled PrimitiveKind: {Kind}");
-            }
+                CppPrimitiveKind.Void => "void",
+                CppPrimitiveKind.WChar => "wchar_t",
+                CppPrimitiveKind.Char => "char",
+                CppPrimitiveKind.Short => "short",
+                CppPrimitiveKind.Int => "int",
+                CppPrimitiveKind.Long => "long",
+                CppPrimitiveKind.UnsignedLong => "unsigned long",
+                CppPrimitiveKind.LongLong => "long long",
+                CppPrimitiveKind.UnsignedChar => "unsigned char",
+                CppPrimitiveKind.UnsignedShort => "unsigned short",
+                CppPrimitiveKind.UnsignedInt => "unsigned int",
+                CppPrimitiveKind.UnsignedLongLong => "unsigned long long",
+                CppPrimitiveKind.Float => "float",
+                CppPrimitiveKind.Double => "double",
+                CppPrimitiveKind.LongDouble => "long double",
+                CppPrimitiveKind.Bool => "bool",
+                CppPrimitiveKind.Int128 => "System.Int128",
+                CppPrimitiveKind.UInt128 => "System.UInt128",
+                CppPrimitiveKind.ObjCId => "ObjCId",
+                CppPrimitiveKind.ObjCSel => "ObjCSel",
+                CppPrimitiveKind.ObjCClass => "ObjCClass",
+                CppPrimitiveKind.ObjCObject => "ObjCObject",
+                CppPrimitiveKind.Float16 => "System.Half",
+                CppPrimitiveKind.BFloat16 => "BFloat16",
+                _ => throw new InvalidOperationException($"Unhandled PrimitiveKind: {Kind}")
+            };
         }
 
         private bool Equals(CppPrimitiveType other)

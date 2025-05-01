@@ -9,7 +9,7 @@ namespace CppAst.Tests;
 public class TestObjectiveC : InlineTestBase
 {
     [Test]
-    public void TestFoundationIncludes()
+    public void TestAppKitIncludes()
     {
         if (!OperatingSystem.IsMacOS())
         {
@@ -18,7 +18,7 @@ public class TestObjectiveC : InlineTestBase
         }
         
         ParseAssert("""
-                    #import <Foundation/Foundation.h>
+                    #import <AppKit/AppKit.h>
                     """,
             compilation =>
             {
@@ -148,7 +148,6 @@ public class TestObjectiveC : InlineTestBase
         );
     }
 
-
     [Test]
     public void TestInterfaceWithMultipleGenericParameters()
     {
@@ -178,6 +177,40 @@ public class TestObjectiveC : InlineTestBase
                 Assert.AreEqual("get_at2:", myInterface.Functions[1].Name);
                 Assert.IsTrue(myInterface.Functions[0].ReturnType is CppTemplateParameterType templateSpecialization && templateSpecialization.Name == "T1");
                 Assert.IsTrue(myInterface.Functions[1].ReturnType is CppTemplateParameterType templateSpecialization2 && templateSpecialization2.Name == "T2");
+            }, GetDefaultObjCOptions()
+        );
+    }
+
+
+    [Test]
+    public void TestInterfaceWithGenericsAndTypedef()
+    {
+        ParseAssert("""
+                    @interface BaseInterface
+                    @end
+
+                    // Generics require a base class
+                    @interface MyInterface<T1> : BaseInterface
+                        typedef T1 HelloWorld;
+                    @end
+                    """,
+            compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+                Assert.AreEqual(2, compilation.Classes.Count);
+                var myInterface = compilation.Classes[1];
+                Assert.AreEqual(CppClassKind.ObjCInterface, myInterface.ClassKind);
+                Assert.AreEqual("MyInterface", myInterface.Name);
+                Assert.AreEqual(1, myInterface.TemplateParameters.Count);
+                Assert.IsTrue(myInterface.TemplateParameters[0] is CppTemplateParameterType templateParam1 && templateParam1.Name == "T1");
+
+                // By default, typedef declared within interfaces are global, but in that case, it is depending on a template parameter
+                // So it is not part of the global namespace
+                Assert.AreEqual(0, compilation.Typedefs.Count);
+                Assert.AreEqual(1, myInterface.Typedefs.Count);
+                var typedef = myInterface.Typedefs[0];
+                Assert.AreEqual("HelloWorld", typedef.Name);
+                Assert.IsTrue(typedef.ElementType is CppTemplateParameterType templateSpecialization && templateSpecialization.Name == "T1");
             }, GetDefaultObjCOptions()
         );
     }
@@ -275,6 +308,7 @@ public class TestObjectiveC : InlineTestBase
 
                 var myInterfaceBase = compilation.Classes[0];
                 Assert.AreEqual(CppClassKind.ObjCInterface, myInterfaceBase.ClassKind);
+                Assert.AreEqual(0, myInterfaceBase.BaseTypes.Count);
                 Assert.AreEqual("InterfaceBase", myInterfaceBase.Name);
 
                 var myInterface = compilation.Classes[1];

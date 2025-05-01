@@ -1,4 +1,4 @@
-﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
@@ -13,7 +13,7 @@ namespace CppAst
     /// <remarks>
     /// Template parameter type instance are actually exposed with this type.
     /// </remarks>
-    public sealed class CppUnexposedType : CppType, ICppTemplateOwner
+    public sealed class CppUnexposedType : CppType, ICppTemplateOwner, ICppContainer
     {
         /// <summary>
         /// Creates an instance of this type.
@@ -22,7 +22,7 @@ namespace CppAst
         public CppUnexposedType(string name) : base(CppTypeKind.Unexposed)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
-            TemplateParameters = new List<CppType>();
+            TemplateParameters = new CppContainerList<CppType>(this);
         }
 
         /// <summary>
@@ -34,12 +34,17 @@ namespace CppAst
         public override int SizeOf { get; set; }
 
         /// <inheritdoc />
-        public List<CppType> TemplateParameters { get; }
+        public CppContainerList<CppType> TemplateParameters { get; }
 
         /// <inheritdoc />
         public override CppType GetCanonicalType() => this;
 
         /// <inheritdoc />
         public override string ToString() => Name;
+
+        public IEnumerable<ICppDeclaration> Children()
+        {
+            yield break;
+        }
     }
 }

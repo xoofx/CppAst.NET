@@ -991,7 +991,7 @@ namespace CppAst
                     }
                     attributes.Add(attribute);
 
-                    tokenIt.Skip(",");
+                    tokenIt.Skip(","); 
                 }
 
                 return tokenIt.Skip(")", ")");

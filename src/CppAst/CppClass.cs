@@ -28,7 +28,7 @@ namespace CppAst
             Enums = new CppContainerList<CppEnum>(this);
             Classes = new CppContainerList<CppClass>(this);
             Typedefs = new CppContainerList<CppTypedef>(this);
-            TemplateParameters = new List<CppType>();
+            TemplateParameters = new CppContainerList<CppType>(this);
             Attributes = new List<CppAttribute>();
             TokenAttributes = new List<CppAttribute>();
             ObjCImplementedProtocols = new List<CppClass>();
@@ -175,7 +175,7 @@ namespace CppAst
         public List<CppClass> ObjCCategories { get; }
 
         /// <inheritdoc />
-        public List<CppType> TemplateParameters { get; }
+        public CppContainerList<CppType> TemplateParameters { get; }
 
         public List<CppTemplateArgument> TemplateSpecializedArguments { get; } = new List<CppTemplateArgument>();
 

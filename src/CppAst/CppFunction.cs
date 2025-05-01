@@ -1,4 +1,4 @@
-﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
@@ -21,7 +21,7 @@ namespace CppAst
         {
             Name = name;
             Parameters = new CppContainerList<CppParameter>(this);
-            TemplateParameters = new List<CppType>();
+            TemplateParameters = new CppContainerList<CppType>(this);
             Attributes = new List<CppAttribute>();
             TokenAttributes = new List<CppAttribute>();
         }
@@ -111,7 +111,7 @@ namespace CppAst
         public bool IsFunctionTemplate => ((int)Flags & (int)CppFunctionFlags.FunctionTemplate) != 0;
 
         /// <inheritdoc />
-        public List<CppType> TemplateParameters { get; }
+        public CppContainerList<CppType> TemplateParameters { get; }
 
         /// <inheritdoc />
         public override string ToString()
