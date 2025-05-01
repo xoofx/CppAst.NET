@@ -71,7 +71,6 @@ namespace CppAst
         /// <summary>
         /// Gets the source file of this element.
         /// </summary>
-        public string SourceFile => string.IsNullOrWhiteSpace(Span.Start.File) ? (Parent as CppElement)?.SourceFile : Span.Start.File;
-
+        public string SourceFile => Span.Start.File;
     }
 }

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
@@ -33,6 +33,7 @@ namespace CppAst
             Attributes = new List<CppAttribute>();
             TokenAttributes = new List<CppAttribute>();
             Properties = new CppContainerList<CppProperty>(this);
+            InclusionDirectives = new CppContainerList<CppInclusionDirective>(this);
         }
 
         /// <summary>
@@ -71,6 +72,11 @@ namespace CppAst
         public List<CppAttribute> TokenAttributes { get; }
 
         public MetaAttributeMap MetaAttributes { get; private set; } = new MetaAttributeMap();
+
+        /// <summary>
+        /// Gets the list of inclusion directives for this container.
+        /// </summary>
+        public CppContainerList<CppInclusionDirective> InclusionDirectives { get; }
 
         /// <inheritdoc />
         public virtual IEnumerable<ICppDeclaration> Children()

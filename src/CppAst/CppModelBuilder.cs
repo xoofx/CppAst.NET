@@ -624,8 +624,19 @@ namespace CppAst
                     element = ParseMacro(cursor);
                     break;
 
-                case CXCursorKind.CXCursor_MacroExpansion:
+
                 case CXCursorKind.CXCursor_InclusionDirective:
+                    var file = cursor.IncludedFile;
+                    CppInclusionDirective inclusionDirective = new()
+                    {
+                        FileName = file.Name.ToString()
+                    };
+                    element = inclusionDirective;
+                    var rootContainer = (CppGlobalDeclarationContainer)_rootContainerContext.DeclarationContainer;
+                    rootContainer.InclusionDirectives.Add(inclusionDirective);
+                    break;
+
+                case CXCursorKind.CXCursor_MacroExpansion:
                 case CXCursorKind.CXCursor_FirstRef:
                 case CXCursorKind.CXCursor_ObjCIvarDecl:
                 case CXCursorKind.CXCursor_TemplateTypeParameter:
