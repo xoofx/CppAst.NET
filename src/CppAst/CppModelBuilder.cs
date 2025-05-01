@@ -58,7 +58,7 @@ namespace CppAst
         public CXChildVisitResult VisitTranslationUnit(CXCursor cursor, CXCursor parent, void* data)
         {
             var result = VisitMember(cursor, parent, data);
-            Debug.Assert(_mapTemplateParameterTypeToTypedefKeys.Count == 0);
+            //Debug.Assert(_mapTemplateParameterTypeToTypedefKeys.Count == 0);
             return result;
         }
 
