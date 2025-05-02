@@ -204,6 +204,9 @@ public class TestObjectiveC : InlineTestBase
                 Assert.AreEqual(1, myInterface.TemplateParameters.Count);
                 Assert.IsTrue(myInterface.TemplateParameters[0] is CppTemplateParameterType templateParam1 && templateParam1.Name == "T1");
 
+                var text = myInterface.ToString();
+                Assert.AreEqual("@interface MyInterface<T1> : BaseInterface", text);
+                
                 // By default, typedef declared within interfaces are global, but in that case, it is depending on a template parameter
                 // So it is not part of the global namespace
                 Assert.AreEqual(0, compilation.Typedefs.Count);
@@ -279,7 +282,10 @@ public class TestObjectiveC : InlineTestBase
                 Assert.AreEqual(2, myProtocol2.ObjCImplementedProtocols.Count);
                 Assert.AreEqual(myProtocol, myProtocol2.ObjCImplementedProtocols[0]);
                 Assert.AreEqual(myProtocol1, myProtocol2.ObjCImplementedProtocols[1]);
-
+                
+                var text2 = myProtocol2.ToString();
+                Assert.AreEqual("@protocol MyProtocol2 <MyProtocol, MyProtocol1>", text2);
+                
                 var myInterface = compilation.Classes[3];
                 Assert.AreEqual(CppClassKind.ObjCInterface, myInterface.ClassKind);
                 Assert.AreEqual("MyInterface", myInterface.Name);
@@ -345,11 +351,13 @@ public class TestObjectiveC : InlineTestBase
                 Assert.AreEqual("MyInterface", myInterfaceWithCategory.Name);
                 Assert.AreEqual("MyCategory", myInterfaceWithCategory.ObjCCategoryName);
                 Assert.AreEqual(myInterface, myInterfaceWithCategory.ObjCCategoryTargetClass);
+
+                var text = myInterfaceWithCategory.ToString();
+                Assert.AreEqual("@interface MyInterface (MyCategory)", text);
             }, GetDefaultObjCOptions()
         );
     }
-
-
+    
     private static CppParserOptions GetDefaultObjCOptions()
     {
         return new CppParserOptions

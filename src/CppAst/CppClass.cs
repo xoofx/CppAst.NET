@@ -248,7 +248,7 @@ namespace CppAst
                         builder.Append(TemplateSpecializedArguments[i].ToString());
                     }
                 }
-                else if(TemplateKind == CppTemplateKind.TemplateClass)
+                else if (TemplateParameters.Count > 0)
                 {
                     for (var i = 0; i < TemplateParameters.Count; i++)
                     {
