@@ -629,7 +629,7 @@ namespace CppAst
                     var file = cursor.IncludedFile;
                     CppInclusionDirective inclusionDirective = new()
                     {
-                        FileName = file.Name.ToString()
+                        FileName = Path.GetFullPath(file.Name.ToString())
                     };
                     element = inclusionDirective;
                     var rootContainer = (CppGlobalDeclarationContainer)_rootContainerContext.DeclarationContainer;
