@@ -38,7 +38,7 @@ namespace CppAst
         /// </summary>
         Typedef,
         /// <summary>
-        /// A struct or a class.
+        /// A struct or a class or an Objective-C Interface/Interface Category.
         /// </summary>
         StructOrClass,
         /// <summary>
@@ -68,10 +68,6 @@ namespace CppAst
 		/// <summary>
 		/// A generic type (e.g. Objective-C `MyType&lt;TArg&gt;`)
 		/// </summary>
-		GenericType,
-        /// <summary>
-        /// An Objective-C interface with a category.
-        /// </summary>
-        ObjCInterfaceWithCategory,
+		ObjCGenericType,
     }
 }

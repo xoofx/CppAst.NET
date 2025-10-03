@@ -10,18 +10,21 @@ namespace CppAst;
 /// <summary>
 /// A generic type, a type that has a base type and a list of generic type arguments.
 /// </summary>
-public class CppGenericType : CppType
+public class CppObjCGenericType : CppType
 {
-    public CppGenericType(CppType baseType) : base(CppTypeKind.GenericType)
+    public CppObjCGenericType(CppType baseType) : base(CppTypeKind.ObjCGenericType)
     {
         BaseType = baseType;
         GenericArguments = new List<CppType>();
+        ObjCProtocolRefs = new List<CppType>();
     }
     
     public CppType BaseType { get; set; }
     
     public List<CppType> GenericArguments { get; }
     
+    public List<CppType> ObjCProtocolRefs { get; }
+
     public override int SizeOf { get; set; }
     
     public override CppType GetCanonicalType() => this;
@@ -44,6 +47,21 @@ public class CppGenericType : CppType
             }
             builder.Append(">");
         }
+
+        if (ObjCProtocolRefs.Count > 0)
+        {
+            builder.Append(" <");
+            for (int i = 0; i < ObjCProtocolRefs.Count; i++)
+            {
+                if (i > 0)
+                {
+                    builder.Append(", ");
+                }
+                builder.Append(ObjCProtocolRefs[i].GetDisplayName());
+            }
+            builder.Append(">");
+        }
+        
         return builder.ToString();
     }
 }

@@ -4,43 +4,60 @@
 
 using System;
 
-namespace CppAst
+namespace CppAst;
+
+/// <summary>
+/// A C++ template parameter type.
+/// </summary>
+public sealed class CppTemplateParameterType : CppType
+{
+    /// <summary>
+    /// Constructor of this template parameter type.
+    /// </summary>
+    /// <param name="name"></param>
+    public CppTemplateParameterType(string name, CppTemplateParameterTypeKind kind) : base(CppTypeKind.TemplateParameterType)
+    {
+        Name = name ?? throw new ArgumentNullException(nameof(name));
+        Kind = kind;
+    }
+
+    /// <summary>
+    /// Name of the template parameter.
+    /// </summary>
+    public string Name { get; }
+
+    /// <summary>
+    /// Gets or sets the kind of the template parameter type.
+    /// </summary>
+    public CppTemplateParameterTypeKind Kind { get; set; }
+
+    private bool Equals(CppTemplateParameterType other)
+    {
+        return base.Equals(other) && Name.Equals(other.Name);
+    }
+
+    /// <inheritdoc />
+    public override int SizeOf
+    {
+        get => 0;
+        set => throw new InvalidOperationException("This type does not support SizeOf");
+    }
+
+    /// <inheritdoc />
+    public override CppType GetCanonicalType() => this;
+
+    /// <inheritdoc />
+    public override string ToString() => Name;
+}
+
+public enum CppTemplateParameterTypeKind
 {
     /// <summary>
     /// A C++ template parameter type.
     /// </summary>
-    public sealed class CppTemplateParameterType : CppType
-    {
-        /// <summary>
-        /// Constructor of this template parameter type.
-        /// </summary>
-        /// <param name="name"></param>
-        public CppTemplateParameterType(string name) : base(CppTypeKind.TemplateParameterType)
-        {
-            Name = name ?? throw new ArgumentNullException(nameof(name));
-        }
-
-        /// <summary>
-        /// Name of the template parameter.
-        /// </summary>
-        public string Name { get; }
-
-        private bool Equals(CppTemplateParameterType other)
-        {
-            return base.Equals(other) && Name.Equals(other.Name);
-        }
-
-        /// <inheritdoc />
-        public override int SizeOf
-        {
-            get => 0;
-            set => throw new InvalidOperationException("This type does not support SizeOf");
-        }
-
-        /// <inheritdoc />
-        public override CppType GetCanonicalType() => this;
-
-        /// <inheritdoc />
-        public override string ToString() => Name;
-    }
+    Cpp,
+    /// <summary>
+    /// A generic ObjC type parameter.
+    /// </summary>
+    ObjC,
 }

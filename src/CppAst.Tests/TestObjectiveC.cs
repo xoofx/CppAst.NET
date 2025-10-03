@@ -129,6 +129,7 @@ public class TestObjectiveC : InlineTestBase
         ParseAssert("""
                     @interface MyInterface
                         + (instancetype)getInstance;
+                        - (instancetype)get;
                     @end
                     """,
             compilation =>
@@ -138,12 +139,19 @@ public class TestObjectiveC : InlineTestBase
                 var myInterface = compilation.Classes[0];
                 Assert.AreEqual(CppClassKind.ObjCInterface, myInterface.ClassKind);
                 Assert.AreEqual("MyInterface", myInterface.Name);
-                Assert.AreEqual(1, myInterface.Functions.Count);
+                Assert.AreEqual(2, myInterface.Functions.Count);
+                
                 Assert.AreEqual("getInstance", myInterface.Functions[0].Name);
                 Assert.IsTrue((myInterface.Functions[0].Flags & CppFunctionFlags.ClassMethod) != 0);
-                var pointerType = myInterface.Functions[0].ReturnType as CppPointerType;
-                Assert.IsNotNull(pointerType);
-                Assert.AreEqual(myInterface, pointerType!.ElementType);
+                var typedef = myInterface.Functions[0].ReturnType as CppTypedef;
+                Assert.IsTrue(typedef is not null && typedef.ElementType is CppPrimitiveType prim && prim.Kind == CppPrimitiveKind.ObjCObject, $"Invalid return type found for getInstance {myInterface.Functions[0].ReturnType}");
+
+                Assert.AreEqual("get", myInterface.Functions[1].Name);
+                Assert.IsTrue((myInterface.Functions[1].Flags & CppFunctionFlags.Method) != 0);
+                Assert.IsTrue((myInterface.Functions[1].Flags & CppFunctionFlags.ClassMethod) == 0);
+                var typedef2 = myInterface.Functions[1].ReturnType as CppTypedef;
+                Assert.IsTrue(typedef2 is not null && typedef2.ElementType is CppPrimitiveType prim2 && prim2.Kind == CppPrimitiveKind.ObjCObject, $"Invalid return type found for getInstance {myInterface.Functions[1].ReturnType}");
+
             }, GetDefaultObjCOptions()
         );
     }
@@ -357,7 +365,92 @@ public class TestObjectiveC : InlineTestBase
             }, GetDefaultObjCOptions()
         );
     }
-    
+
+    [Test]
+    public void TestInterfaceWithMethodsReturningObjects()
+    {
+        ParseAssert("""
+                    @interface MyInterface1
+                    + (MyInterface1*)getInstance1;
+                    @end
+                    
+                    @interface MyInterface2<T1> : MyInterface1
+                    @end
+                    
+                    @interface MyInterface2NoGeneric
+                    @end
+                    
+                    @protocol MyProtocol
+                    @end
+                    
+                    @interface MyInterface3
+                    + (MyInterface2<MyInterface1*>*)getInstance2;
+                    + (MyInterface2NoGeneric<MyProtocol>*)getInstanceWithProtocol3;
+                    + (id<MyProtocol>)getInstanceWithProtocol4;
+                    @end
+                    """,
+            compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+
+                Assert.AreEqual(5, compilation.Classes.Count);
+
+                var myInterface1 = compilation.Classes[0];
+                Assert.AreEqual(CppClassKind.ObjCInterface, myInterface1.ClassKind);
+                Assert.AreEqual("MyInterface1", myInterface1.Name);
+
+                var myInterface2 = compilation.Classes[1];
+                Assert.AreEqual(CppClassKind.ObjCInterface, myInterface2.ClassKind);
+                Assert.AreEqual("MyInterface2", myInterface2.Name);
+
+                var myInterface2NoGeneric = compilation.Classes[2];
+                Assert.AreEqual(CppClassKind.ObjCInterface, myInterface2NoGeneric.ClassKind);
+                Assert.AreEqual("MyInterface2NoGeneric", myInterface2NoGeneric.Name);
+
+                var myProtocol = compilation.Classes[3];
+                Assert.AreEqual(CppClassKind.ObjCProtocol, myProtocol.ClassKind);
+                Assert.AreEqual("MyProtocol", myProtocol.Name);
+                
+                var myInterface3 = compilation.Classes[4];
+
+                Assert.AreEqual(CppClassKind.ObjCInterface, myInterface3.ClassKind);
+                Assert.AreEqual("MyInterface3", myInterface3.Name);
+                Assert.AreEqual(3, myInterface3.Functions.Count);
+                Assert.AreEqual("getInstance2", myInterface3.Functions[0].Name);
+                Assert.AreEqual("getInstanceWithProtocol3", myInterface3.Functions[1].Name);
+                Assert.AreEqual("getInstanceWithProtocol4", myInterface3.Functions[2].Name);
+
+                Assert.IsTrue(myInterface3.Functions[0].ReturnType is CppPointerType pointerType &&
+                              pointerType.ElementType is CppObjCGenericType genericType &&
+                              ReferenceEquals(genericType.BaseType, myInterface2) &&
+                              genericType.GenericArguments.Count == 1 &&
+                              genericType.GenericArguments[0] is CppPointerType pointerType2 &&
+                              ReferenceEquals(pointerType2.ElementType, myInterface1),
+                    "Unable to resolve return type getInstance2. Must be MyInterface2<MyInterface1*>*"
+                );
+
+                Assert.IsTrue(myInterface3.Functions[1].ReturnType is CppPointerType pointerType3 &&
+                              pointerType3.ElementType is CppObjCGenericType genericType2 &&
+                              ReferenceEquals(genericType2.BaseType, myInterface2NoGeneric) &&
+                              genericType2.ObjCProtocolRefs.Count == 1 &&
+                              ReferenceEquals(genericType2.ObjCProtocolRefs[0], myProtocol),
+                    "Unable to resolve return type getInstanceWithProtocol3. Must be MyInterface2NoGeneric<MyProtocol>*"
+                );
+
+                Assert.IsTrue(myInterface3.Functions[2].ReturnType is CppPointerType pointerType4 &&
+                              pointerType4.ElementType is CppObjCGenericType genericType3 &&
+                              genericType3.BaseType is CppPrimitiveType primitiveType3 &&
+                              primitiveType3.Kind == CppPrimitiveKind.ObjCObject &&
+                              genericType3.ObjCProtocolRefs.Count == 1 &&
+                              ReferenceEquals(genericType3.ObjCProtocolRefs[0], myProtocol),
+                    "Unable to resolve return type getInstanceWithProtocol4. Must be id<MyProtocol>"
+                );
+
+            }, GetDefaultObjCOptions()
+        );
+    }
+
+
     private static CppParserOptions GetDefaultObjCOptions()
     {
         return new CppParserOptions

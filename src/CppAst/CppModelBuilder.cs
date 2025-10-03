@@ -5,10 +5,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using ClangSharp;
 using ClangSharp.Interop;
 
 namespace CppAst
@@ -72,7 +74,7 @@ namespace CppAst
                     if (!_objCTemplateParameterTypes.TryGetValue(key, out var templateParameterType))
                     {
                         var templateParameterName = CXUtil.GetCursorSpelling(cursor);
-                        templateParameterType = new CppTemplateParameterType(templateParameterName);
+                        templateParameterType = new CppTemplateParameterType(templateParameterName, CppTemplateParameterTypeKind.ObjC);
                         _objCTemplateParameterTypes.Add(key, templateParameterType);
                     }
                     return templateParameterType;
@@ -89,7 +91,7 @@ namespace CppAst
                 case CXCursorKind.CXCursor_TemplateTypeParameter:
                     {
                         var templateParameterName = CXUtil.GetCursorSpelling(cursor);
-                        var templateParameterType = new CppTemplateParameterType(templateParameterName);
+                        var templateParameterType = new CppTemplateParameterType(templateParameterName, CppTemplateParameterTypeKind.Cpp);
                         return templateParameterType;
                     }
                 case CXCursorKind.CXCursor_NonTypeTemplateParameter:
@@ -108,7 +110,7 @@ namespace CppAst
                         //ToDo: add template template parameter support here~~
                         RootCompilation.Diagnostics.Warning($"Unhandled template parameter: {cursor.Kind}/{CXUtil.GetCursorSpelling(cursor)}", GetSourceLocation(cursor.Location));
                         var templateParameterName = CXUtil.GetCursorSpelling(cursor);
-                        var templateParameterType = new CppTemplateParameterType(templateParameterName);
+                        var templateParameterType = new CppTemplateParameterType(templateParameterName, CppTemplateParameterTypeKind.Cpp);
                         return templateParameterType;
                     }
             }
@@ -267,7 +269,7 @@ namespace CppAst
                             switch (param)
                             {
                                 case CppTemplateParameterType paramType:
-                                    cppClass.TemplateParameters.Add(new CppTemplateParameterType(paramType.Name));
+                                    cppClass.TemplateParameters.Add(new CppTemplateParameterType(paramType.Name, CppTemplateParameterTypeKind.Cpp));
                                     break;
                                 case CppTemplateParameterNonType nonType:
                                     cppClass.TemplateParameters.Add(new CppTemplateParameterNonType(nonType.Name, nonType.NoneTemplateType));
@@ -388,6 +390,9 @@ namespace CppAst
         private CppClass VisitClassDecl(CXCursor cursor, void* data)
         {
             var cppStruct = GetOrCreateDeclarationContainer<CppClass>(cursor, data, out var context);
+            // Force assign source span as early as possible
+            AssignSourceSpan(cursor, cppStruct);
+
             if (IsCursorDefinition(cursor, cppStruct) && !context.IsChildrenVisited)
             {
                 ParseAttributes(cursor, cppStruct, false);
@@ -397,6 +402,46 @@ namespace CppAst
                 context.IsChildrenVisited = true;
                 var saveCurrentClassBeingVisited = _currentClassBeingVisited;
                 _currentClassBeingVisited = cppStruct;
+
+                if (cppStruct.IsObjCType)
+                {
+                    // Collect extended protocols for ObjC interface categories
+                    int numProtocols = cursor.NumProtocols;
+                    for (int i = 0; i < numProtocols; i++)
+                    {
+                        var protocolCursor = cursor.GetProtocol((uint)i);
+                        var protocol = (CppClass)GetOrCreateDeclarationContainer(protocolCursor, data).Container;
+                        if (!cppStruct.ObjCImplementedProtocols.Contains(protocol))
+                        {
+                            cppStruct.ObjCImplementedProtocols.Add(protocol);
+                        }
+                    }
+
+                    // Base type (only for interface)
+                    var cursorType = cursor.Type;
+
+                    if (cursorType.UnderlyingType.kind != CXTypeKind.CXType_Invalid)
+                    {
+                        var baseType = GetCppType(cursorType.UnderlyingType.Declaration, cursorType.UnderlyingType, cursor, data);
+                        cppStruct.BaseTypes.Add(new CppBaseType(baseType));
+                    }
+
+                    cursor.VisitChildren((cxCursor, parent, clientData) =>
+                    {
+                        var kind = cxCursor.Kind;
+
+                        if (kind == CXCursorKind.CXCursor_ObjCProtocolRef)
+                        {
+                            var referencedType = (CppClass)GetOrCreateDeclarationContainer(cxCursor.Referenced, data).Container;
+                            if (!cppStruct.ObjCImplementedProtocols.Contains(referencedType))
+                            {
+                                cppStruct.ObjCImplementedProtocols.Add(referencedType);
+                            }
+                        }
+
+                        return CXChildVisitResult.CXChildVisit_Continue;
+                    }, default);
+                }
                 cursor.VisitChildren(VisitMember, new CXClientData((IntPtr)data));
 
                 // Resolve getter/setter methods
@@ -410,7 +455,10 @@ namespace CppAst
                     }
                 }
 
+
+
                 // Force assign source span as early as possible
+                cppStruct.Span = default; // Always reset for the definition
                 AssignSourceSpan(cursor, cppStruct);
 
                 _currentClassBeingVisited = saveCurrentClassBeingVisited;
@@ -420,8 +468,11 @@ namespace CppAst
 
         private static bool IsCursorDefinition(CXCursor cursor, CppElement element)
         {
+            //return (cursor.IsDefinition || element is CppInclusionDirective || (element is CppClass cppClass && (cppClass.ClassKind == CppClassKind.ObjCInterface ||
+            //                                                                                                     cppClass.ClassKind == CppClassKind.ObjCProtocol ||
+            //                                                                                                     cppClass.ClassKind == CppClassKind.ObjCInterfaceCategory)
+            //    ));
             return (cursor.IsDefinition || element is CppInclusionDirective || (element is CppClass cppClass && (cppClass.ClassKind == CppClassKind.ObjCInterface ||
-                                                                                                                 cppClass.ClassKind == CppClassKind.ObjCProtocol ||
                                                                                                                  cppClass.ClassKind == CppClassKind.ObjCInterfaceCategory)
                 ));
         }
@@ -491,41 +542,49 @@ namespace CppAst
                 case CXCursorKind.CXCursor_ObjCCategoryDecl:
                 {
                     bool isAnonymous = cursor.IsAnonymous;
-                    var cppClass = VisitClassDecl(cursor, data);
                     var containerContext = GetOrCreateDeclarationContainer(parent, data);
-                    // Empty struct/class/union declaration are considered as fields
-                    if (isAnonymous)
+                    if (containerContext.Container is CppClass cppContainer && cppContainer.IsObjCType && isAnonymous)
                     {
-                        cppClass.Name = string.Empty;
-                        Debug.Assert(string.IsNullOrEmpty(cppClass.Name));
-
-                        // We try to recover the offset from the previous field
-                        // Might not be always correct (with alignment rules),
-                        // but not sure how to recover the offset without recalculating the entire offsets
-                        var offset = 0;
-                        var cppClassContainer = containerContext.Container as CppClass;
-                        if (cppClassContainer is object && cppClassContainer.Fields.Count > 0)
-                        {
-                            var lastField = cppClassContainer.Fields[cppClassContainer.Fields.Count - 1];
-                            offset = (int)lastField.Offset + lastField.Type.SizeOf;
-                        }
-
-                        // Create an anonymous field for the type
-                        var cppField = new CppField(cppClass, string.Empty)
-                        {
-                            Visibility = containerContext.CurrentVisibility,
-                            StorageQualifier = GetStorageQualifier(cursor),
-                            IsAnonymous = true,
-                            Offset = offset,
-                        };
-                        ParseAttributes(cursor, cppField, true);
-                        containerContext.DeclarationContainer.Fields.Add(cppField);
-                        element = cppField;
+                        // We discard anonymous structs/fields declared in a ObjC interface
                     }
                     else
                     {
-                        cppClass.Visibility = containerContext.CurrentVisibility;
-                        element = cppClass;
+                        var cppClass = VisitClassDecl(cursor, data);
+                        // Empty struct/class/union declaration are considered as fields
+                        if (isAnonymous)
+                        {
+                            // Don't add any fields to ObjC class
+                            cppClass.Name = string.Empty;
+                            Debug.Assert(string.IsNullOrEmpty(cppClass.Name));
+
+                            // We try to recover the offset from the previous field
+                            // Might not be always correct (with alignment rules),
+                            // but not sure how to recover the offset without recalculating the entire offsets
+                            var offset = 0;
+                            var cppClassContainer = containerContext.Container as CppClass;
+                            if (cppClassContainer is object && cppClassContainer.Fields.Count > 0)
+                            {
+                                var lastField = cppClassContainer.Fields[cppClassContainer.Fields.Count - 1];
+                                offset = (int)lastField.Offset + lastField.Type.SizeOf;
+                            }
+
+                            // Create an anonymous field for the type
+                            var cppField = new CppField(cppClass, string.Empty)
+                            {
+                                Visibility = containerContext.CurrentVisibility,
+                                StorageQualifier = GetStorageQualifier(cursor),
+                                IsAnonymous = true,
+                                Offset = offset,
+                            };
+                            ParseAttributes(cursor, cppField, true);
+                            containerContext.DeclarationContainer.Fields.Add(cppField);
+                            element = cppField;
+                        }
+                        else
+                        {
+                            cppClass.Visibility = containerContext.CurrentVisibility;
+                            element = cppClass;
+                        }
                     }
 
                     break;
@@ -567,33 +626,14 @@ namespace CppAst
                 case CXCursorKind.CXCursor_UnexposedDecl:
                     return CXChildVisitResult.CXChildVisit_Recurse;
 
-                case CXCursorKind.CXCursor_ObjCClassRef:
-                case CXCursorKind.CXCursor_ObjCProtocolRef:
-                {
-                    var objCContainer = GetOrCreateDeclarationContainer(parent, data).Container;
-                    if (objCContainer is CppClass cppClass && cppClass.ClassKind != CppClassKind.ObjCInterfaceCategory)
-                    {
-                        var referencedType = (CppClass)GetOrCreateDeclarationContainer(cursor.Referenced, data).Container;
-                        if (cursor.Kind == CXCursorKind.CXCursor_ObjCClassRef)
-                        {
-                            var cppBaseType = new CppBaseType(referencedType);
-                            cppClass.BaseTypes.Add(cppBaseType);
-                        }
-                        else
-                        {
-                            cppClass.ObjCImplementedProtocols.Add(referencedType);
-                        }
-                    }
 
-                    break;
-                }
                 case CXCursorKind.CXCursor_TypeRef:
                     if (_currentClassBeingVisited != null && _currentClassBeingVisited.BaseTypes.Count == 1)
                     {
                         var baseType = _currentClassBeingVisited.BaseTypes[0].Type;
-                        CppGenericType genericType = baseType as CppGenericType ?? new CppGenericType(baseType);
+                        CppObjCGenericType objCGenericType = baseType as CppObjCGenericType ?? new CppObjCGenericType(baseType);
                         var type = GetCppType(cursor.Referenced, cursor.Type, cursor, data);
-                        genericType.GenericArguments.Add(type);
+                        objCGenericType.GenericArguments.Add(type);
                     }
 
                     break;
@@ -664,7 +704,7 @@ namespace CppAst
 
             if (element != null) 
             {
-                if (element.SourceFile is null || IsCursorDefinition(cursor, element))
+                if (string.IsNullOrEmpty(element.SourceFile) || IsCursorDefinition(cursor, element))
                 {
                     AssignSourceSpan(cursor, element);
                 }
@@ -1058,7 +1098,7 @@ namespace CppAst
         {
             var start = cursor.Extent.Start;
             var end = cursor.Extent.End;
-            if (element.Span.Start.File is null)
+            if (string.IsNullOrEmpty(element.Span.Start.File))
                 element.Span = new CppSourceSpan(GetSourceLocation(start), GetSourceLocation(end));
         }
 
@@ -1238,10 +1278,12 @@ namespace CppAst
                     AppendTokensToExpression(cursor, expr);
                     break;
                 case CXCursorKind.CXCursor_IntegerLiteral:
-                    expr = new CppLiteralExpression(CppExpressionKind.IntegerLiteral, GetCursorAsText(cursor));
+                    // Keep the original text if it is hexadecimal
+                    var text = GetCursorAsText(cursor);
+                    expr = new CppLiteralExpression(CppExpressionKind.IntegerLiteral, text is not null && text.StartsWith("0x") ? text : cursor.IntegerLiteralValue.ToString(CultureInfo.InvariantCulture));
                     break;
                 case CXCursorKind.CXCursor_FloatingLiteral:
-                    expr = new CppLiteralExpression(CppExpressionKind.FloatingLiteral, GetCursorAsText(cursor));
+                    expr = new CppLiteralExpression(CppExpressionKind.FloatingLiteral, cursor.FloatingLiteralValueAsApproximateDouble.ToString(CultureInfo.InvariantCulture));
                     break;
                 case CXCursorKind.CXCursor_ImaginaryLiteral:
                     expr = new CppLiteralExpression(CppExpressionKind.ImaginaryLiteral, GetCursorAsText(cursor));
@@ -1596,13 +1638,6 @@ namespace CppAst
 
             // Gets the return type
             var returnType = GetCppType(cursor.ResultType.Declaration, cursor.ResultType, cursor, data);
-            if (cppClass != null && cppClass.ClassKind == CppClassKind.ObjCInterface)
-            {
-                if (returnType is CppTypedef typedef && typedef.Name == "instancetype")
-                {
-                    returnType = new CppPointerType(cppClass);
-                }
-            }
             cppFunction.ReturnType = returnType;
 
             ParseAttributes(cursor, cppFunction, true);
@@ -1977,12 +2012,13 @@ namespace CppAst
                 return type;
             }
 
+            var typedefName = CXUtil.GetCursorSpelling(cursor);
+
             var contextContainer = GetOrCreateDeclarationContainer(cursor.SemanticParent, data);
             _currentTypedefKey = fulltypeDefName;
             var underlyingTypeDefType = GetCppType(cursor.TypedefDeclUnderlyingType.Declaration, cursor.TypedefDeclUnderlyingType, cursor, data);
             _currentTypedefKey = null;
 
-            var typedefName = CXUtil.GetCursorSpelling(cursor);
 
             ICppDeclarationContainer container = null;
 
@@ -2213,6 +2249,12 @@ namespace CppAst
                 case CXTypeKind.CXType_Unexposed:
                     {
                         // It may be possible to parse them even if they are unexposed.
+                        var canonicalTypeKind = type.CanonicalType.kind;
+                        if (canonicalTypeKind != CXTypeKind.CXType_Unexposed && canonicalTypeKind != CXTypeKind.CXType_Invalid)
+                        {
+                            return GetCppType(type.Declaration, type.CanonicalType, parent, data);
+                        }
+
                         var kind = type.Declaration.Type.kind;
                         if (kind != CXTypeKind.CXType_Unexposed && kind != CXTypeKind.CXType_Invalid)
                         {
@@ -2235,7 +2277,7 @@ namespace CppAst
                     return GetCppType(type.Declaration, type.Declaration.Type, parent, data);
 
                 case CXTypeKind.CXType_ObjCId:
-                    return CppPrimitiveType.ObjCId;
+                    return CppPrimitiveType.ObjCObject;
                 
                 case CXTypeKind.CXType_ObjCSel:
                     return CppPrimitiveType.ObjCSel;
@@ -2244,8 +2286,32 @@ namespace CppAst
                     return CppPrimitiveType.ObjCClass;
 
                 case CXTypeKind.CXType_ObjCObject:
-                    return CppPrimitiveType.ObjCObject;
-                
+                {
+                    var baseType = GetCppType(type.ObjCObjectBaseType.Declaration, type.ObjCObjectBaseType, parent, data);
+                    if (type.NumObjCTypeArgs > 0 || type.NumObjCProtocolRefs > 0)
+                    {
+                        var genericType = new CppObjCGenericType(baseType);
+
+                        for (uint i = 0; i < type.NumObjCTypeArgs; i++)
+                        {
+                            var argType = type.GetObjCTypeArg(i);
+                            var cppType = GetCppType(argType.Declaration, argType, parent, data);
+                            genericType.GenericArguments.Add(cppType);
+                        }
+
+
+                        for (uint i = 0; i < type.NumObjCProtocolRefs; i++)
+                        {
+                            var argCursor = type.GetObjCProtocolDecl(i);
+                            var argType = VisitClassDecl(argCursor, data);
+                            genericType.ObjCProtocolRefs.Add(argType);
+                        }
+
+                        return genericType;
+                    }
+
+                    return baseType;
+                }
                 case CXTypeKind.CXType_Int128:
                     return CppPrimitiveType.Int128;
                 

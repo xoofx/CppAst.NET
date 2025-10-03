@@ -1,4 +1,4 @@
-﻿// Copyright (c) Alexandre Mutel. All rights reserved.
+// Copyright (c) Alexandre Mutel. All rights reserved.
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
@@ -88,11 +88,11 @@ namespace CppAst
         /// C++ `long double`
         /// </summary>
         LongDouble,
-        
+
         /// <summary>
-        /// An Objective-C `id` type.
+        /// An Objective-C pointed by an `id` type (ObjCObject*).
         /// </summary>
-        ObjCId,
+        ObjCObject,
         
         /// <summary>
         /// An Objective-C `SEL` type.
@@ -103,11 +103,6 @@ namespace CppAst
         /// An Objective-C `Class` type.
         /// </summary>
         ObjCClass,
-        
-        /// <summary>
-        /// An Objective-C `NSObject` type.
-        /// </summary>
-        ObjCObject,
         
         /// <summary>
         /// Unsigned 128 bits integer type.
@@ -128,5 +123,15 @@ namespace CppAst
         /// A 16 bits brain float type.
         /// </summary>
         BFloat16,
+
+        /// <summary>
+        /// A pointer type.
+        /// </summary>
+        IntPtr,
+
+        /// <summary>
+        /// An unsigned pointer type.
+        /// </summary>
+        UIntPtr,
     }
 }

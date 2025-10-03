@@ -94,7 +94,7 @@ namespace CppAst
         /// <summary>
         /// ObjC `id` type.
         /// </summary>
-        public static readonly CppPrimitiveType ObjCId = new CppPrimitiveType(CppPrimitiveKind.ObjCId);
+        public static readonly CppPrimitiveType ObjCObject = new CppPrimitiveType(CppPrimitiveKind.ObjCObject);
 
         /// <summary>
         /// ObjC `SEL` type.
@@ -105,11 +105,6 @@ namespace CppAst
         /// ObjC `Class` type.
         /// </summary>
         public static readonly CppPrimitiveType ObjCClass = new CppPrimitiveType(CppPrimitiveKind.ObjCClass);
-
-        /// <summary>
-        /// ObjC `Object` type.
-        /// </summary>
-        public static readonly CppPrimitiveType ObjCObject = new CppPrimitiveType(CppPrimitiveKind.ObjCObject);
 
         /// <summary>
         /// Unsigned 128 bits integer type.
@@ -130,9 +125,17 @@ namespace CppAst
         /// BFloat16 type.
         /// </summary>
         public static readonly CppPrimitiveType BFloat16 = new CppPrimitiveType(CppPrimitiveKind.BFloat16);
-        
 
-        
+        /// <summary>
+        /// A IntPtr type (Not directly a C++ type, but used during remapping/codegen).
+        /// </summary>
+        public static readonly CppPrimitiveType IntPtr = new CppPrimitiveType(CppPrimitiveKind.IntPtr);
+
+        /// <summary>
+        /// A UIntPtr type (Not directly a C++ type, but used during remapping/codegen).
+        /// </summary>
+        public static readonly CppPrimitiveType UIntPtr = new CppPrimitiveType(CppPrimitiveKind.UIntPtr);
+
         private readonly int _sizeOf;
 
         /// <summary>
@@ -200,10 +203,11 @@ namespace CppAst
                 case CppPrimitiveKind.LongDouble:
                     sizeOf = 8;
                     break;
-                case CppPrimitiveKind.ObjCId:
+                case CppPrimitiveKind.ObjCObject:
                 case CppPrimitiveKind.ObjCSel:
                 case CppPrimitiveKind.ObjCClass:
-                case CppPrimitiveKind.ObjCObject:
+                case CppPrimitiveKind.IntPtr:
+                case CppPrimitiveKind.UIntPtr:
                     sizeOf = 8; // Valid only for 64 bits
                     break;
                 case CppPrimitiveKind.UInt128:
@@ -240,12 +244,13 @@ namespace CppAst
                 CppPrimitiveKind.Double => "double",
                 CppPrimitiveKind.LongDouble => "long double",
                 CppPrimitiveKind.Bool => "bool",
+                CppPrimitiveKind.IntPtr => "intptr_t",
+                CppPrimitiveKind.UIntPtr => "uintptr_t",
                 CppPrimitiveKind.Int128 => "System.Int128",
                 CppPrimitiveKind.UInt128 => "System.UInt128",
-                CppPrimitiveKind.ObjCId => "ObjCId",
+                CppPrimitiveKind.ObjCObject => "ObjCObject",
                 CppPrimitiveKind.ObjCSel => "ObjCSel",
                 CppPrimitiveKind.ObjCClass => "ObjCClass",
-                CppPrimitiveKind.ObjCObject => "ObjCObject",
                 CppPrimitiveKind.Float16 => "System.Half",
                 CppPrimitiveKind.BFloat16 => "BFloat16",
                 _ => throw new InvalidOperationException($"Unhandled PrimitiveKind: {Kind}")
