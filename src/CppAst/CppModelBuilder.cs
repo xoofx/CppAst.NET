@@ -1442,10 +1442,6 @@ namespace CppAst
                     expr = new CppRawExpression(CppExpressionKind.ObjCSelf);
                     AppendTokensToExpression(cursor, expr);
                     break;
-                case CXCursorKind.CXCursor_OMPArraySectionExpr:
-                    expr = new CppRawExpression(CppExpressionKind.OMPArraySection);
-                    AppendTokensToExpression(cursor, expr);
-                    break;
                 case CXCursorKind.CXCursor_ObjCAvailabilityCheckExpr:
                     expr = new CppRawExpression(CppExpressionKind.ObjCAvailabilityCheck);
                     AppendTokensToExpression(cursor, expr);
@@ -1454,7 +1450,17 @@ namespace CppAst
                     expr = new CppLiteralExpression(CppExpressionKind.FixedPointLiteral, GetCursorAsText(cursor));
                     break;
                 default:
-                    return null;
+                    if (cursor.Kind.ToString().StartsWith("CXCursor_OMP"))
+                    {
+                        expr = new CppRawExpression(CppExpressionKind.OMP);
+                        AppendTokensToExpression(cursor, expr);
+                    }
+                    else
+                    {
+                        return null;
+                    }
+
+                    break;
             }
 
             AssignSourceSpan(cursor, expr);
