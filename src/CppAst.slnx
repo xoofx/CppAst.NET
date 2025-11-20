@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/build/">
+    <File Path="../.github/workflows/ci.yml" />
+    <File Path="../changelog.md" />
+    <File Path="../license.txt" />
+    <File Path="../readme.md" />
+    <File Path="Directory.Packages.props" />
+    <File Path="dotnet-releaser.toml" />
+    <File Path="global.json" />
+  </Folder>
+  <Project Path="CppAst.Tests/CppAst.Tests.csproj" />
+  <Project Path="CppAst/CppAst.csproj" />
+</Solution>

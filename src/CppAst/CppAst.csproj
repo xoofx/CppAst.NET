@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <PackageId>CppAst</PackageId>
@@ -26,15 +26,15 @@
     <None Include="../../img/cppast.png" Pack="true" PackagePath="/logo.png" />
     <None Include="../../readme.md" Pack="true" PackagePath="/" />
 
-    <PackageReference Include="ClangSharp" Version="20.1.2.1" />
+    <PackageReference Include="ClangSharp" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Irony" Version="1.5.3" />
-    <PackageReference Include="MinVer" Version="6.0.0">
+    <PackageReference Include="Irony" />
+    <PackageReference Include="MinVer">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
   </ItemGroup>
 </Project>

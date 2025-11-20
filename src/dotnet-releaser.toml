@@ -1,6 +1,6 @@
 # configuration file for dotnet-releaser
 [msbuild]
-project = "./CppAst.sln"
+project = "./CppAst.slnx"
 [github]
 user = "xoofx"
 repo = "CppAst.NET"
