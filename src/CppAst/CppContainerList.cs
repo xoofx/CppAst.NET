@@ -58,7 +58,17 @@ namespace CppAst
             {
                 foreach (var element in collection)
                 {
-                    Add(element);
+                    // Check if given element is already resolved
+                    if (element.Parent == null)
+                    {
+                        // If not, create one
+                        Add(element);
+                    }
+                    else
+                    {
+                        // Otherwise, just reference it
+                        _elements.Add(element);
+                    }
                 }
             }
         }
