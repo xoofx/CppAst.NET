@@ -38,5 +38,49 @@ class MyClass0
                 }
             );
         }
+
+        [Test]
+        public void TestFinal()
+        {
+            ParseAssert(@"
+class Base
+{
+public:
+    virtual void Method();
+};
+
+class Leaf final : public Base
+{
+public:
+    void Method() final;
+    void OtherMethod();
+};
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(2, compilation.Classes.Count);
+
+                    var baseClass = compilation.Classes[0];
+                    Assert.False(baseClass.IsFinal);
+                    Assert.AreEqual(1, baseClass.Functions.Count);
+                    Assert.False(baseClass.Functions[0].IsFinal);
+
+                    var leafClass = compilation.Classes[1];
+                    Assert.True(leafClass.IsFinal);
+                    Assert.AreEqual("class Leaf final : Base", leafClass.ToString());
+
+                    Assert.AreEqual(2, leafClass.Functions.Count);
+                    Assert.True(leafClass.Functions[0].IsFinal);
+                    Assert.True(leafClass.Functions[0].Flags.HasFlag(CppFunctionFlags.Final));
+                    Assert.AreEqual("public virtual void Method() final", leafClass.Functions[0].ToString());
+
+                    Assert.False(leafClass.Functions[1].IsFinal);
+                    Assert.AreEqual("public void OtherMethod()", leafClass.Functions[1].ToString());
+                },
+                new CppParserOptions { AdditionalArguments = { "-std=c++11" } }
+            );
+        }
     }
 }

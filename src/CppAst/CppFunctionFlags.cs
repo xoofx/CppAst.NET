@@ -76,6 +76,11 @@ namespace CppAst
         /// This is an Objective-C class method
         /// </summary>
         ClassMethod = 1 << 11,
+
+        /// <summary>
+        /// The C++ method is declared `final`.
+        /// </summary>
+        Final = 1 << 12,
         
     }
 }

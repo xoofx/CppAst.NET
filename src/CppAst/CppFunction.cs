@@ -109,6 +109,11 @@ namespace CppAst
 
 		public bool IsVirtual => ((int)Flags & (int)CppFunctionFlags.Virtual) != 0;
 
+        /// <summary>
+        /// Gets a boolean indicating whether this C++ method is declared <c>final</c>.
+        /// </summary>
+        public bool IsFinal => ((int)Flags & (int)CppFunctionFlags.Final) != 0;
+
 		public bool IsStatic => StorageQualifier == CppStorageQualifier.Static;
 
         public bool IsConst => ((int)Flags & (int)CppFunctionFlags.Const) != 0;
@@ -172,6 +177,11 @@ namespace CppAst
             if ((Flags & CppFunctionFlags.Const) != 0)
             {
                 builder.Append(" const");
+            }
+
+            if ((Flags & CppFunctionFlags.Final) != 0)
+            {
+                builder.Append(" final");
             }
 
             if ((Flags & CppFunctionFlags.Pure) != 0)

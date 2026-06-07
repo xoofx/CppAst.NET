@@ -189,6 +189,11 @@ namespace CppAst
 
         public bool IsAbstract { get; set; }
 
+        /// <summary>
+        /// Gets or sets a boolean indicating whether this C++ class is declared <c>final</c>.
+        /// </summary>
+        public bool IsFinal { get; set; }
+
 
         /// <inheritdoc />
         public override int SizeOf { get; set; }
@@ -234,7 +239,7 @@ namespace CppAst
             {
                 builder.Append(Name);
             }
-            
+
             //Add template arguments here
             if(TemplateKind != CppTemplateKind.NormalClass)
             {
@@ -258,6 +263,11 @@ namespace CppAst
                 }
 
                 builder.Append(">");
+            }
+
+            if (IsFinal)
+            {
+                builder.Append(" final");
             }
 
             if (BaseTypes.Count > 0)

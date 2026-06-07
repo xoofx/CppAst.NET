@@ -243,6 +243,7 @@ namespace CppAst
                     }
 
                     cppClass.IsAbstract = cursor.CXXRecord_IsAbstract;
+                    cppClass.IsFinal = CursorHasChildKind(cursor, CXCursorKind.CXCursor_CXXFinalAttr);
                     
                     if (cursor.DeclKind == CX_DeclKind.CX_DeclKind_ClassTemplateSpecialization
                         || cursor.DeclKind == CX_DeclKind.CX_DeclKind_ClassTemplatePartialSpecialization)
@@ -1707,6 +1708,10 @@ namespace CppAst
             {
                 cppFunction.Flags |= CppFunctionFlags.Pure | CppFunctionFlags.Virtual;
             }
+            if (CursorHasChildKind(cursor, CXCursorKind.CXCursor_CXXFinalAttr))
+            {
+                cppFunction.Flags |= CppFunctionFlags.Final;
+            }
             if (clang.CXXMethod_isDeleted(cursor) != 0)
             {
                 cppFunction.Flags |= CppFunctionFlags.Deleted;
@@ -1771,6 +1776,23 @@ namespace CppAst
             }, new CXClientData((IntPtr)data));
 
             return cppFunction;
+        }
+
+        private static bool CursorHasChildKind(CXCursor cursor, CXCursorKind kind)
+        {
+            var found = false;
+            cursor.VisitChildren((childCursor, parentCursor, clientData) =>
+            {
+                if (childCursor.Kind == kind)
+                {
+                    found = true;
+                    return CXChildVisitResult.CXChildVisit_Break;
+                }
+
+                return CXChildVisitResult.CXChildVisit_Continue;
+            }, default);
+
+            return found;
         }
 
         private static CppLinkageKind GetLinkage(CXLinkageKind link)
