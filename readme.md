@@ -2,7 +2,7 @@
 
 <img align="right" width="160px" height="160px" src="https://raw.githubusercontent.com/xoofx/CppAst.NET/main/img/cppast.png">
 
-CppAst provides a C/C++ parser for header files with access to the full AST, comments and macros for .NET Framework and .NET Core
+CppAst provides a C/C++ parser for header files with access to the full AST, comments and macros for .NET.
 
 ## Purpose
 
