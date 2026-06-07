@@ -53,6 +53,8 @@ namespace CppAst
 
         public bool ParseSystemIncludes { get; set; }
 
+        public bool ParseMacros { get; set; }
+
         public bool ParseTokenAttributeEnabled { get; set; }
 
         public bool ParseCommentAttributeEnabled { get; set; }
@@ -300,6 +302,29 @@ namespace CppAst
                                 case CXTemplateArgumentKind.CXTemplateArgumentKind_Integral:
                                     {
                                         cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(tempParams[(int)i], arg.AsIntegral));
+                                    }
+                                    break;
+                                case CXTemplateArgumentKind.CXTemplateArgumentKind_Pack:
+                                    {
+                                        var packArguments = ParseTemplateSpecializedArgumentsFromTypeSpelling(cursor.Type);
+                                        if (packArguments is null || packArguments.Count == 0)
+                                        {
+                                            packArguments = ParseTemplateSpecializedArgumentsFromSpelling(CXUtil.GetCursorSpelling(cursor));
+                                        }
+
+                                        if (packArguments is not null && packArguments.Count > 0)
+                                        {
+                                            var sourceParam = tempParams[(int)i];
+                                            foreach (var packArgument in packArguments)
+                                            {
+                                                cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(sourceParam, packArgument, packArgument is not CppTemplateParameterType));
+                                            }
+                                        }
+                                        else
+                                        {
+                                            RootCompilation.Diagnostics.Warning($"Unhandled template argument with type {arg.kind}: {cursor.Kind}/{CXUtil.GetCursorSpelling(cursor)}", GetSourceLocation(cursor.Location));
+                                            cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(tempParams[(int)i], arg.ToString()));
+                                        }
                                     }
                                     break;
                                 default:
@@ -618,9 +643,14 @@ namespace CppAst
                 case CXCursorKind.CXCursor_Constructor:
                 case CXCursorKind.CXCursor_Destructor:
                 case CXCursorKind.CXCursor_CXXMethod:
+                case CXCursorKind.CXCursor_ConversionFunction:
                 case CXCursorKind.CXCursor_ObjCClassMethodDecl:
                 case CXCursorKind.CXCursor_ObjCInstanceMethodDecl:
                     element = VisitFunctionDecl(cursor, parent, data);
+                    break;
+
+                case CXCursorKind.CXCursor_FriendDecl:
+                    cursor.VisitChildren(VisitMember, new CXClientData((IntPtr)data));
                     break;
 
                 case CXCursorKind.CXCursor_UsingDirective:
@@ -664,7 +694,10 @@ namespace CppAst
                     break;
 
                 case CXCursorKind.CXCursor_MacroDefinition:
-                    element = ParseMacro(cursor);
+                    if (ParseMacros || ParseTokenAttributeEnabled)
+                    {
+                        element = ParseMacro(cursor);
+                    }
                     break;
 
 
@@ -1713,6 +1746,7 @@ namespace CppAst
                     break;
                 case CXCursorKind.CXCursor_ObjCInstanceMethodDecl:
                 case CXCursorKind.CXCursor_CXXMethod:
+                case CXCursorKind.CXCursor_ConversionFunction:
                     cppFunction.Flags |= CppFunctionFlags.Method;
                     break;
                 case CXCursorKind.CXCursor_ObjCClassMethodDecl:
@@ -1766,6 +1800,7 @@ namespace CppAst
             cppFunction.ReturnType = returnType;
 
             ParseAttributes(cursor, cppFunction, true);
+            cppFunction.Comment = GetComment(cursor);
             cppFunction.CallingConvention = GetCallingConvention(cursor.Type);
 
             if (cursor.IsDefinition)
@@ -1792,6 +1827,7 @@ namespace CppAst
                         var argName = CXUtil.GetCursorSpelling(argCursor);
 
                         var parameter = new CppParameter(GetCppType(argCursor.Type.Declaration, argCursor.Type, argCursor, clientData), argName);
+                        parameter.Comment = GetComment(argCursor);
 
                         ParseAttributes(argCursor, parameter, true);
                         
@@ -1819,7 +1855,54 @@ namespace CppAst
 
             }, new CXClientData((IntPtr)data));
 
+            AssignParameterCommentsFromFunctionComment(cppFunction);
+
             return cppFunction;
+        }
+
+        private static void AssignParameterCommentsFromFunctionComment(CppFunction cppFunction)
+        {
+            if (cppFunction.Comment is null || cppFunction.Parameters.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var paramComment in EnumerateComments(cppFunction.Comment).OfType<CppCommentParamCommand>())
+            {
+                CppParameter parameter = null;
+                if (paramComment.IsParamIndexValid && paramComment.ParamIndex >= 0 && paramComment.ParamIndex < cppFunction.Parameters.Count)
+                {
+                    parameter = cppFunction.Parameters[paramComment.ParamIndex];
+                }
+
+                if (parameter is null && !string.IsNullOrEmpty(paramComment.ParamName))
+                {
+                    parameter = cppFunction.Parameters.FirstOrDefault(x => x.Name == paramComment.ParamName);
+                }
+
+                if (parameter is not null && parameter.Comment is null)
+                {
+                    parameter.Comment = paramComment;
+                }
+            }
+        }
+
+        private static IEnumerable<CppComment> EnumerateComments(CppComment comment)
+        {
+            yield return comment;
+
+            if (comment.Children is null)
+            {
+                yield break;
+            }
+
+            foreach (var child in comment.Children)
+            {
+                foreach (var descendant in EnumerateComments(child))
+                {
+                    yield return descendant;
+                }
+            }
         }
 
         private static bool CursorHasChildKind(CXCursor cursor, CXCursorKind kind)
@@ -2650,6 +2733,11 @@ namespace CppAst
         private List<CppType> ParseTemplateSpecializedArgumentsFromTypeSpelling(CXType type)
         {
             var spelling = CXUtil.GetTypeSpelling(type);
+            return ParseTemplateSpecializedArgumentsFromSpelling(spelling);
+        }
+
+        private List<CppType> ParseTemplateSpecializedArgumentsFromSpelling(string spelling)
+        {
             var start = spelling.IndexOf('<');
             var end = spelling.LastIndexOf('>');
             if (start < 0 || end <= start)
@@ -2847,7 +2935,7 @@ namespace CppAst
             /// <summary>
             /// Either "system" (include) or user.
             /// </summary>
-            public string? NameContext { get; init; }
+            public string NameContext { get; init; }
 
             public bool IsChildrenVisited;
         }

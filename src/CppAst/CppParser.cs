@@ -142,6 +142,7 @@ namespace CppAst
                 var builder = new CppModelBuilder
                 {
                     AutoSquashTypedef = options.AutoSquashTypedef,
+                    ParseMacros = options.ParseMacros,
                     ParseSystemIncludes = options.ParseSystemIncludes,
                     ParseTokenAttributeEnabled = options.ParseTokenAttributes,
                     ParseCommentAttributeEnabled = options.ParseCommentAttribute,
@@ -233,6 +234,12 @@ namespace CppAst
                 else
                 {
                     translationUnit.Cursor.VisitChildren(builder.VisitTranslationUnit, clientData: default);
+                }
+
+                if (!options.ParseMacros)
+                {
+                    compilation.Macros.Clear();
+                    compilation.System.Macros.Clear();
                 }
 
                 translationUnit.Dispose();

@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+using System.Linq;
+using NUnit.Framework;
 
 namespace CppAst.Tests
 {
@@ -163,6 +164,55 @@ template<typename T1> using MyStructT = MyStruct<T1>;
 
                 }
             );
+        }
+
+        [Test]
+        public void TestCppAliasChainsTemplatesAndNamespaces()
+        {
+            ParseAssert(@"
+namespace api
+{
+template<typename T>
+struct Box
+{
+    T value;
+};
+
+using Int = int;
+using IntPtr = Int*;
+template<typename T>
+using BoxAlias = Box<T>;
+using BoxInt = BoxAlias<int>;
+}
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    var api = compilation.Namespaces.Single(x => x.Name == "api");
+                    Assert.True(api.Classes.Any(x => x.Name == "Box" && x.TemplateKind == CppTemplateKind.TemplateClass));
+
+                    var intAlias = api.Typedefs.Single(x => x.Name == "Int");
+                    Assert.AreEqual(CppPrimitiveType.Int, intAlias.ElementType);
+
+                    var intPtr = api.Typedefs.Single(x => x.Name == "IntPtr");
+                    Assert.IsInstanceOf<CppPointerType>(intPtr.ElementType);
+                    Assert.AreEqual("Int *", intPtr.ElementType.GetDisplayName());
+
+                    var boxAlias = api.Typedefs.Single(x => x.Name == "BoxAlias");
+                    Assert.IsInstanceOf<CppClass>(boxAlias.ElementType);
+                    var dependentBox = (CppClass)boxAlias.ElementType;
+                    Assert.AreEqual("Box", dependentBox.Name);
+                    Assert.AreEqual("T", dependentBox.TemplateSpecializedArguments[0].ArgString);
+
+                    var boxInt = api.Typedefs.Single(x => x.Name == "BoxInt");
+                    Assert.IsInstanceOf<CppClass>(boxInt.ElementType);
+                    var specializedBox = (CppClass)boxInt.ElementType;
+                    Assert.AreEqual("Box", specializedBox.Name);
+                    Assert.AreEqual("int", specializedBox.TemplateSpecializedArguments[0].ArgString);
+                    Assert.AreEqual(specializedBox, compilation.FindByFullName<CppTypedef>("api::BoxInt").ElementType);
+                },
+                new CppParserOptions { AdditionalArguments = { "-std=c++17" } });
         }
     }
 }

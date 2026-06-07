@@ -1,3 +1,4 @@
+using System.Linq;
 using NUnit.Framework;
 
 namespace CppAst.Tests
@@ -108,6 +109,55 @@ typedef struct {
                 new CppParserOptions() { AutoSquashTypedef = false }
             );
 
+        }
+
+        [Test]
+        public void TestCAdvancedTypedefs()
+        {
+            ParseAssert(@"
+typedef int IntArray[4];
+typedef int (*BinaryOp)(int lhs, int rhs);
+typedef struct Named Named;
+struct Named
+{
+    int value;
+};
+typedef enum Color
+{
+    Color_Red = 1,
+    Color_Blue = 2,
+} Color;
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    var intArray = compilation.Typedefs.Single(x => x.Name == "IntArray");
+                    Assert.IsInstanceOf<CppArrayType>(intArray.ElementType);
+                    Assert.AreEqual(4, ((CppArrayType)intArray.ElementType).Size);
+
+                    var binaryOp = compilation.Typedefs.Single(x => x.Name == "BinaryOp");
+                    Assert.IsInstanceOf<CppPointerType>(binaryOp.ElementType);
+                    var pointer = (CppPointerType)binaryOp.ElementType;
+                    Assert.IsInstanceOf<CppFunctionType>(pointer.ElementType);
+                    var function = (CppFunctionType)pointer.ElementType;
+                    Assert.AreEqual(CppPrimitiveType.Int, function.ReturnType);
+                    Assert.AreEqual(new[] { "lhs", "rhs" }, function.Parameters.Select(x => x.Name).ToArray());
+
+                    var named = compilation.Classes.Single(x => x.Name == "Named");
+                    Assert.AreEqual(CppClassKind.Struct, named.ClassKind);
+                    Assert.AreEqual(named, compilation.Typedefs.Single(x => x.Name == "Named").ElementType);
+
+                    var color = compilation.Enums.Single(x => x.Name == "Color");
+                    Assert.AreEqual(new[] { "Color_Red", "Color_Blue" }, color.Items.Select(x => x.Name).ToArray());
+                    Assert.AreEqual(color, compilation.Typedefs.Single(x => x.Name == "Color").ElementType);
+                },
+                new CppParserOptions
+                {
+                    ParserKind = CppParserKind.C,
+                    AdditionalArguments = { "-std=c11" },
+                    AutoSquashTypedef = false,
+                });
         }
     }
 }
