@@ -139,7 +139,7 @@ private static void PrintASTByCursor(CXCursor cursor, int level, List<string> sa
 ## 3. CppAst.Net - 新的天花板
 &emsp;&emsp;前面的铺垫比较长, 终于迎来我们的正主 [CppAst.Net](https://github.com/xoofx/CppAst.NET)了, 还是按照老规矩, **我们先来看一段 CppAst.Net 官网上的示例代码:**
 ```cs
-// Parse a C++ files
+// Parse C++ files
 var compilation = CppParser.Parse(@"
 enum MyEnum { MyEnum_0, MyEnum_1 };
 void function0(int a, int b);
@@ -180,7 +180,7 @@ typedef MyStruct* MyStructPtr
 2. 能够支持直接从字符串构建 Compilation, 这样也方便实现单元测试.
 
 ### 3.1 简单配置即可上手使用
-&emsp;&emsp;CppAst.Net底层是依赖ClangSharp的, 有过 ClangSharp 使用经念的同学可能都知道, 整个编译运行的体验可能并不太好, 从 NuGet 添加了 ClangSharp 包之后, 可能我们直接运行相关的示例和测试代码, 还是会提示 `libclang.dll/ligclang.so` 找不到之类的问题, 体验不会特别好, 这个其实也不能全怪 ClangSharp, 主要还是 NuGet 对包本身依赖的原生二进制的大小做了一些限制, 因为这个问题可能比较多人遇到, 我们先贴出一下相关的 Workaround, 方便大家更好的运行自己的测试代码:
+&emsp;&emsp;CppAst.Net 底层依赖 ClangSharp 和其 native libclang 二进制。从 NuGet 添加 CppAst 包之后，项目仍建议选择一个运行时标识符，以便还原并加载正确的 native 资产。常见的项目文件配置如下：
 ```xml
 <PropertyGroup>
     <!-- Workaround for issue https://github.com/microsoft/ClangSharp/issues/129 -->
@@ -188,7 +188,7 @@ typedef MyStruct* MyStructPtr
 </PropertyGroup>
 ```
 
-对于前面说到的官方示例代码, 我们可以尝试从零开始建立一个` C# .netcore 3.1` 的Console App, 一步一步将其运行起来:
+对于前面说到的官方示例代码，我们可以尝试从零开始建立一个现代 `.NET 8` Console App，一步一步将其运行起来：
 
 #### 3.1.1 新建工程
 **打开 Visual Studio  建立一个C# Console App (笔者当前使用的环境是 VS 2022):**
@@ -217,27 +217,27 @@ typedef MyStruct* MyStructPtr
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
 
     <!-- Workaround for issue https://github.com/microsoft/ClangSharp/issues/129 -->
     <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$(PackAsTool)' != 'true'">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CppAst" Version="0.13.0" />
+    <PackageReference Include="CppAst" Version="LATEST_VERSION" />
   </ItemGroup>
 
 </Project>
 
 ```
-也就是上面的 `RuntimeIdentifier` 项, 这个是必须的, 不然容易出现运行时找不到 libclang 的 native dll的报错.
+请将 `LATEST_VERSION` 替换为当前 NuGet 版本。上面的 `RuntimeIdentifier` 项建议保留，这样还原时会选择当前平台对应的 native libclang 资产。
 
 #### 3.1.4 添加示例代码后测试运行对应的App
 **在Program.cs的Main()函数中添加测试代码:**
 ```cs
 static void Main(string[] args)
 {
-	// Parse a C++ files
+	// Parse C++ files
 	var compilation = CppParser.Parse(@"
 enum MyEnum { MyEnum_0, MyEnum_1 };
 void function0(int a, int b);
@@ -371,7 +371,7 @@ foo<int, int> foobar;
 
 ### 4.2 `meta attribute` 支持
 &emsp;&emsp;这一部分我们在CppAst.Net的代码仓库里添加了一个具体的文档 [attributes.md](https://github.com/xoofx/CppAst.NET/blob/main/doc/attributes.md), 感兴趣的读者可以自行查阅, 主要是用来解决上面提到的需要对某些导出项进行配置, 但又不希望代码项和配置信息分离的问题的, 原来 CppAst.Net 也有一版自己的基于再次 token parse 的 token attributes实现, 不过实际用于项目存在一些社区中比较多反馈的问题:
-1. `ParseAttributes()` 耗时巨大, 所以导致了后来的版本中加入了`ParseAttributes` 参数来控制是否解析 `attributes`, 但某些场合, 我们需要依赖 `attributes` 才能完成相关的功能实现. 这显然带来了不便.
+1. 基于 token 的 attribute 解析成本较高，因此当前版本将这条兼容路径改为通过 `CppParserOptions.ParseTokenAttributes` 按需开启。
     
 2. 对 `meta attribute` - `[[]]` 的解析存在缺陷, 像 `Function` 和 `Field` 上方定义的 `meta attribute`, 在语义层面, 显然是合法的, 但 `cppast.net` 并不能很好的支持这种在对象上方定义的`meta attribute` (这里存在一些例外情况, 像 `namespace`, `class`, `enum` 这些的 `attribute` 声明, attribute定义本身就不能位于上方, 相关的用法编译器会直接报错, 只能在相关的关键字后面, 如 `class [[deprecated]] Abc{};` 这种 ).
     

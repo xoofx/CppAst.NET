@@ -2,7 +2,7 @@
 
 ## 1. `cppast.net 0.12` 对 `attributes` 支持情况
 `cppast.net` 原有的对各类 `attribute` 的支持, 包括 `c++17` 的 `meta attribute` 的支持, 由于 `libclang` 本身 `Api` 的限制, 我们需要借助 token 层级的解析, 才能够完成相关的功能实现. 在 `cppast.net 0.12` 版本及以前的实现中, 我们都使用了解析 `token` 的方式来实现相关的功能, 甚至连一些 `libclang` 中能够很好的支持的 `attribute`, 如 `dllexport`, `dllimport` 等, `cppast.net` 大部分时候也是使用 token 解析来实现的. 这样做虽然灵活, 我们始终能够从 `token` 层级尝试解析相关的 `attribute`, 但也带来了一些问题和限制, 社区中比较多反馈的问题:
-1. `ParseAttributes()` 耗时巨大, 所以导致了后来的版本中加入了`ParseAttributes` 参数来控制是否解析 `attributes`, 但某些场合, 我们需要依赖 `attributes` 才能完成相关的功能实现. 这显然带来了不便.
+1. 基于 token 的 attribute 解析成本较高，因此后续版本将 fallback token 解析改为按需开启。在当前 CppAst 版本中，这条兼容路径由 `CppParserOptions.ParseTokenAttributes` 控制。
 2. 对 `meta attribute` - `[[]]` 的解析存在缺陷, 像 `Function` 和 `Field` 上方定义的 `meta attribute`, 在语义层面, 显然是合法的, 但 `cppast.net` 并不能很好的支持这种在对象上方定义的`meta attribute` (这里存在一些例外情况, 像 `namespace`, `class`, `enum` 这些的 `attribute` 声明, attribute定义本身就不能位于上方, 相关的用法编译器会直接报错, 只能在相关的关键字后面, 如 `class [[deprecated]] Abc{};` 这种 ). 
 3. `meta attribute` 个别参数使用宏的情况. 因为我们原有的实现是基于 `token` 解析来实现的, 编译期的宏显然不能很好的在这种情况下被正确处理.
 
@@ -19,7 +19,7 @@
 #define EXPORT_API __attribute__((visibility(""default"")))
 #endif
 ```
- 像 `dllexport` 和 `visibility` 这种控制接口可见性的 `attribute`, 我们肯定是比较常用的, 而不仅仅是只有在打开 `ParseAttributes` 的时候才让它能够工作, 我们需要为这些基础的系统属性提供高性能的解决方案, 而且相关的实现应该是不受开关影响的.
+ 像 `dllexport` 和 `visibility` 这种控制接口可见性的 `attribute` 非常常用，不应该依赖可选的 token 解析开关。当前 CppAst 会通过 `Attributes` 暴露支持的系统 attribute，而不需要开启 `ParseTokenAttributes`。
 
 ---
 ### 2.2 导出工具等工具额外的信息注入

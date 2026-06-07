@@ -192,7 +192,7 @@ From the above example, we can already see some advantages of CppAst.Net:
 2. It supports building Compilation directly from a string, which also facilitates the implementation of unit tests.
 
 ### 3.1 Easy to Start with Simple Configuration
-&emsp;&emsp;CppAst.Net fundamentally relies on ClangSharp. Those who have experience with ClangSharp might be aware that the compilation and execution experience may not be very smooth. After adding the ClangSharp package from NuGet, attempting to run related examples and test codes might still prompt issues such as the absence of `libclang.dll/ligclang.so`, leading to a less than ideal experience. This situation can't be entirely blamed on ClangSharp, as it mainly stems from NuGet's limitations on the size of native binaries that a package can depend on. Since this issue might be encountered by many, let's first share a workaround to facilitate easier running of your own test codes:
+&emsp;&emsp;CppAst.Net fundamentally relies on ClangSharp and its native libclang binaries. After adding the CppAst package from NuGet, projects should still select a runtime identifier so the correct native asset can be restored and loaded. A common project-file configuration is:
 ```xml
 <PropertyGroup>
     <!-- Workaround for issue https://github.com/microsoft/ClangSharp/issues/129 -->
@@ -200,7 +200,7 @@ From the above example, we can already see some advantages of CppAst.Net:
 </PropertyGroup>
 ```
 
-For the official sample codes mentioned earlier, we can try to start from scratch and create a `C# .netcore 3.1` Console App, and step by step get it to run:
+For the official sample code mentioned earlier, we can start from scratch with a modern `.NET 8` console app and get it running step by step:
 
 #### 3.1.1 Creating a Project
 **Open Visual Studio and create a C# Console App (the environment used by the author is VS 2022):**
@@ -209,7 +209,7 @@ For the official sample codes mentioned earlier, we can try to start from scratc
 **Configure the project name:**
 ![3-2-guide2](cn/img/3-2-guide2.png)
 
-**Select the .net version (here we directly use .net core 3.1):**
+**Select the .NET version (the current package targets .NET 8):**
 ![3-3-guide](cn/img/3-3-guide.png)
 
 #### 3.1.2 Adding `CppAst.Net` Package via NuGet
@@ -229,26 +229,26 @@ For the official sample codes mentioned earlier, we can try to start from scratc
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
 
     <!-- Workaround for issue https://github.com/microsoft/ClangSharp/issues/129 -->
     <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$(PackAsTool)' != 'true'">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CppAst" Version="0.13.0" />
+    <PackageReference Include="CppAst" Version="LATEST_VERSION" />
   </ItemGroup>
 
 </Project>
 ```
-The `RuntimeIdentifier` entry is essential, as omitting it could lead to runtime errors due to missing libclang native dlls.
+Replace `LATEST_VERSION` with the current NuGet version. The `RuntimeIdentifier` entry is recommended so restore selects the native libclang asset for the current platform.
 
 #### 3.1.4 Adding Sample Code and Testing the App
 **Add test code in the Main() function of Program.cs:**
 ```cs
 static void Main(string[] args)
 {
-	// Parse a C++ files
+	// Parse C++ files
 	var compilation = CppParser.Parse(@"
 enum MyEnum { MyEnum_0, MyEnum_1 };
 void function0(int a, int b);
@@ -455,7 +455,7 @@ foo<int, int> foobar;
 
 ### 4.2 Support for `meta attribute`
 &emsp;&emsp;In this section, we added a specific document [attributes.md](https://github.com/xoofx/CppAst.NET/blob/main/doc/attributes.md) to the CppAst.Net code repository. Interested readers can consult it on their own. It mainly addresses the issue mentioned above about needing to configure certain exported items without wanting to separate the code items from the configuration information. Originally, CppAst.Net also had its own implementation of token attributes based on token parsing, but when used in projects, it encountered some issues frequently mentioned by the community:
-1. `ParseAttributes()` was time-consuming, leading to the introduction of the `ParseAttributes` parameter in later versions to control whether to parse `attributes`. However, in some cases, we rely on `attributes` to implement certain functionalities, which obviously was inconvenient.
+1. Token-based attribute parsing was time-consuming, so current versions keep that compatibility path opt-in through `CppParserOptions.ParseTokenAttributes`.
 
 2. There were flaws in parsing `meta attribute` - `[[]]`. `meta attribute` defined above `Function` and `Field` is semantically legal, but `cppast.net` could not properly support such `meta attribute` defined above objects (with some exceptions, like `namespace`, `class`, `enum`, where the attribute declaration itself cannot be placed above, as the compiler would directly report errors for such usages, it can only be placed after the related keywords, like `class [[deprecated]] Abc{};`).
 

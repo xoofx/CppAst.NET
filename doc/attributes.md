@@ -1,6 +1,6 @@
 ## 1. `cppast.net 0.12` Support for `attributes`
 The original support of `cppast.net` for various types of `attributes`, including the `meta attribute` of `c++17`, is restricted due to the limitation of `libclang` itself `Api`. We need to rely on token-level parsing to implement related functions. In the implementation of `cppast.net 0.12` and previous versions, we used parsing `token` to implement related functions. Even some `attributes` that `libclang` supports well, such as `dllexport`, `dllimport`, etc., `cppast.net` most of the time also uses token parsing. Although this approach is flexible and we can always try to parse the related `attributes` from the `token` level, it also brings some problems and restrictions, including:
-1. `ParseAttributes()` is extremely time-consuming, which led to the addition of the `ParseAttributes` parameter in later versions to control whether to parse `attributes`. However, in some cases, we need to rely on `attributes` to complete the related functions, which is obviously inconvenient.
+1. Token-based attribute parsing is comparatively expensive, which led to parser options that make fallback token parsing opt-in. In current CppAst versions, this compatibility path is controlled by `CppParserOptions.ParseTokenAttributes`.
 2. There are defects in the parsing of `meta attribute` - `[[]]`. For `meta attribute` defined above `Function` and `Field`, it is obviously legal at the semantic level, but `cppast.net` does not support this type of `meta attribute` defined above the object very well (there are some exceptions here, like `namespace`, `class`, `enum` these `attribute` declarations, the attribute definition itself cannot be at the top, the compiler will report an error directly for the related usage, it can only be after the related keywords, such as `class [[deprecated]] Abc{};`).
 3. Individual parameters of `meta attribute` use macros. Because our original implementation is based on `token` parsing, macros during compilation obviously cannot be correctly handled in this case.
 
@@ -17,7 +17,7 @@ Taking the code segment in the `cppast.net` test case as an example:
 #define EXPORT_API __attribute__((visibility(""default"")))
 #endif
 ```
-For `attributes` like `dllexport` and `visibility` that control interface visibility, we definitely use them more often, not only when `ParseAttributes` is turned on to make it work. We need to provide a high-performance solution for these basic system attributes, and the implementation should not be affected by the switch.
+For attributes like `dllexport` and `visibility` that control interface visibility, we need them more often than an opt-in token parser would allow. Current CppAst exposes supported system attributes through `Attributes` without requiring `ParseTokenAttributes`.
 
 ---
 ### 2.2 Injection of Additional Information by Export Tools and Other Tools
