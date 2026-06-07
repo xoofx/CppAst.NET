@@ -25,6 +25,7 @@ namespace CppAst
         private CppContainerContext _rootContainerContext;
         private readonly Dictionary<string, CppContainerContext> _containers;
         private readonly Dictionary<string, CppType> _typedefs;
+        private readonly Dictionary<string, CppClass> _templateSpecializedClasses;
         private readonly Dictionary<string, CppType> _objCTemplateParameterTypes;
         private CppClass _currentClassBeingVisited;
         private string _currentTypedefKey;
@@ -36,6 +37,7 @@ namespace CppAst
             _mapTemplateParameterTypeToTypedefKeys = new();
             RootCompilation = new CppCompilation();
             _typedefs = new Dictionary<string, CppType>();
+            _templateSpecializedClasses = new Dictionary<string, CppClass>();
             _objCTemplateParameterTypes = new Dictionary<string, CppType>();
             _userRootContainerContext = new CppContainerContext(RootCompilation)
             {
@@ -1209,7 +1211,9 @@ namespace CppAst
             {
                 if (IsExpression(initCursor))
                 {
-                    localExpression = VisitExpression(initCursor, clientData);
+                    localExpression = cursor.Kind == CXCursorKind.CXCursor_ParmDecl
+                        ? VisitParameterInitExpression(initCursor, clientData)
+                        : VisitExpression(initCursor, clientData);
                     return CXChildVisitResult.CXChildVisit_Break;
                 }
                 return CXChildVisitResult.CXChildVisit_Continue;
@@ -1241,6 +1245,41 @@ namespace CppAst
             expression = localExpression;
             value = localValue;
             resultEval.Dispose();
+        }
+
+        private CppExpression VisitParameterInitExpression(CXCursor cursor, void* data)
+        {
+            if (cursor.Kind == CXCursorKind.CXCursor_UnexposedExpr)
+            {
+                CppExpression childExpression = null;
+                cursor.VisitChildren((childCursor, parentCursor, clientData) =>
+                {
+                    if (IsExpression(childCursor))
+                    {
+                        childExpression = VisitParameterInitExpression(childCursor, clientData);
+                        return CXChildVisitResult.CXChildVisit_Break;
+                    }
+
+                    return CXChildVisitResult.CXChildVisit_Continue;
+                }, new CXClientData((IntPtr)data));
+
+                if (childExpression != null)
+                {
+                    return childExpression;
+                }
+            }
+
+            var expression = VisitExpression(cursor, data);
+            if (expression is CppRawExpression rawExpression && rawExpression.Text != null)
+            {
+                var text = rawExpression.Text.TrimStart();
+                if (text.StartsWith("=", StringComparison.Ordinal))
+                {
+                    rawExpression.Text = text.Substring(1).TrimStart();
+                }
+            }
+
+            return expression;
         }
 
         private static bool IsExpression(CXCursor cursor)
@@ -1606,6 +1645,11 @@ namespace CppAst
                                 break;
                             }
                         }
+                    }
+
+                    if (existingFunction != null && cursor.IsFunctionInlined)
+                    {
+                        existingFunction.Flags |= CppFunctionFlags.Inline;
                     }
 
                     // If we found the existing function, update its BodySpan
@@ -2205,7 +2249,17 @@ namespace CppAst
             // If the type has been already declared, return it immediately.
             if (TryGetDeclarationContainer(cursor, data, out _, out var containerContext))
             {
-                return (CppType)containerContext.Container;
+                var cppType = (CppType)containerContext.Container;
+                if (cppType is CppClass cppClass)
+                {
+                    var specializedClass = TryCreateTemplateSpecializedClass(cppClass, cursor, type, data);
+                    if (specializedClass != null)
+                    {
+                        return specializedClass;
+                    }
+                }
+
+                return cppType;
             }
 
             // TODO: Pseudo fix, we are not supposed to land here, as the TryGet before should resolve an existing type already declared (but not necessarily defined)
@@ -2326,7 +2380,10 @@ namespace CppAst
                     return new CppReferenceType(GetCppType(type.PointeeType.Declaration, type.PointeeType, parent, data));
 
                 case CXTypeKind.CXType_Record:
-                    return VisitClassDecl(cursor, data);
+                    {
+                        var cppClass = VisitClassDecl(cursor, data);
+                        return TryCreateTemplateSpecializedClass(cppClass, cursor, type, data) ?? cppClass;
+                    }
 
                 case CXTypeKind.CXType_ObjCInterface:
                 {
@@ -2570,6 +2627,171 @@ namespace CppAst
             }
 
             return templateCppTypes;
+        }
+
+        private CppClass TryCreateTemplateSpecializedClass(CppClass cppClass, CXCursor cursor, CXType type, void* data)
+        {
+            if (cppClass.TemplateKind == CppTemplateKind.TemplateSpecializedClass || cppClass.TemplateParameters.Count == 0)
+            {
+                return null;
+            }
+
+            var templateArguments = ParseTemplateSpecializedArguments(cursor, type, new CXClientData((IntPtr)data));
+            if (templateArguments == null || templateArguments.Count == 0)
+            {
+                templateArguments = ParseTemplateSpecializedArgumentsFromTypeSpelling(type);
+            }
+
+            return templateArguments != null && templateArguments.Count > 0
+                ? CreateTemplateSpecializedClass(cppClass, templateArguments)
+                : null;
+        }
+
+        private List<CppType> ParseTemplateSpecializedArgumentsFromTypeSpelling(CXType type)
+        {
+            var spelling = CXUtil.GetTypeSpelling(type);
+            var start = spelling.IndexOf('<');
+            var end = spelling.LastIndexOf('>');
+            if (start < 0 || end <= start)
+            {
+                return null;
+            }
+
+            var argumentSpellings = SplitTemplateArgumentSpellings(spelling.Substring(start + 1, end - start - 1));
+            if (argumentSpellings.Count == 0)
+            {
+                return null;
+            }
+
+            var templateArguments = new List<CppType>();
+            foreach (var argumentSpelling in argumentSpellings)
+            {
+                templateArguments.Add(ResolveTemplateArgumentSpelling(argumentSpelling));
+            }
+
+            return templateArguments;
+        }
+
+        private CppType ResolveTemplateArgumentSpelling(string spelling)
+        {
+            spelling = spelling.Trim();
+
+            var currentClass = _currentClassBeingVisited;
+            while (currentClass != null)
+            {
+                foreach (var templateParameter in currentClass.TemplateParameters)
+                {
+                    if (templateParameter is CppTemplateParameterType templateParameterType && templateParameterType.Name == spelling)
+                    {
+                        return templateParameterType;
+                    }
+                }
+
+                currentClass = currentClass.Parent as CppClass;
+            }
+
+            return spelling switch
+            {
+                "bool" => CppPrimitiveType.Bool,
+                "char" => CppPrimitiveType.Char,
+                "double" => CppPrimitiveType.Double,
+                "float" => CppPrimitiveType.Float,
+                "int" => CppPrimitiveType.Int,
+                "long" => CppPrimitiveType.Long,
+                "long long" => CppPrimitiveType.LongLong,
+                "short" => CppPrimitiveType.Short,
+                "unsigned char" => CppPrimitiveType.UnsignedChar,
+                "unsigned int" => CppPrimitiveType.UnsignedInt,
+                "unsigned long" => CppPrimitiveType.UnsignedLong,
+                "unsigned long long" => CppPrimitiveType.UnsignedLongLong,
+                "unsigned short" => CppPrimitiveType.UnsignedShort,
+                "void" => CppPrimitiveType.Void,
+                _ => new CppUnexposedType(spelling),
+            };
+        }
+
+        private static List<string> SplitTemplateArgumentSpellings(string text)
+        {
+            var arguments = new List<string>();
+            var depth = 0;
+            var start = 0;
+            for (var i = 0; i < text.Length; i++)
+            {
+                switch (text[i])
+                {
+                    case '<':
+                        depth++;
+                        break;
+                    case '>':
+                        depth--;
+                        break;
+                    case ',' when depth == 0:
+                        AddTemplateArgumentSpelling(arguments, text, start, i);
+                        start = i + 1;
+                        break;
+                }
+            }
+
+            AddTemplateArgumentSpelling(arguments, text, start, text.Length);
+            return arguments;
+        }
+
+        private static void AddTemplateArgumentSpelling(List<string> arguments, string text, int start, int end)
+        {
+            var argument = text.Substring(start, end - start).Trim();
+            if (argument.Length > 0)
+            {
+                arguments.Add(argument);
+            }
+        }
+
+        private CppClass CreateTemplateSpecializedClass(CppClass specializedTemplate, List<CppType> templateArguments)
+        {
+            var key = $"{specializedTemplate.GetHashCode()}<{string.Join(",", templateArguments.Select(x => x.FullName))}>";
+            if (_templateSpecializedClasses.TryGetValue(key, out var existingClass))
+            {
+                return existingClass;
+            }
+
+            var cppClass = new CppClass(specializedTemplate.Name)
+            {
+                AlignOf = specializedTemplate.AlignOf,
+                ClassKind = specializedTemplate.ClassKind,
+                IsAbstract = specializedTemplate.IsAbstract,
+                IsDefinition = specializedTemplate.IsDefinition,
+                IsFinal = specializedTemplate.IsFinal,
+                Parent = specializedTemplate.Parent,
+                SizeOf = specializedTemplate.SizeOf,
+                SpecializedTemplate = specializedTemplate,
+                TemplateKind = CppTemplateKind.TemplateSpecializedClass,
+                Visibility = specializedTemplate.Visibility,
+            };
+
+            foreach (var parameter in specializedTemplate.TemplateParameters)
+            {
+                switch (parameter)
+                {
+                    case CppTemplateParameterType parameterType:
+                        cppClass.TemplateParameters.Add(new CppTemplateParameterType(parameterType.Name, parameterType.Kind));
+                        break;
+                    case CppTemplateParameterNonType nonTypeParameter:
+                        cppClass.TemplateParameters.Add(new CppTemplateParameterNonType(nonTypeParameter.Name, nonTypeParameter.NoneTemplateType));
+                        break;
+                }
+            }
+
+            var argumentCount = Math.Min(specializedTemplate.TemplateParameters.Count, templateArguments.Count);
+            for (var i = 0; i < argumentCount; i++)
+            {
+                var argument = templateArguments[i];
+                cppClass.TemplateSpecializedArguments.Add(new CppTemplateArgument(
+                    specializedTemplate.TemplateParameters[i],
+                    argument,
+                    argument is not CppTemplateParameterType));
+            }
+
+            _templateSpecializedClasses.Add(key, cppClass);
+            return cppClass;
         }
         
         private string GetCursorKey(CXCursor cursor)
