@@ -137,4 +137,19 @@ using FooInt = Foo<int, double, char, long>;
             },
             new CppParserOptions { AdditionalArguments = { "-std=c++11" } });
     }
+
+    [Test]
+    public void TestIssue122UnexposedTemplateArgumentsDoNotOwnTypes()
+    {
+        var compilation = new CppCompilation();
+        var cppClass = new CppClass("TemplateArgument");
+        compilation.Classes.Add(cppClass);
+
+        var unexposedType = new CppUnexposedType("Unexposed<TemplateArgument>");
+        unexposedType.TemplateParameters.Add(cppClass);
+
+        Assert.AreSame(compilation, cppClass.Parent);
+        Assert.AreSame(cppClass, unexposedType.TemplateParameters.Single());
+        Assert.AreSame(cppClass, ((ICppTemplateOwner)unexposedType).TemplateParameters.Single());
+    }
 }

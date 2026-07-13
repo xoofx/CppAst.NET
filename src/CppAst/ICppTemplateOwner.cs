@@ -12,8 +12,11 @@ namespace CppAst
     public interface ICppTemplateOwner
     {
         /// <summary>
-        /// List of template parameters.
+        /// Gets the list of template parameters.
         /// </summary>
-        CppContainerList<CppType> TemplateParameters { get; }
+        /// <remarks>
+        /// The list may either own declared template parameters or reference template argument types owned elsewhere.
+        /// </remarks>
+        IList<CppType> TemplateParameters { get; }
     }
 }

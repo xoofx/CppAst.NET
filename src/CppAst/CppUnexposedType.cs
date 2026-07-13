@@ -22,7 +22,7 @@ namespace CppAst
         public CppUnexposedType(string name) : base(CppTypeKind.Unexposed)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
-            TemplateParameters = new CppContainerList<CppType>(this);
+            TemplateParameters = new List<CppType>();
         }
 
         /// <summary>
@@ -33,8 +33,15 @@ namespace CppAst
         /// <inheritdoc />
         public override int SizeOf { get; set; }
 
-        /// <inheritdoc />
-        public CppContainerList<CppType> TemplateParameters { get; }
+        /// <summary>
+        /// Gets the template argument types referenced by this unexposed type.
+        /// </summary>
+        /// <remarks>
+        /// This list does not own its elements and does not change their <see cref="CppElement.Parent"/>.
+        /// </remarks>
+        public List<CppType> TemplateParameters { get; }
+
+        IList<CppType> ICppTemplateOwner.TemplateParameters => TemplateParameters;
 
         /// <inheritdoc />
         public override CppType GetCanonicalType() => this;

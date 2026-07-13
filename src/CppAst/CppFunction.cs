@@ -123,6 +123,8 @@ namespace CppAst
         /// <inheritdoc />
         public CppContainerList<CppType> TemplateParameters { get; }
 
+        IList<CppType> ICppTemplateOwner.TemplateParameters => TemplateParameters;
+
         /// <inheritdoc />
         public override string ToString()
         {

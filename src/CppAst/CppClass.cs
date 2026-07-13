@@ -177,6 +177,8 @@ namespace CppAst
         /// <inheritdoc />
         public CppContainerList<CppType> TemplateParameters { get; }
 
+        IList<CppType> ICppTemplateOwner.TemplateParameters => TemplateParameters;
+
         public List<CppTemplateArgument> TemplateSpecializedArguments { get; } = new List<CppTemplateArgument>();
 
         /// <summary>
