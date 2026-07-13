@@ -4,3 +4,6 @@ project = "./CppAst.slnx"
 [github]
 user = "xoofx"
 repo = "CppAst.NET"
+[nuget]
+user = "xoofx"
+trusted_publishing = true
