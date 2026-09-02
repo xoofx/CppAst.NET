@@ -15,7 +15,7 @@ namespace CppAst
     /// <typeparam name="TElement"></typeparam>
     [DebuggerTypeProxy(typeof(CppContainerListDebugView<>))]
     [DebuggerDisplay("Count = {Count}")]
-    public class CppContainerList<TElement> : IList<TElement> where TElement : CppElement
+    public class CppContainerList<TElement> : IList<TElement>, IReadOnlyList<TElement> where TElement : CppElement
     {
         private readonly List<TElement> _elements;
 
