@@ -25,6 +25,7 @@
   <ItemGroup>
     <None Include="../../img/cppast.png" Pack="true" PackagePath="/logo.png" />
     <None Include="../../readme.md" Pack="true" PackagePath="/" />
+    <None Include="../../license.txt" Pack="true" PackagePath="/" />
 
     <PackageReference Include="ClangSharp" />
   </ItemGroup>
